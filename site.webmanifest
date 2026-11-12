@@ -1,6 +1,6 @@
 {
-  "name": "One Less One · Lab",
-  "short_name": "One Less One Lab",
+  "name": "one - one · Lab",
+  "short_name": "one - one Lab",
   "description": "Finanzas personales: ingresos menos gastos, decisiones con claridad.",
   "id": "./",
   "start_url": "./",
@@ -9,12 +9,5 @@
   "background_color": "#191919",
   "theme_color": "#191919",
   "lang": "es",
-  "icons": [
-    {
-      "src": "./one-less-one-icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    }
-  ]
+  "icons": []
 }
