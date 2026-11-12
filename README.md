@@ -2,7 +2,7 @@
 
 Laboratorio de **one - one**, software de finanzas personales desarrollado por **rastro.** Esta versión mantiene categorías genéricas y almacenamiento independiente de la versión Daniel.
 
-**Versión:** v8.2.0 LAB — primera beta de módulos opcionales y Cobros.
+**Versión:** v8.3.0 LAB — Cobros 2.0 beta, con organización por personas, abonos parciales e indicadores de recuperación.
 
 ## Navegación personalizable
 
@@ -12,7 +12,7 @@ Laboratorio de **one - one**, software de finanzas personales desarrollado por *
 
 ## Cobros — Beta
 
-El módulo permite registrar persona, concepto, fecha del cargo, fecha de recordatorio, importe, moneda y notas. Los cargos pueden agruparse por persona o motivo y configurarse como mensuales. El módulo incluye estados pendiente/pagado y un recordatorio visible en Inicio para cobros vencidos o próximos.
+El módulo permite registrar persona, concepto, fecha de cargo, fecha de recordatorio, importe, moneda y notas; agrupar cargos por persona o concepto; y crear recurrencias mensuales. La vista **Personas** muestra total recibido y pendiente, mientras que **Grupos** conserva la organización original. Se admite historial de abonos parciales, reversión de abonos y estados pendiente/parcial/pagado. Inicio muestra recordatorios que se pueden anticipar (0, 1, 3 o 7 días) o posponer 3 días, y Cobros ofrece indicadores de recuperación y vencimientos.
 
 **Alcance:** los avisos aparecen dentro de la aplicación; no se envían notificaciones de sistema ni correos. Marcar un cobro como pagado no registra automáticamente un ingreso en Movimientos.
 
