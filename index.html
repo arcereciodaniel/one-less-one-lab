@@ -3019,13 +3019,19 @@ function oneApplyCopyBudgetMonth(month){
 function r8BudgetLine(category,period){
   const key=periodKey(period),cid=category.id,currency=normalizeCurrency(period.categoryBudgetCurrencies?.[cid]||"CRC");
   const amount=num(period.categoryBudgets?.[cid]);
+  const planned=periodCategoryBudgetCRC(period,cid,category.type==="Ingreso"?"receive":"pay");
+  const spent=category.type==="Ingreso"?0:selectedMovements("fortnight",key)
+    .filter(m=>m.type===category.type).reduce((sum,m)=>sum+movementCategoryAmountCRC(m,category),0);
+  const excess=category.type==="Ingreso"?0:spent-planned;
   const extraTitle=category.type==="Ingreso"&&period.categoryBudgetSources?.[cid]==="auto"?"Ingreso generado automáticamente":"Editar presupuesto de esta categoría";
   return `<div class="r8-budget-row">
-    <span class="r8-budget-row-label" title="${safe(category.name)}">${safe(category.name)}</span>
+    <span class="r8-budget-row-label" title="${safe(category.name)}"><span>${safe(category.name)}</span>
+      ${excess>.005?`<small class="r8-over-budget">Superado por ${money(excess)} <button type="button" data-r8-edit-budget="${key}|${cid}" aria-label="Ajustar presupuesto de ${safe(category.name)}">Ajustar</button></small>`:""}
+    </span>
     <span class="r8-edit-cell">
       <button type="button" class="r8-value-button" data-r8-edit-budget="${key}|${cid}" title="${safe(extraTitle)}">${originalMoney(amount,currency)}</button>
       <span class="r8-edit-controls" hidden>
-        <input class="editable" type="number" step="0.01" data-category-budget="${key}|${cid}" value="${amount}" aria-label="Monto de ${safe(category.name)}">
+        <input class="editable" type="number" min="0" step="0.01" data-category-budget="${key}|${cid}" value="${amount}" aria-label="Monto de ${safe(category.name)}">
         <select class="editable" data-category-budget-currency="${key}|${cid}" aria-label="Moneda de ${safe(category.name)}">
           <option value="CRC" ${currency==="CRC"?"selected":""}>CRC</option>
           <option value="USD" ${currency==="USD"?"selected":""}>USD</option>
@@ -3034,12 +3040,13 @@ function r8BudgetLine(category,period){
     </span>
   </div>`;
 }
-
 function r8BudgetSection(types,heading,period){
   const cats=budgetCategories(types,period);
   const intent=types==="Ingreso"?"receive":"pay";
   const total=cats.reduce((sum,c)=>sum+periodCategoryBudgetCRC(period,c.id,intent),0);
-  const main=cats.filter(c=>Math.abs(num(period.categoryBudgets?.[c.id]))>.0001);
+  const periodMovements=selectedMovements("fortnight",periodKey(period));
+  const main=cats.filter(c=>Math.abs(num(period.categoryBudgets?.[c.id]))>.0001||
+    (c.type!=="Ingreso"&&periodMovements.some(m=>m.type===c.type&&movementCategoryAmountCRC(m,c)>.005)));
   const empty=cats.filter(c=>!main.includes(c));
   return `<div class="r8-section">
     <div class="r8-section-heading"><span>${heading}</span><strong>${money(total)}</strong></div>
@@ -3204,7 +3211,7 @@ function initR8(){
     if(copy){oneOpenCopyBudgetMonth(copy.dataset.copyBudgetMonth);return}
     const edit=event.target.closest("[data-r8-edit-budget]");
     if(edit){
-      const cell=edit.closest(".r8-edit-cell"),controls=cell?.querySelector(".r8-edit-controls");
+      const cell=edit.closest(".r8-budget-row")?.querySelector(".r8-edit-cell"),controls=cell?.querySelector(".r8-edit-controls");
       if(!controls)return;
       edit.hidden=true;controls.hidden=false;
       const input=controls.querySelector("input");input?.focus();input?.select();
