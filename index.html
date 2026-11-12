@@ -1107,26 +1107,46 @@ header nav button.one-add-module-button:focus-visible{outline:2px solid var(--ac
 .m2-balance-row strong{font-variant-numeric:tabular-nums}
 @media(max-width:720px){.m2-split-row{grid-template-columns:1fr 1fr auto}.v7-transaction-row.m2-row{grid-template-columns:36px minmax(0,1fr) auto}.v7-transaction-row.m2-row .v7-category-chip{display:none}.m2-feed-actions{grid-column:2/-1;justify-self:end}}
 
-/* Movimientos Simple & Smart */
-.one-move-period{display:flex;align-items:center;justify-content:center;gap:14px;margin:0 0 18px}
-.one-move-period>button{width:35px;height:35px;display:grid;place-items:center;border:1px solid var(--border);border-radius:9px;background:var(--surface);color:var(--text);font-size:1.3rem}
-.one-move-period>button:disabled{opacity:.35;cursor:not-allowed}
-.one-move-period>div{display:flex;align-items:center;justify-content:center;min-width:200px;gap:10px}
-#movementPeriodHeading{text-transform:capitalize;font-size:1.02rem}
-#movementTodayPeriod{border:0;background:var(--surface-2);border-radius:6px;color:var(--muted);font-size:.7rem;padding:5px 7px}
+
+/* Movimientos · period controls mirror Inicio/Presupuesto; advanced filters never float */
+.one-move-screen-reader-only{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important}
+.one-move-period-control{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:13px 18px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin:0 0 16px}
+.one-move-view-switch{display:inline-flex;gap:3px;padding:4px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;flex-shrink:0}
+.one-move-view-switch button{border:0;border-radius:6px;background:transparent;color:var(--muted);padding:9px 12px;font-size:.77rem;font-weight:650;cursor:pointer;white-space:nowrap}
+.one-move-view-switch button:hover{color:var(--text)}
+.one-move-view-switch button.active{background:var(--surface);box-shadow:0 1px 3px rgba(0,0,0,.10);color:var(--text)}
+.one-move-view-switch button:focus-visible,.one-move-filter-button:focus-visible,.one-move-period-navigation button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.one-move-period-pickers{display:flex;align-items:end;justify-content:flex-end;flex-wrap:wrap;gap:9px 12px;flex:1;min-width:0}
+.one-move-period-field{display:flex;flex-direction:column;gap:3px;min-width:0}
+.one-move-period-field[hidden],.one-move-filter-panel[hidden]{display:none!important}
+.one-move-period-field label{font-size:.66rem;font-weight:650;color:var(--muted)}
+.one-move-period-field select{min-width:142px;max-width:235px;width:auto;height:36px;background:var(--surface);font-size:.77rem}
+#movementFortnightWrap select{min-width:148px}
+.one-move-period-navigation{display:flex;align-items:center;gap:5px;margin-left:2px}
+.one-move-period-navigation button{display:grid;place-items:center;width:34px;height:36px;border:1px solid var(--border);border-radius:7px;background:var(--surface);color:var(--text);font-size:1.15rem;cursor:pointer}
+.one-move-period-navigation button:disabled{opacity:.35;cursor:not-allowed}
+#movementTodayPeriod{display:inline-flex;align-items:center;justify-content:center;width:auto;padding:0 9px;background:var(--surface-2);border:1px solid var(--border);color:var(--muted);font-size:.72rem}
 .one-move-kpis{grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:16px}
-.one-move-toolbar{display:flex;align-items:start;gap:10px;margin-bottom:15px;position:relative;z-index:10}
-.one-move-search{flex:1;min-width:0;height:42px}
-.one-move-search input{width:100%}
-.one-move-filters{flex:0 0 auto;position:relative}
-.one-move-filters>summary{list-style:none;display:flex;align-items:center;gap:7px;height:42px;border:1px solid var(--border);border-radius:9px;background:var(--surface);padding:0 14px;font-size:.79rem;font-weight:650;cursor:pointer}
-.one-move-filters>summary::-webkit-details-marker{display:none}
-.one-move-filter-count{border-radius:99px;background:var(--surface-hover);padding:1px 6px;font-size:.7rem}
-.one-move-filter-popover{position:absolute;right:0;top:calc(100% + 8px);width:min(590px,calc(100vw - 32px));max-height:70vh;overflow:auto;z-index:15;padding:17px;background:var(--surface);border:1px solid var(--border);border-radius:11px;box-shadow:0 15px 35px rgba(0,0,0,.14)}
-.one-move-filter-popover>p{font-size:.76rem;margin:0 0 11px}
-.one-move-filter-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
-.one-move-filter-grid .field{min-width:0}.one-move-filter-grid select,.one-move-filter-grid input{width:100%}
-.one-move-filter-footer{display:flex;justify-content:flex-end;gap:7px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:13px;margin-top:15px}
+.one-move-toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin-bottom:12px;position:relative;z-index:1}
+.one-move-search{flex:0 1 350px;max-width:350px;min-width:205px;height:39px}
+.one-move-search input{width:100%;height:39px;font-size:.79rem}
+.one-move-filter-button{display:inline-flex;align-items:center;gap:8px;height:39px;padding:0 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-weight:640;font-size:.78rem;cursor:pointer}
+.one-move-filter-button:hover,.one-move-filter-button[aria-expanded="true"]{background:var(--surface-2);border-color:color-mix(in srgb,var(--accent) 38%,var(--border))}
+.one-move-filter-count{border-radius:99px;background:var(--accent-soft);color:var(--accent);padding:1px 6px;font-size:.69rem;font-weight:740}
+.one-move-filter-count[hidden]{display:none!important}
+.one-move-filter-panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:17px 18px 14px;margin:0 0 16px;box-shadow:0 4px 14px rgba(0,0,0,.035);overflow:visible}
+.one-move-filter-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:13px}
+.one-move-filter-head strong{font-size:.84rem;color:var(--text)}
+.one-move-filter-head p{margin:3px 0 0;color:var(--muted);font-size:.74rem}
+.one-move-filter-close{display:grid;place-items:center;width:27px;height:27px;background:transparent;border:0;border-radius:5px;color:var(--muted);font-size:1.2rem;cursor:pointer}
+.one-move-filter-close:hover{background:var(--surface-hover);color:var(--text)}
+.one-move-filter-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 12px;align-items:end}
+.one-move-filter-grid .field{min-width:0}
+.one-move-filter-grid input,.one-move-filter-grid select{width:100%;min-width:0}
+.one-move-filter-footer{display:flex;justify-content:flex-end;gap:7px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:12px;margin-top:15px}
+@media(max-width:1080px){.one-move-period-control{align-items:flex-start}.one-move-period-pickers{justify-content:flex-start}}
+@media(max-width:740px){.one-move-period-control{padding:12px}.one-move-period-pickers{width:100%;flex:1 1 100%}.one-move-filter-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.one-move-search{flex:1 1 210px;max-width:100%}}
+@media(max-width:460px){.one-move-view-switch{width:100%}.one-move-view-switch button{flex:1;padding:9px 6px}.one-move-period-field select{min-width:0;max-width:none;width:100%}.one-move-period-field{flex:1 1 150px}.one-move-period-navigation{margin-left:0}.one-move-filter-grid{grid-template-columns:1fr}.one-move-toolbar{flex-wrap:nowrap}.one-move-search{flex:1 1 auto;min-width:0}.one-move-filter-button{padding:0 10px;white-space:nowrap}.one-move-filter-panel{padding:13px}}
 .one-move-scheduled{margin-bottom:13px}.one-move-scheduled>summary{cursor:pointer;font-size:.83rem}.one-move-scheduled small{color:var(--muted);font-weight:400;margin-left:10px}.one-move-scheduled #movementTemplatesList{padding-top:12px;margin:0}
 .one-move-feed{padding:18px 20px}
 .one-move-feed .v7-transaction-row{grid-template-columns:38px minmax(0,1.2fr) minmax(90px,.6fr) auto minmax(116px,max-content)}
@@ -1221,10 +1241,6 @@ header nav button.one-add-module-button:focus-visible{outline:2px solid var(--ac
         <div class="v7-eyebrow">INICIO</div>
         <h1>Tu panorama financiero</h1>
         <p class="sub">Comprendé tu flujo de dinero y tomá mejores decisiones para lo que viene.</p>
-      </div>
-      <div class="v7-page-actions">
-        
-        <button class="btn secondary" id="printBtn">Imprimir / PDF</button>
       </div>
     </div>
 
@@ -1392,37 +1408,46 @@ header nav button.one-add-module-button:focus-visible{outline:2px solid var(--ac
     <div class="v7-page-head"><div><div class="v7-eyebrow">MOVIMIENTOS</div><h1>Movimientos</h1><p class="sub">Tu actividad financiera, en orden.</p></div>
       <div class="v7-page-actions"><button class="btn" id="toggleMovementComposer" type="button">＋ Agregar movimiento</button></div>
     </div>
-    <div class="one-move-period">
-      <button type="button" id="movementPreviousPeriod" aria-label="Período anterior">‹</button>
-      <div><strong id="movementPeriodHeading">Mes actual</strong><button type="button" id="movementTodayPeriod" title="Volver a este mes">Hoy</button></div>
-      <button type="button" id="movementNextPeriod" aria-label="Período siguiente">›</button>
+
+    <div class="one-move-period-control" aria-label="Período de movimientos">
+      <div class="one-move-view-switch" role="group" aria-label="Vista del período">
+        <button type="button" data-one-move-level="quarter" aria-pressed="false">Trimestre</button>
+        <button type="button" data-one-move-level="month" aria-pressed="true">Mes</button>
+        <button type="button" data-one-move-level="fortnight" aria-pressed="false">Quincena</button>
+      </div>
+      <div class="one-move-period-pickers">
+        <div class="one-move-period-field" id="movementQuarterWrap" hidden><label for="movementQuarter">Trimestre</label><select id="movementQuarter"></select></div>
+        <div class="one-move-period-field" id="movementMonthWrap"><label for="movementMonth">Mes</label><select id="movementMonth"></select></div>
+        <div class="one-move-period-field" id="movementFortnightWrap" hidden><label for="movementFortnight">Quincena</label><select id="movementFortnight"></select></div>
+        <div class="one-move-period-navigation">
+          <button type="button" id="movementPreviousPeriod" aria-label="Período anterior" title="Período anterior">‹</button>
+          <button type="button" id="movementNextPeriod" aria-label="Período siguiente" title="Período siguiente">›</button>
+          <button type="button" id="movementTodayPeriod" title="Ir al mes actual">Hoy</button>
+        </div>
+      </div>
+      <span class="one-move-screen-reader-only" id="movementPeriodHeading" aria-live="polite"></span>
+      <div hidden aria-hidden="true"><select id="movementLevel"><option value="quarter">Trimestre</option><option value="month" selected>Mes</option><option value="fortnight">Quincena</option></select><select id="movementPeriod"></select></div>
     </div>
     <div class="v7-kpis one-move-kpis" id="movementSummary"></div>
     <div class="one-move-toolbar">
-      <div class="v7-search one-move-search"><span aria-hidden="true">⌕</span><input type="search" id="movementSearch" aria-label="Buscar movimientos" placeholder="Buscar movimientos..."></div>
-      <details id="movementFiltersDetails" class="one-move-filters">
-        <summary>☷ Filtros <span id="movementFiltersCount" class="one-move-filter-count" hidden></span></summary>
-        <div class="one-move-filter-popover"><p class="muted">Más opciones para buscar en tu historial.</p>
-          <div class="one-move-filter-grid">
-            <div class="field"><label>Agrupación</label><select id="movementLevel"><option value="month" selected>Mes</option><option value="fortnight">Quincena</option><option value="quarter">Trimestre</option></select></div>
-            <div class="field"><label>Período</label><select id="movementPeriod"></select></div>
-            <div class="field"><label>Tipo</label><select id="movementTypeFilter"><option value="">Todos</option></select></div>
-            <div class="field"><label>Categoría</label><select id="movementCategoryFilter"><option value="">Todas</option></select></div>
-            <div class="field"><label>Desde</label><input type="date" id="movementDateFrom"></div>
-            <div class="field"><label>Hasta</label><input type="date" id="movementDateTo"></div>
-            <div class="field"><label>Cuenta</label><select id="movementAccountFilter"><option value="">Todas</option></select></div>
-            <div class="field"><label>Moneda</label><select id="movementCurrencyFilter"><option value="">Todas</option><option value="CRC">CRC</option><option value="USD">USD</option></select></div>
-            <div class="field"><label>Monto mínimo</label><input type="number" min="0" step=".01" id="movementAmountMin"></div>
-            <div class="field"><label>Monto máximo</label><input type="number" min="0" step=".01" id="movementAmountMax"></div>
-          </div>
-          <div class="one-move-filter-footer">
-            <button class="btn secondary small" type="button" id="movementClearFilters">Limpiar filtros</button>
-            <button class="btn secondary small" type="button" id="exportMovementsCsv">Exportar CSV</button>
-            <button class="btn secondary small" type="button" data-manage-categories>Categorías</button>
-          </div>
-        </div>
-      </details>
+      <div class="v7-search one-move-search"><span aria-hidden="true">⌕</span><input id="movementSearch" type="search" aria-label="Buscar movimientos" placeholder="Buscar movimientos..."></div>
+      <button type="button" id="movementFilterToggle" class="one-move-filter-button" aria-expanded="false" aria-controls="movementFiltersPanel">☷ Filtros <span class="one-move-filter-count" id="movementFiltersCount" hidden></span></button>
     </div>
+    <section class="one-move-filter-panel" id="movementFiltersPanel" hidden aria-label="Filtros de movimientos">
+      <div class="one-move-filter-head"><div><strong>Refinar movimientos</strong><p>Filtrá solamente cuando lo necesités.</p></div><button type="button" class="one-move-filter-close" id="movementFiltersClose" aria-label="Cerrar filtros">×</button></div>
+      <div class="one-move-filter-grid">
+        <div class="field"><label for="movementTypeFilter">Tipo</label><select id="movementTypeFilter"><option value="">Todos</option></select></div>
+        <div class="field"><label for="movementCategoryFilter">Categoría</label><select id="movementCategoryFilter"><option value="">Todas</option></select></div>
+        <div class="field"><label for="movementCurrencyFilter">Moneda</label><select id="movementCurrencyFilter"><option value="">Todas</option><option value="CRC">CRC</option><option value="USD">USD</option></select></div>
+        <div class="field"><label for="movementDateFrom">Desde</label><input type="date" id="movementDateFrom"></div>
+        <div class="field"><label for="movementDateTo">Hasta</label><input type="date" id="movementDateTo"></div>
+      </div>
+      <div class="one-move-filter-footer">
+        <button class="btn secondary small" type="button" id="movementClearFilters">Limpiar filtros</button>
+        <button class="btn secondary small" type="button" id="exportMovementsCsv">Exportar CSV</button>
+        <button class="btn secondary small" type="button" data-manage-categories>Administrar categorías</button>
+      </div>
+    </section>
     <details class="v7-card one-move-scheduled" id="movementTemplatesCard" hidden>
       <summary><strong id="movementScheduledTitle">Programados</strong><small>Recordatorios que no afectan tu saldo hasta registrarlos.</small></summary>
       <div id="movementTemplatesList" class="m2-template-grid"></div>
@@ -2812,7 +2837,7 @@ function syncQuarterSelectors(){
   const quarters=planningQuarters();data.quarters=quarters;
   syncHierarchicalFilter("dashboard");
   syncHierarchicalFilter("plan");
-  ["movement"].forEach(prefix=>syncPeriodFilter(prefix));
+  m2SyncMovementPeriod();
 }
 function navigate(view){
   if(ONE_OPTIONAL_MODULES.has(view)&&!oneModuleEnabled(view))view="dashboard";
@@ -3741,10 +3766,10 @@ function m2Accounts(){
 }
 function m2RefreshAccounts(selected){
   const options=m2Accounts();
-  ["mAccount","mtAccount","movementAccountFilter"].forEach(id=>{
+  ["mAccount","mtAccount"].forEach(id=>{
     const el=document.getElementById(id);if(!el)return;
     const prior=id==="mAccount"&&selected!==undefined?selected:el.value;
-    el.innerHTML=(id==="movementAccountFilter"?'<option value="">Todas las cuentas</option>':'<option value="">Sin especificar</option>')+
+    el.innerHTML='<option value="">Sin especificar</option>'+
       options.map(name=>`<option value="${safe(name)}">${safe(name)}</option>`).join("");
     el.value=options.includes(prior)||!prior?prior:"";
   });
@@ -3754,22 +3779,16 @@ function m2FilteredMovementRows(){
   const value=document.getElementById("movementPeriod")?.value||"";
   const type=document.getElementById("movementTypeFilter")?.value||"";
   const category=document.getElementById("movementCategoryFilter")?.value||"";
-  const account=document.getElementById("movementAccountFilter")?.value||"";
   const currency=document.getElementById("movementCurrencyFilter")?.value||"";
   const from=document.getElementById("movementDateFrom")?.value||"";
   const to=document.getElementById("movementDateTo")?.value||"";
-  const minInput=document.getElementById("movementAmountMin")?.value||"";
-  const maxInput=document.getElementById("movementAmountMax")?.value||"";
-  const min=minInput!==""?Number(minInput):null,max=maxInput!==""?Number(maxInput):null;
   const query=(document.getElementById("movementSearch")?.value||"").trim().toLocaleLowerCase("es");
   const scope=selectedMovements(level,value).sort((a,b)=>String(b.date).localeCompare(String(a.date))||num(b.seq)-num(a.seq));
   const rows=scope.filter(m=>{
     if(type&&m.type!==type)return false;
     if(category&&!(m.splits||[]).some(x=>x.categoryId===category)&&m.categoryId!==category)return false;
-    if(account&&m.account!==account)return false;
     if(currency&&normalizeCurrency(m.currency)!==currency)return false;
     if(from&&m.date<from||to&&m.date>to)return false;
-    if(min!==null&&num(m.amount)<min||max!==null&&num(m.amount)>max)return false;
     if(query){
       const splitCategories=(m.splits||[]).map(x=>categoryNameById(x.categoryId,"")).join(" ");
       const hay=[m.description,movementCategoryName(m),splitCategories,movementDebtName(m),m.account,m.paymentMethod,m.type,m.currency,m.amount].join(" ").toLocaleLowerCase("es");
@@ -4172,10 +4191,6 @@ function bind(){
     if(!section)return;const open=btn.getAttribute("aria-expanded")!=="true";
     setPlanMonthOpen(section,open);
   });
-  ["movement"].forEach(prefix=>{
-    document.getElementById(prefix+"Level").addEventListener("change",()=>{syncPeriodFilter(prefix);prefix==="movement"?renderMovements():renderReports()});
-    document.getElementById(prefix+"Period").addEventListener("change",()=>prefix==="movement"?renderMovements():renderReports());
-  });
   document.getElementById("reportHistoryRange")?.addEventListener("change",renderReports);
   document.querySelectorAll("[data-report-tab]").forEach(btn=>btn.addEventListener("click",()=>{reportActiveTab=btn.dataset.reportTab||"overview";renderReports()}));
   document.getElementById("movementTypeFilter").addEventListener("change",renderMovements);
@@ -4200,7 +4215,6 @@ function bind(){
     data.reconciliations.push({id:id(),date,amount,currency,...currentFxSnapshot(),afterSeq:num(data.movementSeq),calculatedBefore,note:document.getElementById("rNote").value.trim(),createdAt:new Date().toISOString()});
     save();document.getElementById("reconcileDialog").close();syncQuarterSelectors();renderDashboard();renderPlan();
   });
-  document.getElementById("printBtn").addEventListener("click",()=>window.print());
 
   document.getElementById("movementForm").addEventListener("submit",e=>{
     e.preventDefault();
@@ -4812,13 +4826,28 @@ renderPlan=function(){
 };
 
 
+
+function m2SyncMovementPeriod(reset=false){
+  syncHierarchicalFilter("movement",reset);
+  const {level,value}=hierarchicalSelection("movement");
+  syncPeriodFilter("movement",value);
+  const select=document.getElementById("movementPeriod");
+  if(value&&Array.from(select.options).some(o=>o.value===value))select.value=value;
+  const fortnight=document.getElementById("movementFortnight");
+  if(fortnight)Array.from(fortnight.options).forEach(o=>o.textContent=o.value==="1"?"Primera quincena":"Segunda quincena");
+  document.querySelectorAll("[data-one-move-level]").forEach(b=>{
+    const active=b.dataset.oneMoveLevel===level;
+    b.classList.toggle("active",active);
+    b.setAttribute("aria-pressed",String(active));
+  });
+}
 function m2RefreshMovementToolbar(level,value){
   const label=document.getElementById("movementPeriodHeading");if(label)label.textContent=selectedLabel(level,value)||"Sin períodos";
   const opts=filterOptions(level),i=opts.findIndex(o=>o.value===value);
   document.getElementById("movementPreviousPeriod").disabled=i<=0;
   document.getElementById("movementNextPeriod").disabled=i<0||i>=opts.length-1;
-  const fields=["movementTypeFilter","movementCategoryFilter","movementDateFrom","movementDateTo","movementAccountFilter","movementCurrencyFilter","movementAmountMin","movementAmountMax"];
-  const count=fields.filter(id=>!!document.getElementById(id)?.value).length+(level==="month"?0:1);
+  const fields=["movementTypeFilter","movementCategoryFilter","movementCurrencyFilter","movementDateFrom","movementDateTo"];
+  const count=fields.filter(id=>!!document.getElementById(id)?.value).length;
   const badge=document.getElementById("movementFiltersCount");badge.hidden=count===0;badge.textContent=String(count);
 }
 renderMovements=function(){
@@ -4941,7 +4970,7 @@ function initMovements2(){
   const form=document.getElementById("movementForm"),composer=document.getElementById("movementComposer");
   m2ResetComposer(true);
   document.getElementById("movementLevel").value="month";
-  syncPeriodFilter("movement",currentFinancialContext().financialMonth);
+  m2SyncMovementPeriod(true);
   m2RefreshAccounts("");
   m2RenderTemplates();
   document.getElementById("toggleMovementComposer")?.addEventListener("click",()=>m2OpenComposer());
@@ -4971,16 +5000,13 @@ function initMovements2(){
   splits?.addEventListener("input",m2SplitMessage);
   splits?.addEventListener("change",m2SplitMessage);
   document.getElementById("mAmount")?.addEventListener("input",m2SplitMessage);
-  ["movementDateFrom","movementDateTo","movementAccountFilter","movementCurrencyFilter","movementAmountMin","movementAmountMax"].forEach(id=>{
-    const el=document.getElementById(id);
-    el?.addEventListener(id.includes("Amount")?"input":"change",renderMovements);
+  ["movementDateFrom","movementDateTo","movementCurrencyFilter"].forEach(id=>{
+    document.getElementById(id)?.addEventListener("change",renderMovements);
   });
   document.getElementById("movementClearFilters")?.addEventListener("click",()=>{
-    for(const key of ["movementDateFrom","movementDateTo","movementAccountFilter","movementCurrencyFilter","movementAmountMin","movementAmountMax","movementSearch","movementTypeFilter","movementCategoryFilter"]){
+    for(const key of ["movementDateFrom","movementDateTo","movementCurrencyFilter","movementSearch","movementTypeFilter","movementCategoryFilter"]){
       const el=document.getElementById(key);if(el)el.value="";
     }
-    document.getElementById("movementLevel").value="month";
-    syncPeriodFilter("movement",currentFinancialContext().financialMonth);
     renderMovements();
   });
   document.getElementById("addMovementTemplateBtn")?.addEventListener("click",()=>m2OpenTemplate());
@@ -5032,15 +5058,36 @@ function initV7(){
   });
   document.getElementById("movementSearch")?.addEventListener("input",renderMovements);
   document.getElementById("movementCategoryFilter")?.addEventListener("change",renderMovements);
+  const updateMovementPeriod=()=>{m2SyncMovementPeriod();renderMovements()};
+  document.querySelectorAll("[data-one-move-level]").forEach(b=>b.addEventListener("click",()=>{
+    document.getElementById("movementLevel").value=b.dataset.oneMoveLevel;
+    updateMovementPeriod();
+  }));
+  ["movementQuarter","movementMonth","movementFortnight"].forEach(id=>document.getElementById(id)?.addEventListener("change",updateMovementPeriod));
   const step=delta=>{
-    const level=document.getElementById("movementLevel").value,select=document.getElementById("movementPeriod");
-    const options=filterOptions(level),index=options.findIndex(o=>o.value===select.value),next=options[index+delta];
-    if(next){select.value=next.value;renderMovements();}
+    const level=document.getElementById("movementLevel").value;
+    const options=filterOptions(level),current=document.getElementById("movementPeriod").value;
+    const index=options.findIndex(o=>o.value===current),next=options[index+delta];
+    if(!next)return;
+    if(level==="quarter")document.getElementById("movementQuarter").value=next.value;
+    else if(level==="month")document.getElementById("movementMonth").value=next.value;
+    else{
+      const period=periodByKey(next.value);if(!period)return;
+      document.getElementById("movementMonth").value=period.budgetMonth;
+      syncHierarchicalFilter("movement",false);
+      document.getElementById("movementFortnight").value=String(period.fortnight);
+    }
+    updateMovementPeriod();
   };
   document.getElementById("movementPreviousPeriod")?.addEventListener("click",()=>step(-1));
   document.getElementById("movementNextPeriod")?.addEventListener("click",()=>step(1));
-  document.getElementById("movementTodayPeriod")?.addEventListener("click",()=>{document.getElementById("movementLevel").value="month";syncPeriodFilter("movement",currentFinancialContext().financialMonth);renderMovements()});
-  document.addEventListener("click",e=>{if(!e.target.closest(".one-move-filters"))document.getElementById("movementFiltersDetails")?.removeAttribute("open");if(!e.target.closest(".one-move-row-more"))document.querySelectorAll(".one-move-row-more[open]").forEach(d=>d.open=false)});
+  document.getElementById("movementTodayPeriod")?.addEventListener("click",()=>{document.getElementById("movementLevel").value="month";m2SyncMovementPeriod(true);renderMovements()});
+  const filterButton=document.getElementById("movementFilterToggle"),filterPanel=document.getElementById("movementFiltersPanel");
+  const showFilters=open=>{filterPanel.hidden=!open;filterButton.setAttribute("aria-expanded",String(open))};
+  filterButton?.addEventListener("click",()=>showFilters(filterPanel.hidden));
+  document.getElementById("movementFiltersClose")?.addEventListener("click",()=>showFilters(false));
+  document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!filterPanel.hidden){showFilters(false);filterButton.focus()}});
+  document.addEventListener("click",e=>{if(!e.target.closest(".one-move-row-more"))document.querySelectorAll(".one-move-row-more[open]").forEach(d=>d.open=false)});
 
 
 }
