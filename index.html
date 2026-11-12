@@ -1072,6 +1072,40 @@ header nav button.one-add-module-button:focus-visible{outline:2px solid var(--ac
 .one-payment-line small{display:block;color:var(--muted);margin-top:4px}
 .one-payment-notice{font-size:.76rem;color:var(--muted);line-height:1.5}
 @media(max-width:750px){.one-collection-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* Movimientos 2.0 */
+#movementTemplatesCard[hidden],#movementAccountsSummary[hidden]{display:none!important}
+
+.m2-audit-card{margin-top:14px}
+.m2-audit-card>summary{cursor:pointer;font-size:.84rem;font-weight:700}
+.m2-audit-card #movementAuditList{display:grid;gap:5px;margin-top:10px}
+.m2-audit-row{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-top:1px solid var(--border);font-size:.76rem;color:var(--muted)}
+.m2-audit-row strong{color:var(--text)}
+
+.m2-quick-types{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 13px}
+.m2-quick-types button{font-size:.78rem;font-weight:650;padding:8px 12px;border:1px solid var(--border);background:var(--surface-2);color:var(--muted);border-radius:8px}
+.m2-quick-types button.active{background:var(--text);color:var(--app-bg);border-color:var(--text)}
+.m2-more{grid-column:1/-1;border:1px solid var(--border);border-radius:9px;padding:11px 13px;background:var(--surface-2)}
+.m2-more>summary{font-size:.8rem;font-weight:700;cursor:pointer;color:var(--text)}
+.m2-more .form-grid{margin-top:12px}
+.m2-splits{margin:12px 0;display:grid;gap:9px}
+.m2-split-row{display:grid;grid-template-columns:minmax(160px,1fr) minmax(110px,.55fr) auto;gap:9px;align-items:center}
+.m2-split-row input,.m2-split-row select{width:100%}
+.m2-helper,.m2-status{color:var(--muted);font-size:.74rem;line-height:1.5}
+.m2-filter-panel{display:flex;align-items:end;flex-wrap:wrap;gap:10px;margin:0 0 14px}
+.m2-filter-panel .field{min-width:115px;flex:1}
+.m2-filter-panel input,.m2-filter-panel select{width:100%}
+.m2-filter-panel .field label{display:block;color:var(--muted);font-size:.7rem;margin-bottom:5px}
+.m2-feed-actions{display:flex;gap:3px;align-items:center;flex-wrap:wrap}
+.m2-feed-actions button{border:1px solid transparent;background:transparent;color:var(--muted);border-radius:6px;padding:6px;font-size:.73rem;cursor:pointer}
+.m2-feed-actions button:hover{border-color:var(--border);background:var(--surface-hover);color:var(--text)}
+.v7-transaction-row.m2-row{grid-template-columns:38px minmax(0,1.2fr) minmax(110px,.6fr) auto minmax(120px,max-content)}
+.m2-template-grid{display:grid;gap:10px;margin:0 0 14px}
+.m2-template-card{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;padding:12px}
+.m2-template-card strong{font-size:.85rem}
+.m2-template-card small{font-size:.73rem;color:var(--muted);display:block;margin-top:4px}
+.m2-balance-row{display:flex;justify-content:space-between;gap:10px;font-size:.8rem;padding:8px 0;border-top:1px solid var(--border)}
+.m2-balance-row strong{font-variant-numeric:tabular-nums}
+@media(max-width:720px){.m2-split-row{grid-template-columns:1fr 1fr auto}.v7-transaction-row.m2-row{grid-template-columns:36px minmax(0,1fr) auto}.v7-transaction-row.m2-row .v7-category-chip{display:none}.m2-feed-actions{grid-column:2/-1;justify-self:end}}
 </style>
 </head>
 <body>
@@ -1080,7 +1114,7 @@ header nav button.one-add-module-button:focus-visible{outline:2px solid var(--ac
   <div class="topbar">
     <div class="brand" aria-label="one - one, by rastro.">
       <div class="r8-brand-lockup"><span class="r8-wordmark">one - one</span><span class="r8-byline">by <strong>rastro.</strong></span></div>
-      <small class="brand-version">v8.3.0 LAB</small>
+      <small class="brand-version">v8.4.0 LAB</small>
     </div>
     <nav id="nav">
       <button data-view="dashboard" class="active"><span class="nav-icon" aria-hidden="true">⌂</span><span>Inicio</span></button>
@@ -1292,24 +1326,42 @@ header nav button.one-add-module-button:focus-visible{outline:2px solid var(--ac
       </div>
       <div class="v7-page-actions">
         <button class="btn secondary" type="button" data-manage-categories>Categorías</button>
+        <button class="btn secondary" type="button" id="addMovementTemplateBtn">Programar frecuente</button>
         <button class="btn" id="toggleMovementComposer" type="button">＋ Agregar movimiento</button>
       </div>
     </div>
 
     <div class="v7-card v7-composer" id="movementComposer" hidden>
       <div class="v7-card-head">
-        <div><h2>Nuevo movimiento</h2><p>Registralo una vez y one - one actualiza el resto.</p></div>
+        <div><h2 id="movementComposerTitle">Nuevo movimiento</h2><p>Registralo en segundos. Las opciones avanzadas son opcionales.</p></div>
         <button class="v7-icon-button" id="closeMovementComposer" type="button" aria-label="Cerrar">×</button>
       </div>
-      <form id="movementForm" class="form-grid">
+      <div class="m2-quick-types" id="movementQuickTypes">
+          <button type="button" data-m2-type="Gasto" class="active">↓ Gasto</button>
+          <button type="button" data-m2-type="Ingreso">↑ Ingreso</button>
+          <button type="button" data-m2-type="Pago deuda">Pago deuda</button>
+        </div>
+        <form id="movementForm" class="form-grid">
+        <input type="hidden" id="mEditId"><input type="hidden" id="mScheduledId">
         <div class="field"><label>Fecha</label><input type="date" id="mDate" required></div>
         <div class="field"><label>Tipo</label><select id="mType" required></select></div>
         <div class="field" id="mCategoryField"><label>Categoría</label><select id="mCategory" required></select></div>
         <div class="field" id="mDebtField"><label>¿Qué préstamo o tarjeta vas a pagar?</label><select id="mDebt"></select><small class="r8-debt-field-help">La categoría de pago se asigna automáticamente.</small></div>
-        <div class="field"><label>Cuenta</label><select id="mAccount"></select></div>
+        <details class="m2-more" id="movementAdvancedFields"><summary>Más opciones · cuenta y método de pago</summary>
+          <div class="form-grid">
+          <div class="field"><label>Cuenta</label><select id="mAccount"></select></div>
+          <div class="field"><label>Método de pago</label><select id="mPaymentMethod"><option value="">No especificado</option><option>Transferencia</option><option>SINPE</option><option>Tarjeta de débito</option><option>Tarjeta de crédito</option><option>Efectivo</option><option>Otro</option></select></div>
+          <div class="field wide"><button type="button" class="btn secondary small" id="manageMovementAccounts">Administrar cuentas</button></div>
+          </div></details>
         <div class="field wide"><label>Descripción</label><input id="mDescription" placeholder="Ej. almuerzo, pago mínimo, salario"></div>
         <div class="field"><label>Monto</label><div class="money-input"><input id="mAmount" type="number" min="0" step="0.01" required><select id="mCurrency"><option value="CRC">CRC ₡</option><option value="USD">USD $</option></select></div></div>
-        <div class="form-actions"><button class="btn" type="submit">Registrar</button></div>
+        <details class="m2-more" id="movementSplitDetails"><summary>Dividir el gasto entre categorías</summary>
+         <p class="m2-helper">Un solo movimiento financiero; cada categoría recibe su porción. La suma debe coincidir con el monto total.</p>
+         <div class="m2-splits" id="movementSplitRows"></div>
+         <button class="btn secondary small" type="button" id="addMovementSplit">+ Otra categoría</button>
+         <div class="m2-status" id="movementSplitStatus"></div>
+        </details>
+        <div class="form-actions"><button class="btn" type="submit" id="movementSubmitBtn">Registrar</button><button type="button" class="btn secondary" id="movementCancelEdit" hidden>Cancelar edición</button></div>
       </form>
     </div>
 
@@ -1322,8 +1374,21 @@ header nav button.one-add-module-button:focus-visible{outline:2px solid var(--ac
       <button class="btn secondary" id="exportMovementsCsv">Exportar CSV</button>
     </div>
 
+    <div class="m2-filter-panel">
+      <div class="field"><label>Desde</label><input type="date" id="movementDateFrom"></div>
+      <div class="field"><label>Hasta</label><input type="date" id="movementDateTo"></div>
+      <div class="field"><label>Cuenta</label><select id="movementAccountFilter"><option value="">Todas</option></select></div>
+      <div class="field"><label>Moneda</label><select id="movementCurrencyFilter"><option value="">Todas</option><option value="CRC">CRC</option><option value="USD">USD</option></select></div>
+      <div class="field"><label>Mínimo original</label><input type="number" id="movementAmountMin" min="0" step=".01"></div>
+      <div class="field"><label>Máximo original</label><input type="number" id="movementAmountMax" min="0" step=".01"></div>
+      <button type="button" class="btn secondary small" id="movementClearFilters">Limpiar filtros</button>
+    </div>
     <div class="v7-kpis" id="movementSummary"></div>
 
+    <div class="v7-card" id="movementTemplatesCard">
+       <div class="v7-card-head"><div><h2>Movimientos programados</h2><p>Recordatorios pendientes de confirmar. No afectan tu saldo hasta registrarlos.</p></div></div>
+       <div id="movementTemplatesList" class="m2-template-grid"></div>
+    </div>
     <div class="v7-movement-layout">
       <div class="v7-card v7-feed-card">
         <div class="v7-card-head">
@@ -1333,6 +1398,7 @@ header nav button.one-add-module-button:focus-visible{outline:2px solid var(--ac
       </div>
       <aside class="v7-stack">
         <div class="v7-card" id="movementQuick"></div>
+        <div class="v7-card" id="movementAccountsSummary"></div>
         <div class="v7-card">
           <div class="v7-card-head"><div><h2>Atajos</h2><p>Vistas que usás con frecuencia.</p></div></div>
           <div class="v7-shortcuts">
@@ -1344,6 +1410,11 @@ header nav button.one-add-module-button:focus-visible{outline:2px solid var(--ac
         </div>
       </aside>
     </div>
+    <details class="v7-card m2-audit-card" id="movementAuditPanel">
+      <summary>Historial de cambios en movimientos</summary>
+      <p class="m2-helper">Registra los cambios realizados desde esta versión. No modifica tus movimientos históricos ni es una conciliación bancaria.</p>
+      <div id="movementAuditList"></div>
+    </details>
   </section>
 
   <section class="view" id="view-debts">
@@ -1466,10 +1537,41 @@ header nav button.one-add-module-button:focus-visible{outline:2px solid var(--ac
   </section>
 
 </main>
-<footer>one - one · by rastro. · v8.3.0 LAB · CRC/USD · Datos locales · No envía información a ningún servidor.</footer>
+<footer>one - one · by rastro. · v8.4.0 LAB · CRC/USD · Datos locales · No envía información a ningún servidor.</footer>
 </div>
 
 
+<dialog id="movementTemplateDialog">
+ <div class="dialog-body"><button class="dialog-close" type="button" aria-label="Cerrar">×</button>
+  <h2 id="movementTemplateTitle">Programar movimiento</h2>
+  <p class="muted">Cada movimiento recurrente requiere confirmación antes de afectar tu saldo. Cuando registrés uno, programaremos automáticamente la próxima fecha.</p>
+  <form id="movementTemplateForm" class="form-grid">
+   <input id="mtId" type="hidden">
+   <div class="field wide"><label>Nombre</label><input id="mtName" placeholder="Ej. Recibo de internet" required></div>
+   <div class="field"><label>Tipo</label><select id="mtType"><option>Gasto</option><option>Ingreso</option><option>Pago deuda</option></select></div>
+   <div class="field"><label>Frecuencia</label><select id="mtFrequency"><option value="weekly">Semanal</option><option value="fortnightly">Quincenal (14 días)</option><option value="monthly" selected>Mensual</option><option value="yearly">Anual</option></select></div>
+   <div class="field"><label>Próxima fecha</label><input id="mtNextDate" type="date" required></div>
+   <div class="field"><label>Categoría</label><select id="mtCategory" required></select></div>
+   <div class="field" id="mtDebtField" hidden><label>Deuda</label><select id="mtDebt"></select></div>
+   <div class="field"><label>Monto</label><input id="mtAmount" type="number" min=".01" step=".01" required></div>
+   <div class="field"><label>Moneda</label><select id="mtCurrency"><option value="CRC">CRC ₡</option><option value="USD">USD $</option></select></div>
+   <div class="field wide"><label>Descripción</label><input id="mtDescription" placeholder="Concepto"></div>
+   <div class="field wide"><label>Cuenta</label><select id="mtAccount"></select></div>
+   <div class="dialog-actions wide"><button type="button" class="btn secondary" id="cancelMovementTemplate">Cancelar</button><button type="submit" class="btn">Guardar programación</button></div>
+  </form>
+ </div>
+</dialog>
+<dialog id="movementAccountsDialog">
+ <div class="dialog-body"><button class="dialog-close" type="button" aria-label="Cerrar">×</button>
+  <h2>Administrar cuentas</h2>
+  <p class="muted">Clasificá los movimientos por cuenta. Los totales mostrados son actividad registrada, no saldos bancarios conciliados.</p>
+  <form id="movementAccountForm" class="form-grid">
+   <div class="field wide"><label>Nombre de cuenta</label><input id="newMovementAccount" maxlength="60" placeholder="Ej. Banco, efectivo, tarjeta" required></div>
+   <div class="dialog-actions wide"><button type="button" class="btn secondary" id="closeMovementAccounts">Cerrar</button><button type="submit" class="btn">Agregar cuenta</button></div>
+  </form>
+  <div class="m2-helper" id="movementAccountsList"></div>
+ </div>
+</dialog>
 <dialog id="modulesDialog" class="one-modules-dialog" aria-labelledby="modulesDialogTitle">
   <div style="padding:20px 22px;border-bottom:1px solid var(--border)"><h2 id="modulesDialogTitle">Herramientas adicionales</h2><p>Activá las herramientas que querés utilizar. Podés ocultarlas cuando no las necesités sin perder sus datos.</p></div>
   <div class="one-module-fixed"><strong>Siempre visibles:</strong> Inicio · Presupuesto · Movimientos</div>
@@ -1883,6 +1985,9 @@ const initialData = {
   receivableRecurring:[],
   categories:clone(DEFAULT_CATEGORIES),
   movementSeq:0,
+  movementTemplates:[],
+  movementAudit:[],
+  accounts:[...ACCOUNTS],
   debts:[]
 };
 
@@ -1940,6 +2045,11 @@ function migrateData(raw){
   raw.settings.displayCurrency=normalizeCurrency(raw.settings.displayCurrency||"CRC");
   raw.periods=Array.isArray(raw.periods)?raw.periods:[];
   raw.movements=Array.isArray(raw.movements)?raw.movements:[];
+  raw.movementTemplates=Array.isArray(raw.movementTemplates)?raw.movementTemplates:[];
+  raw.movementAudit=Array.isArray(raw.movementAudit)?raw.movementAudit:[];
+  raw.accounts=Array.isArray(raw.accounts)?raw.accounts.filter(a=>typeof a==="string"&&a.trim()):[...ACCOUNTS];
+  raw.accounts=[...new Set([...ACCOUNTS,...raw.accounts,...raw.movements.map(m=>m.account).filter(Boolean)])];
+  raw.movementTemplates.forEach(t=>{t.id=t.id||id();t.active=t.active!==false;t.frequency=["weekly","fortnightly","monthly","yearly"].includes(t.frequency)?t.frequency:"monthly";t.nextDate=t.nextDate||todayIso();t.amount=num(t.amount);t.currency=normalizeCurrency(t.currency||"CRC")});
   raw.reconciliations=Array.isArray(raw.reconciliations)?raw.reconciliations:[];
   raw.debts=Array.isArray(raw.debts)?raw.debts:[];
   raw.reserves=Array.isArray(raw.reserves)?raw.reserves:[];
@@ -2040,6 +2150,7 @@ function migrateData(raw){
   raw.movements.forEach((m,index)=>{
     if(!Number.isFinite(Number(m.seq))||Number(m.seq)<=0)m.seq=++maxSeq; else maxSeq=Math.max(maxSeq,Number(m.seq));
     m.createdAt=m.createdAt||`${m.date||"2000-01-01"}T12:00:00`;
+    m.splits=Array.isArray(m.splits)?m.splits.filter(x=>x&&x.categoryId&&num(x.amount)>0).map(x=>({categoryId:String(x.categoryId),amount:num(x.amount)})):[];m.paymentMethod=m.paymentMethod||"";
     m.currency=normalizeCurrency(m.currency||"CRC");m.fxBuy=num(m.fxBuy);m.fxSell=num(m.fxSell);m.fxRef=num(m.fxRef);m.fxDate=m.fxDate||"";
     if(m.category==="Saldo vencido teléfono")m.category="Teléfonos";
     const desc=String(m.description||"").toLowerCase();
@@ -2297,7 +2408,19 @@ function setIncomeBudgetToScheduled(p,cid){
   p.categoryBudgets[cid]=scheduled?.amount||0;p.categoryBudgetCurrencies[cid]=cfg?.expectedCurrency||"CRC";p.categoryBudgetSources[cid]="auto";if(scheduled?.dates?.length)p.categoryBudgetScheduledDates[cid]=scheduled.dates;else delete p.categoryBudgetScheduledDates[cid];save();
 }
 function movementCategoryName(m){return categoryNameById(m.categoryId,m.category)}
-function movementMatchesCategory(m,c){return m.categoryId?m.categoryId===c.id:movementCategoryName(m)===c.name}
+function movementMatchesCategory(m,c){
+  if(Array.isArray(m.splits)&&m.splits.length)return m.splits.some(x=>x.categoryId===c.id);
+  return m.categoryId?m.categoryId===c.id:movementCategoryName(m)===c.name;
+}
+function movementCategoryAmountCRC(m,c){
+  if(!Array.isArray(m.splits)||!m.splits.length)return movementMatchesCategory(m,c)?movementAmountCRC(m):0;
+  if(!(num(m.amount)>0))return 0;
+  const part=m.splits.filter(x=>x.categoryId===c.id).reduce((sum,x)=>sum+num(x.amount),0);
+  return movementAmountCRC(m)*part/num(m.amount);
+}
+function movementDisplayCategory(m){
+  return (m.splits||[]).length>1?`${m.splits.length} categorías`:movementCategoryName(m);
+}
 function periodCategoryBudgetCRC(p,cid,intent="pay"){return currentToCRC(p?.categoryBudgets?.[cid],p?.categoryBudgetCurrencies?.[cid]||"CRC",intent)}
 function periodIncomeTotalCRC(p){return budgetCategories("Ingreso",p).reduce((s,c)=>s+periodCategoryBudgetCRC(p,c.id,"receive"),0)}
 function periodExpenseTotalCRC(p){return budgetCategories(["Gasto","Pago deuda"],p).reduce((s,c)=>s+periodCategoryBudgetCRC(p,c.id,"pay"),0)}
@@ -2398,7 +2521,7 @@ function periodHasRealSignal(p){
 function remainingBudgetForCurrentPeriod(p,throughDate){
   const ms=periodMovements(p,throughDate).filter(m=>m.type==="Gasto"||m.type==="Pago deuda");
   return budgetCategories(["Gasto","Pago deuda"],p).reduce((sum,c)=>{
-    const spent=ms.filter(m=>movementMatchesCategory(m,c)).reduce((s,m)=>s+movementAmountCRC(m),0);
+    const spent=ms.reduce((s,m)=>s+movementCategoryAmountCRC(m,c),0);
     return sum+Math.max(0,periodCategoryBudgetCRC(p,c.id,"pay")-spent);
   },0);
 }
@@ -2508,7 +2631,7 @@ function categoryReportFiltered(level,value){
     const planned=rows.map(p=>periodCategoryBudgetCRC(p,c.id,"pay"));
     const spent=movements
       .filter(m=>(m.type==="Gasto"||m.type==="Pago deuda")&&movementMatchesCategory(m,c))
-      .map(m=>movementAmountCRC(m));
+      .map(m=>movementCategoryAmountCRC(m,c));
     if(!planned.some(v=>Math.abs(v)>0.0001)&&!spent.some(v=>Math.abs(v)>0.0001))return [];
     const budget=planned.reduce((sum,v)=>sum+v,0);
     const actual=spent.reduce((sum,v)=>sum+v,0);
@@ -3566,6 +3689,268 @@ function drawLineChart(canvas,labels,a,b){
   line(a,"#7c3aed",false);line(b,"#059669",true);labels.forEach((l,i)=>{const x=p.l+(labels.length===1?0:i*plotW/(labels.length-1));ctx.fillStyle="#667085";ctx.textAlign="center";ctx.fillText(l,x,h-14)});ctx.textAlign="left";
 }
 
+
+/* Movimientos 2.0: cuentas configurables y filtros comunes al listado y exportación. */
+function m2Accounts(){
+  return [...new Set([...ACCOUNTS,...(data.accounts||[]),...(data.movements||[]).map(m=>m.account).filter(Boolean),...(data.movementTemplates||[]).map(t=>t.account).filter(Boolean)].filter(Boolean))];
+}
+function m2RefreshAccounts(selected){
+  const options=m2Accounts();
+  ["mAccount","mtAccount","movementAccountFilter"].forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    const prior=id==="mAccount"&&selected!==undefined?selected:el.value;
+    el.innerHTML=(id==="movementAccountFilter"?'<option value="">Todas las cuentas</option>':'<option value="">Sin especificar</option>')+
+      options.map(name=>`<option value="${safe(name)}">${safe(name)}</option>`).join("");
+    el.value=options.includes(prior)||!prior?prior:"";
+  });
+}
+function m2FilteredMovementRows(){
+  const level=document.getElementById("movementLevel")?.value||"quarter";
+  const value=document.getElementById("movementPeriod")?.value||"";
+  const type=document.getElementById("movementTypeFilter")?.value||"";
+  const category=document.getElementById("movementCategoryFilter")?.value||"";
+  const account=document.getElementById("movementAccountFilter")?.value||"";
+  const currency=document.getElementById("movementCurrencyFilter")?.value||"";
+  const from=document.getElementById("movementDateFrom")?.value||"";
+  const to=document.getElementById("movementDateTo")?.value||"";
+  const minInput=document.getElementById("movementAmountMin")?.value||"";
+  const maxInput=document.getElementById("movementAmountMax")?.value||"";
+  const min=minInput!==""?Number(minInput):null,max=maxInput!==""?Number(maxInput):null;
+  const query=(document.getElementById("movementSearch")?.value||"").trim().toLocaleLowerCase("es");
+  const scope=selectedMovements(level,value).sort((a,b)=>String(b.date).localeCompare(String(a.date))||num(b.seq)-num(a.seq));
+  const rows=scope.filter(m=>{
+    if(type&&m.type!==type)return false;
+    if(category&&!(m.splits||[]).some(x=>x.categoryId===category)&&m.categoryId!==category)return false;
+    if(account&&m.account!==account)return false;
+    if(currency&&normalizeCurrency(m.currency)!==currency)return false;
+    if(from&&m.date<from||to&&m.date>to)return false;
+    if(min!==null&&num(m.amount)<min||max!==null&&num(m.amount)>max)return false;
+    if(query){
+      const splitCategories=(m.splits||[]).map(x=>categoryNameById(x.categoryId,"")).join(" ");
+      const hay=[m.description,movementCategoryName(m),splitCategories,movementDebtName(m),m.account,m.paymentMethod,m.type,m.currency,m.amount].join(" ").toLocaleLowerCase("es");
+      if(!hay.includes(query))return false;
+    }
+    return true;
+  });
+  return {level,value,scope,rows};
+}
+function m2SameMovement(a,b){
+  return a.date===b.date&&a.type===b.type&&a.categoryId===b.categoryId&&
+    normalizeCurrency(a.currency)===normalizeCurrency(b.currency)&&Math.abs(num(a.amount)-num(b.amount))<.005&&
+    (a.account||"")===(b.account||"")&&(a.debtId||"")===(b.debtId||"");
+}
+function m2Audit(action,m,before=null){
+  data.movementAudit=Array.isArray(data.movementAudit)?data.movementAudit:[];
+  data.movementAudit.push({id:id(),action,movementId:m.id,at:new Date().toISOString(),previous:before?clone(before):null});
+}
+function m2RenderAudit(){
+  const list=document.getElementById("movementAuditList");if(!list)return;
+  const entries=[...(data.movementAudit||[])].slice(-30).reverse();
+  const labels={create:"Creado",edit:"Modificado",delete:"Eliminado"};
+  list.innerHTML=entries.length?entries.map(e=>{
+    const current=(data.movements||[]).find(m=>m.id===e.movementId);
+    const m=current||e.previous,when=e.at?new Date(e.at).toLocaleString("es-CR"):"";
+    return `<div class="m2-audit-row"><span><strong>${labels[e.action]||"Cambio"}</strong> · ${safe(m?.description||movementCategoryName(m||{})||"Movimiento")}${m?` · ${dateLabel(m.date)}`:""}</span><span>${safe(when)}</span></div>`;
+  }).join(""):'<div class="empty">No hay cambios registrados desde la actualización.</div>';
+}
+
+function m2RenderAccountSummary(scope){
+  const box=document.getElementById("movementAccountsSummary");if(!box)return;
+  const byAccount=new Map();
+  scope.filter(m=>m.type==="Ingreso"||m.type==="Gasto"||m.type==="Pago deuda").forEach(m=>{
+    const name=m.account||"Sin cuenta",before=byAccount.get(name)||{count:0,net:0};
+    before.count++;before.net+=signedMovement(m);byAccount.set(name,before);
+  });
+  const rows=[...byAccount.entries()].sort((a,b)=>Math.abs(b[1].net)-Math.abs(a[1].net));
+  box.hidden=rows.length===0;
+  box.innerHTML=`<div class="v7-card-head"><div><h2>Actividad por cuenta</h2><p>No representa el saldo bancario conciliado.</p></div></div>`+
+    (rows.length?rows.map(([name,r])=>`<div class="m2-balance-row"><span>${safe(name)} <small>· ${r.count} mov.</small></span><strong>${r.net>=0?"+":"−"}${money(Math.abs(r.net))}</strong></div>`).join(""):'<div class="empty">Sin actividad por cuenta.</div>');
+}
+
+/* División contable: las líneas son asignaciones del mismo cargo, no nuevos cargos. */
+function m2AddSplitRow(categoryId="",amount=""){
+  const box=document.getElementById("movementSplitRows");if(!box)return;
+  const choices=categoriesOfType("Gasto"),selected=categoryId||choices[0]?.id||"";
+  const opts=[...choices];
+  if(selected&&!opts.some(c=>c.id===selected)){const historic=categoryById(selected);if(historic)opts.push(historic)}
+  const row=document.createElement("div");row.className="m2-split-row";
+  row.innerHTML=`<select class="m2-split-category" aria-label="Categoría del gasto">${opts.map(c=>`<option value="${safe(c.id)}">${safe(c.name)}</option>`).join("")}</select>
+    <input class="m2-split-amount" type="number" min="0.01" step="0.01" placeholder="Monto" aria-label="Monto en moneda original" value="${amount!==""?String(amount):""}">
+    <button type="button" class="btn secondary small" data-m2-remove-split title="Quitar línea">×</button>`;
+  box.appendChild(row);row.querySelector("select").value=selected;
+  m2SplitMessage();
+}
+function m2GetSplits(){
+  const box=document.getElementById("movementSplitRows");
+  if(!document.getElementById("movementSplitDetails")?.open)return {splits:[],error:""};
+  if(!box?.children.length)return {splits:[],error:"Agregá al menos dos categorías o cerrá la opción de división."};
+  const splits=[...box.querySelectorAll(".m2-split-row")].map(row=>({
+    categoryId:row.querySelector(".m2-split-category").value,
+    amount:Number(row.querySelector(".m2-split-amount").value)
+  }));
+  if(splits.length<2)return {splits:[],error:"Para dividir, agregá dos o más categorías."};
+  if(splits.some(x=>!x.categoryId||!Number.isFinite(x.amount)||x.amount<=0))return {splits:[],error:"Cada línea necesita una categoría y un monto positivo."};
+  if(new Set(splits.map(x=>x.categoryId)).size!==splits.length)return {splits:[],error:"No repitás categorías; sumá los importes en una sola línea."};
+  const total=Number(document.getElementById("mAmount")?.value);
+  const allocated=Math.round(splits.reduce((sum,x)=>sum+x.amount,0)*100)/100;
+  if(!Number.isFinite(total)||Math.abs(total-allocated)>.005)return {splits:[],error:`La distribución suma ${allocated.toFixed(2)} y el movimiento es ${(total||0).toFixed(2)}. Deben coincidir.`};
+  return {splits,error:""};
+}
+function m2SplitMessage(){
+  const el=document.getElementById("movementSplitStatus");if(!el)return;
+  const box=document.getElementById("movementSplitRows");
+  if(!box?.children.length){el.textContent="Agregá al menos dos categorías para dividir el gasto.";return}
+  const totals=[...box.querySelectorAll(".m2-split-amount")].reduce((s,input)=>s+num(input.value),0);
+  const original=num(document.getElementById("mAmount")?.value);
+  el.textContent=`Asignado: ${totals.toFixed(2)} / Total: ${original.toFixed(2)}`;
+}
+function m2ResetComposer(close=true){
+  const form=document.getElementById("movementForm");form?.reset();
+  document.getElementById("mEditId").value="";
+  document.getElementById("mScheduledId").value="";
+  document.getElementById("movementComposerTitle").textContent="Nuevo movimiento";
+  document.getElementById("movementSubmitBtn").textContent="Registrar";
+  document.getElementById("movementCancelEdit").hidden=true;
+  document.getElementById("movementSplitRows").innerHTML="";
+  document.getElementById("movementSplitDetails").open=false;
+  document.getElementById("movementAdvancedFields").open=false;
+  document.getElementById("mDate").value=todayIso();
+  document.getElementById("mType").value="Gasto";
+  document.getElementById("mCurrency").value=displayCurrency();
+  refreshMovementCategorySelect();refreshDebtSelect();m2RefreshAccounts("");updateMovementFields();m2RefreshQuickTypes();
+  if(close)document.getElementById("movementComposer").hidden=true;
+}
+function m2OpenComposer(m=null,{repeat=false,scheduledId=""}={}){
+  m2ResetComposer(false);
+  const original=m&&!(repeat||scheduledId);
+  document.getElementById("mEditId").value=original?m.id:"";
+  document.getElementById("mScheduledId").value=scheduledId;
+  document.getElementById("movementComposerTitle").textContent=original?"Editar movimiento":repeat?"Repetir movimiento":scheduledId?"Confirmar programado":"Nuevo movimiento";
+  document.getElementById("movementSubmitBtn").textContent=original?"Guardar cambios":"Registrar";
+  document.getElementById("movementCancelEdit").hidden=!original&&!repeat&&!scheduledId;
+  if(m){
+    document.getElementById("mType").value=m.type||"Gasto";
+    document.getElementById("mDate").value=repeat?todayIso():m.date||todayIso();
+    refreshMovementCategorySelect(m.categoryId);
+    const category=document.getElementById("mCategory");
+    if(m.categoryId&&!Array.from(category.options).some(o=>o.value===m.categoryId)){
+      const past=categoryById(m.categoryId);
+      if(past){const option=document.createElement("option");option.value=past.id;option.textContent=past.name+" (archivada)";category.appendChild(option)}
+    }
+    if(m.categoryId)category.value=m.categoryId;
+    refreshDebtSelect(m.debtId||"");
+    document.getElementById("mDebt").value=m.debtId||"";
+    m2RefreshAccounts(m.account||"");
+    document.getElementById("mDescription").value=m.description||"";
+    document.getElementById("mAmount").value=m.amount;
+    document.getElementById("mCurrency").value=normalizeCurrency(m.currency);
+    document.getElementById("mPaymentMethod").value=m.paymentMethod||"";
+    if((m.splits||[]).length){
+      document.getElementById("movementSplitDetails").open=true;
+      m.splits.forEach(x=>m2AddSplitRow(x.categoryId,x.amount));
+    }
+    document.getElementById("movementAdvancedFields").open=!!(m.account||m.paymentMethod);
+  }
+  updateMovementFields();m2RefreshQuickTypes();
+  document.getElementById("movementComposer").hidden=false;
+  document.getElementById("movementComposer").scrollIntoView?.({behavior:"smooth",block:"start"});
+  document.getElementById("mAmount").focus();
+}
+
+
+/* Programados: se crean plantillas, jamás movimientos reales sin confirmación. */
+function m2NextScheduledDate(date,frequency,anchorDay=0){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date||""))return "";
+  if(frequency==="weekly")return addDaysIso(date,7);
+  if(frequency==="fortnightly")return addDaysIso(date,14);
+  const [year,month,day]=date.split("-").map(Number),targetDay=anchorDay||day;
+  const delta=frequency==="yearly"?12:1;
+  const target=new Date(Date.UTC(year,month-1+delta,1));
+  const y=target.getUTCFullYear(),m=target.getUTCMonth()+1;
+  const last=lastDayOfMonth(y,m);
+  return `${y}-${String(m).padStart(2,"0")}-${String(Math.min(targetDay,last)).padStart(2,"0")}`;
+}
+function m2TemplateCategoryOptions(selected=""){
+  const type=document.getElementById("mtType")?.value||"Gasto",el=document.getElementById("mtCategory");
+  if(!el)return;
+  const rows=[...categoriesOfType(type)];
+  if(selected&&!rows.some(c=>c.id===selected)){const previous=categoryById(selected);if(previous)rows.push(previous)}
+  el.innerHTML=rows.map(c=>`<option value="${safe(c.id)}">${safe(c.name)}</option>`).join("");
+  if(selected&&rows.some(c=>c.id===selected))el.value=selected;
+  const debt=document.getElementById("mtDebt");
+  if(debt)debt.innerHTML='<option value="">Seleccionar deuda</option>'+activeDebts().map(d=>`<option value="${safe(d.id)}">${safe(d.name)}</option>`).join("");
+  const debtField=document.getElementById("mtDebtField");
+  if(debtField)debtField.hidden=type!=="Pago deuda";
+}
+function m2OpenTemplate(source=null){
+  const fromTemplate=source&&Object.prototype.hasOwnProperty.call(source,"frequency");
+  if(source?.splits?.length>1&&!fromTemplate)return alert("Para repetir un gasto dividido, usá «Repetir» desde su movimiento. Las plantillas frecuentes con divisiones se incorporarán posteriormente.");
+  document.getElementById("movementTemplateForm").reset();
+  document.getElementById("movementTemplateTitle").textContent=fromTemplate?"Editar programación":"Programar movimiento";
+  document.getElementById("mtId").value=fromTemplate?source.id:"";
+  document.getElementById("mtName").value=source?.name||source?.description||"";
+  document.getElementById("mtType").value=source?.type||"Gasto";
+  document.getElementById("mtFrequency").value=source?.frequency||"monthly";
+  document.getElementById("mtNextDate").value=fromTemplate?source.nextDate:todayIso();
+  m2TemplateCategoryOptions(source?.categoryId||"");
+  document.getElementById("mtDebt").value=source?.debtId||"";
+  document.getElementById("mtAmount").value=source?.amount||"";
+  document.getElementById("mtCurrency").value=normalizeCurrency(source?.currency||displayCurrency());
+  document.getElementById("mtDescription").value=source?.description||"";
+  m2RefreshAccounts();
+  document.getElementById("mtAccount").value=source?.account||"";
+  document.getElementById("movementTemplateDialog").showModal();
+}
+function m2RenderTemplates(){
+  const box=document.getElementById("movementTemplatesList");if(!box)return;
+  const items=[...(data.movementTemplates||[])].sort((a,b)=>Number(b.active)-Number(a.active)||String(a.nextDate).localeCompare(String(b.nextDate)));
+  const card=document.getElementById("movementTemplatesCard");if(card)card.hidden=items.length===0;
+  const freq={weekly:"Semanal",fortnightly:"Cada 14 días",monthly:"Mensual",yearly:"Anual"};
+  box.innerHTML=items.length?items.map(t=>{
+    const isDue=t.active&&t.nextDate<=todayIso(),cls=t.active?(isDue?" · Por confirmar":" · Próximo"):" · Pausado";
+    return `<div class="m2-template-card">
+       <div><strong>${safe(t.name||t.description||"Movimiento programado")}</strong><small>${safe(freq[t.frequency]||"Mensual")}${cls} · ${dateLabel(t.nextDate)} · ${originalMoney(t.amount,t.currency)}</small></div>
+       <div class="actions">
+       ${t.active?`<button class="btn small" type="button" data-m2-post-template="${safe(t.id)}">Registrar ahora</button>`:""}
+       <button class="btn secondary small" type="button" data-m2-edit-template="${safe(t.id)}">Editar</button>
+       <button class="btn secondary small" type="button" data-m2-toggle-template="${safe(t.id)}">${t.active?"Pausar":"Reactivar"}</button>
+       </div></div>`;
+  }).join(""):'<div class="empty">Todavía no tenés movimientos programados. Podés crear un recordatorio recurrente para registrarlo cuando corresponda.</div>';
+}
+function m2PrepareScheduled(t){
+  if(!t?.active)return;
+  if(!periodForDate(t.nextDate))return alert("La próxima fecha está fuera de los trimestres configurados. Agregá ese trimestre en Presupuesto o editá la programación.");
+  if(!categoryById(t.categoryId)||!categoryIsActive(categoryById(t.categoryId)))return alert("La categoría de este programado está archivada. Editá la programación antes de registrar.");
+  if(t.type==="Pago deuda"&&!activeDebts().some(d=>d.id===t.debtId))return alert("Seleccioná una deuda activa en la programación.");
+  m2OpenComposer({...t,date:t.nextDate},{scheduledId:t.id});
+}
+function m2SaveTemplate(){
+  const tid=document.getElementById("mtId").value,old=(data.movementTemplates||[]).find(t=>t.id===tid)||null;
+  const type=document.getElementById("mtType").value,categoryId=document.getElementById("mtCategory").value;
+  const c=categoryById(categoryId),debtId=document.getElementById("mtDebt").value;
+  const date=document.getElementById("mtNextDate").value,amount=Number(document.getElementById("mtAmount").value);
+  const name=document.getElementById("mtName").value.trim();
+  if(!name||!c||c.type!==type||!categoryIsActive(c))return alert("Completá un nombre y una categoría activa del tipo seleccionado.");
+  if(type==="Pago deuda"&&!activeDebts().some(d=>d.id===debtId))return alert("Seleccioná una deuda activa.");
+  if(!date||!Number.isFinite(amount)||amount<=0)return alert("Ingresá una fecha y un monto válidos.");
+  const obj={...old,id:old?.id||id(),name,type,categoryId,debtId:type==="Pago deuda"?debtId:"",
+    frequency:document.getElementById("mtFrequency").value,nextDate:date,anchorDay:Number(date.slice(8,10)),
+    amount,currency:normalizeCurrency(document.getElementById("mtCurrency").value),
+    description:document.getElementById("mtDescription").value.trim(),account:document.getElementById("mtAccount").value,
+    active:old?old.active!==false:true,createdAt:old?.createdAt||new Date().toISOString()};
+  data.movementTemplates=data.movementTemplates||[];
+  const index=data.movementTemplates.findIndex(t=>t.id===obj.id);
+  if(index<0)data.movementTemplates.push(obj);else data.movementTemplates[index]=obj;
+  save();document.getElementById("movementTemplateDialog").close();m2RenderTemplates();
+}
+
+function m2RefreshQuickTypes(){
+  const type=document.getElementById("mType")?.value;
+  document.querySelectorAll("[data-m2-type]").forEach(b=>b.classList.toggle("active",b.dataset.m2Type===type));
+  const split=document.getElementById("movementSplitDetails");
+  if(split){split.hidden=type!=="Gasto";if(type!=="Gasto")split.open=false}
+}
+
 function updateMovementFields(){
   const type=document.getElementById("mType")?.value||"";
   const payment=type==="Pago deuda";
@@ -3577,7 +3962,7 @@ function updateMovementFields(){
   if(payment){
     const d=(data.debts||[]).find(x=>x.id===debtSelect?.value);
     const suggested=suggestDebtCategoryId(d);
-    if(suggested&&categorySelect)categorySelect.value=suggested;
+    if(suggested&&categorySelect&&!document.getElementById("mEditId")?.value&&!document.getElementById("mScheduledId")?.value)categorySelect.value=suggested;
   }else if(debtSelect){debtSelect.value="";}
 }
 function refreshMovementCategorySelect(selected=""){
@@ -3738,15 +4123,59 @@ function bind(){
   document.getElementById("printBtn").addEventListener("click",()=>window.print());
 
   document.getElementById("movementForm").addEventListener("submit",e=>{
-    e.preventDefault();const date=document.getElementById("mDate").value,p=periodForDate(date);
-    if(!p)return alert("La fecha no pertenece a los trimestres configurados.");
-    const type=document.getElementById("mType").value, debtId=document.getElementById("mDebt").value;
-    const debtObj=data.debts.find(d=>d.id===debtId);
-    if(type==="Pago deuda"&&!debtObj)return alert("Selecciona la deuda o acreedor.");
-    const seq=++data.movementSeq,categoryId=document.getElementById("mCategory").value,cat=categoryById(categoryId);
-    if(!cat)return alert("Selecciona una categoría válida.");
-    data.movements.push({id:id(),seq,createdAt:new Date().toISOString(),date,type,categoryId,category:cat.name,debtId:debtObj?.id||"",debt:debtObj?.name||"",account:document.getElementById("mAccount").value,description:document.getElementById("mDescription").value.trim(),amount:num(document.getElementById("mAmount").value),currency:normalizeCurrency(document.getElementById("mCurrency").value),...currentFxSnapshot(),period:periodKey(p),quarter:budgetQuarter(p)});
-    save();e.target.reset();document.getElementById("mDate").value=todayIso();fillSelect(document.getElementById("mType"),MOVEMENT_TYPES);refreshMovementCategorySelect();fillSelect(document.getElementById("mAccount"),ACCOUNTS);document.getElementById("mCurrency").value=displayCurrency();refreshDebtSelect();updateMovementFields();renderMovements();renderDashboard();renderPlan();
+    e.preventDefault();
+    const editId=document.getElementById("mEditId").value;
+    const existing=editId?data.movements.find(m=>m.id===editId):null;
+    if(editId&&!existing)return alert("El movimiento que intentás editar ya no existe.");
+    const date=document.getElementById("mDate").value,p=periodForDate(date);
+    if(!p)return alert("La fecha no pertenece a los trimestres configurados. Configurá el período desde Presupuesto.");
+    const type=document.getElementById("mType").value,categoryId=document.getElementById("mCategory").value;
+    const debtId=document.getElementById("mDebt").value,debtObj=data.debts.find(d=>d.id===debtId);
+    if(type==="Pago deuda"&&!debtObj)return alert("Seleccioná la deuda o acreedor.");
+    const category=categoryById(categoryId);
+    if(!category||category.type!==type)return alert("Seleccioná una categoría válida para el tipo de movimiento.");
+    if(!categoryIsActive(category)&&(!existing||existing.categoryId!==categoryId))return alert("La categoría seleccionada está archivada; elegí una categoría activa.");
+    const amount=Number(document.getElementById("mAmount").value);
+    if(!Number.isFinite(amount)||amount<=0)return alert("El monto debe ser mayor que cero.");
+    const currency=normalizeCurrency(document.getElementById("mCurrency").value);
+    const details=document.getElementById("movementSplitDetails");
+    const distribution=type==="Gasto"?m2GetSplits():{splits:[],error:""};
+    if(distribution.error)return alert(distribution.error);
+    const splits=distribution.splits;
+    const obj={...existing,id:existing?.id||id(),seq:existing?.seq||data.movementSeq+1,
+      createdAt:existing?.createdAt||new Date().toISOString(),date,type,categoryId:splits.length?splits[0].categoryId:categoryId,
+      category:categoryById(splits.length?splits[0].categoryId:categoryId)?.name||category.name,
+      splits,debtId:type==="Pago deuda"?(debtObj?.id||""):"",debt:type==="Pago deuda"?(debtObj?.name||""):"",
+      account:document.getElementById("mAccount").value,
+      paymentMethod:document.getElementById("mPaymentMethod").value,
+      description:document.getElementById("mDescription").value.trim(),amount,currency,
+      ...(existing&&normalizeCurrency(existing.currency)===currency?{fxBuy:existing.fxBuy,fxSell:existing.fxSell,fxRef:existing.fxRef,fxDate:existing.fxDate}:currentFxSnapshot()),
+      period:periodKey(p),quarter:budgetQuarter(p)};
+    const dup=data.movements.find(m=>m.id!==obj.id&&m2SameMovement(m,obj));
+    if(dup&&!confirm(`Ya existe un ${type.toLowerCase()} de ${originalMoney(amount,currency)} el ${date} con la misma cuenta y categoría. ¿Registrar igualmente?`))return;
+    if(existing){
+      if(!confirm("¿Guardar los cambios de este movimiento? Se actualizarán los indicadores y se conservará el registro del cambio."))return;
+      m2Audit("edit",obj,existing);
+      const index=data.movements.findIndex(m=>m.id===existing.id);
+      data.movements[index]=obj;
+    }else{
+      data.movementSeq++;
+      obj.seq=data.movementSeq;
+      const templateId=document.getElementById("mScheduledId").value;
+      if(templateId){
+        const template=data.movementTemplates.find(t=>t.id===templateId);
+        if(!template?.active)return alert("Esta programación ya no está activa.");
+        if(data.movements.some(m=>m.scheduleTemplateId===templateId&&m.scheduledFor===template.nextDate))
+          return alert("Esta fecha programada ya fue registrada. Revisá el historial antes de continuar.");
+        obj.scheduleTemplateId=templateId;obj.scheduledFor=template.nextDate;
+        template.lastPostedFor=template.nextDate;
+        template.nextDate=m2NextScheduledDate(template.nextDate,template.frequency,template.anchorDay);
+      }
+      data.movements.push(obj);m2Audit("create",obj);
+    }
+    save();m2ResetComposer();
+    refreshV7MovementCategoryFilter();m2RefreshAccounts();
+    renderMovements();renderDashboard();renderPlan();renderReports();m2RenderTemplates();
   });
 
   document.addEventListener("click",e=>{
@@ -3754,7 +4183,16 @@ function bind(){
     const editCategory=e.target.closest("[data-edit-category]");if(editCategory){openCategory(categoryById(editCategory.dataset.editCategory));return}
     const archiveCategory=e.target.closest("[data-archive-category]");if(archiveCategory){const c=categoryById(archiveCategory.dataset.archiveCategory);if(c&&confirm(`¿Archivar “${c.name}”?\n\nSu historial y presupuestos anteriores se conservarán, pero dejará de aparecer para nuevos registros.`)){c.active=false;syncIncomeProjectionsForData(data,{categoryId:c.id});save();refreshMovementCategorySelect();renderCategories();renderPlan();renderDashboard()}return}
     const reactivateCategory=e.target.closest("[data-reactivate-category]");if(reactivateCategory){const c=categoryById(reactivateCategory.dataset.reactivateCategory);if(c){c.active=true;syncIncomeProjectionsForData(data,{categoryId:c.id});save();renderCategories();renderPlan();renderDashboard()}return}
-    const del=e.target.closest("[data-delete-movement]");if(del&&confirm("¿Eliminar este movimiento?")){data.movements=data.movements.filter(m=>m.id!==del.dataset.deleteMovement);save();renderMovements()}
+    const del=e.target.closest("[data-delete-movement]");
+    if(del){
+      const movement=data.movements.find(m=>m.id===del.dataset.deleteMovement);
+      if(movement&&confirm("¿Eliminar este movimiento? Se actualizarán tus saldos, presupuesto e indicadores.")){
+        m2Audit("delete",movement,movement);
+        data.movements=data.movements.filter(m=>m.id!==movement.id);
+        save();renderMovements();renderDashboard();renderPlan();renderReports();m2RenderAccountSummary(selectedMovements(document.getElementById("movementLevel").value,document.getElementById("movementPeriod").value));
+      }
+      return;
+    }
     const edit=e.target.closest("[data-edit-debt]");if(edit)openDebt(data.debts.find(d=>d.id===edit.dataset.editDebt));
     const archive=e.target.closest("[data-archive-debt]");
     if(archive){
@@ -3958,8 +4396,8 @@ function bind(){
 
   document.getElementById("exportMovementsCsv").addEventListener("click",()=>{
     const level=document.getElementById("movementLevel").value,value=document.getElementById("movementPeriod").value;
-    const rows=selectedMovements(level,value),headers=["Fecha","Mes presupuestario","Quincena","Tipo","Categoría","Deuda","Cuenta","Descripción","Monto original","Moneda original","Equivalente CRC histórico","TC compra","TC venta","Periodo","Trimestre"];
-    const csv=[headers,...rows.map(m=>{const p=movementPeriod(m);return [m.date,p?.budgetMonth||"",p?.fortnight||"",m.type,movementCategoryName(m),movementDebtName(m),m.account,m.description,m.amount,normalizeCurrency(m.currency),movementAmountCRC(m),m.fxBuy||"",m.fxSell||"",m.period,movementBudgetQuarter(m)]})].map(r=>r.map(csvEscape).join(",")).join("\n");
+    const rows=m2FilteredMovementRows().rows,headers=["Fecha","Mes presupuestario","Quincena","Tipo","Categoría","Deuda","Cuenta","Método","Descripción","División por categorías","Monto original","Moneda original","Equivalente CRC histórico","TC compra","TC venta","Periodo","Trimestre"];
+    const csv=[headers,...rows.map(m=>{const p=movementPeriod(m);return [m.date,p?.budgetMonth||"",p?.fortnight||"",m.type,movementDisplayCategory(m),movementDebtName(m),m.account,m.paymentMethod||"",m.description,(m.splits||[]).map(x=>categoryNameById(x.categoryId,"?")+": "+x.amount).join(" | "),m.amount,normalizeCurrency(m.currency),movementAmountCRC(m),m.fxBuy||"",m.fxSell||"",m.period,movementBudgetQuarter(m)]})].map(r=>r.map(csvEscape).join(",")).join("\n");
     download(`movimientos-${level}-${value}.csv`,"\ufeff"+csv,"text/csv")
   });
   document.getElementById("exportReportCsv")?.addEventListener("click",()=>{
@@ -4287,21 +4725,7 @@ renderPlan=function(){
 };
 
 renderMovements=function(){
-  const level=document.getElementById("movementLevel").value;
-  const value=document.getElementById("movementPeriod").value;
-  const type=document.getElementById("movementTypeFilter").value;
-  const category=document.getElementById("movementCategoryFilter")?.value||"";
-  const query=(document.getElementById("movementSearch")?.value||"").trim().toLocaleLowerCase("es");
-  const scope=selectedMovements(level,value).sort((a,b)=>String(b.date).localeCompare(String(a.date))||num(b.seq)-num(a.seq));
-  const rows=scope.filter(m=>{
-    if(type&&m.type!==type)return false;
-    if(category&&m.categoryId!==category)return false;
-    if(query){
-      const hay=[m.description,movementCategoryName(m),movementDebtName(m),m.account,m.type].join(" ").toLocaleLowerCase("es");
-      if(!hay.includes(query))return false;
-    }
-    return true;
-  });
+  const {level,value,scope,rows}=m2FilteredMovementRows();
   document.getElementById("movementCount").textContent=`${rows.length} movimientos · ${selectedLabel(level,value)}`;
 
   const income=scope.filter(m=>m.type==="Ingreso").reduce((s,m)=>s+movementAmountCRC(m),0);
@@ -4325,22 +4749,33 @@ renderMovements=function(){
     <div class="v7-feed-date"><strong>${v7DateGroupLabel(g.date)}</strong><span>${dateLabel(g.date)}</span></div>
     ${g.rows.map(m=>{
       const amt=movementAmountCRC(m),positive=m.type==="Ingreso",label=m.description||movementCategoryName(m)||m.type;
-      return `<div class="v7-transaction-row">
+      return `<div class="v7-transaction-row m2-row">
         <div class="v7-transaction-icon">${v7MovementIcon(m)}</div>
-        <div class="v7-transaction-main"><strong>${v7SafeText(label)}</strong><span>${v7SafeText(m.account||m.type)}${movementDebtName(m)?` · ${v7SafeText(movementDebtName(m))}`:""}</span></div>
-        <div class="v7-category-chip">${v7SafeText(movementCategoryName(m)||m.type)}</div>
+        <div class="v7-transaction-main"><strong>${v7SafeText(label)}</strong><span>${v7SafeText(m.account||m.type)}${m.paymentMethod?` · ${v7SafeText(m.paymentMethod)}`:""}${movementDebtName(m)?` · ${v7SafeText(movementDebtName(m))}`:""}</span></div>
+        <div class="v7-category-chip">${v7SafeText(movementDisplayCategory(m)||m.type)}</div>
         <div class="v7-transaction-amount ${positive?"income":""}">${positive?"+":"−"} ${money(amt)}</div>
-        <button class="v7-row-menu" type="button" data-delete-movement="${m.id}" title="Eliminar">···</button>
+        <div class="m2-feed-actions">
+          <button type="button" data-m2-edit="${safe(m.id)}" title="Editar movimiento">Editar</button>
+          <button type="button" data-m2-repeat="${safe(m.id)}" title="Duplicar como nuevo movimiento">Repetir</button>
+          <button type="button" data-m2-schedule="${safe(m.id)}" title="Programar este movimiento como recurrente">↻</button>
+          <button type="button" data-delete-movement="${safe(m.id)}" title="Eliminar movimiento">×</button>
+         </div>
       </div>`
     }).join("")}
   </div>`).join(""):`<div class="empty">No hay movimientos que coincidan con esta vista.</div>`;
 
   const expenseRows=scope.filter(m=>m.type==="Gasto"),tot=expenseRows.reduce((s,m)=>s+movementAmountCRC(m),0),byCat={};
-  expenseRows.forEach(m=>{const k=movementCategoryName(m)||"Otros";byCat[k]=(byCat[k]||0)+movementAmountCRC(m)});
+  expenseRows.forEach(m=>{
+    if((m.splits||[]).length){
+      const original=num(m.amount);
+      (m.splits||[]).forEach(split=>{const name=categoryNameById(split.categoryId,"Otros");byCat[name]=(byCat[name]||0)+(original?movementAmountCRC(m)*num(split.amount)/original:0)});
+    }else{const k=movementCategoryName(m)||"Otros";byCat[k]=(byCat[k]||0)+movementAmountCRC(m)}
+  });
   const ranked=Object.entries(byCat).sort((a,b)=>b[1]-a[1]).slice(0,5),topPct=tot&&ranked.length?Math.round(ranked[0][1]/tot*100):0;
   document.getElementById("movementQuick").innerHTML=`<div class="v7-card-head"><div><h2>Vista rápida</h2><p>${selectedLabel(level,value)}</p></div></div>
     <div class="v7-donut-placeholder" style="--v7-pct:${topPct}%"><div class="v7-donut-center"><strong>${money(expense)}</strong><span>Gastos</span></div></div>
     <div class="v7-mini-bars">${ranked.length?ranked.map(([name,val])=>`<div class="v7-mini-bar"><div><div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:4px"><span>${v7SafeText(name)}</span><span>${tot?Math.round(val/tot*100):0}%</span></div><div class="v7-mini-bar-track"><span style="width:${tot?Math.min(100,val/tot*100):0}%"></span></div></div><strong style="font-size:.66rem;text-align:right">${money(val)}</strong></div>`).join(""):`<div class="muted" style="font-size:.72rem">Todavía no hay gastos reales en este periodo.</div>`}</div>`;
+  m2RenderAccountSummary(scope);m2RenderTemplates();m2RenderAudit();
 };
 
 renderDebts=function(){
@@ -4405,6 +4840,95 @@ function refreshV7MovementCategoryFilter(){
   el.innerHTML=`<option value="">Todas</option>${cats.map(c=>`<option value="${c.id}">${safe(c.name)}</option>`).join("")}`;
   if([...el.options].some(o=>o.value===current))el.value=current;
 }
+
+function initMovements2(){
+  const form=document.getElementById("movementForm"),composer=document.getElementById("movementComposer");
+  m2ResetComposer(true);
+  m2RefreshAccounts("");
+  m2RenderTemplates();
+  document.getElementById("toggleMovementComposer")?.addEventListener("click",()=>{
+    // El listener de la interfaz principal ya alternó el panel.
+    if(!composer.hidden)m2OpenComposer();
+  });
+  document.getElementById("closeMovementComposer")?.addEventListener("click",()=>m2ResetComposer());
+  document.getElementById("movementCancelEdit")?.addEventListener("click",()=>m2ResetComposer());
+  document.querySelectorAll("[data-m2-type]").forEach(btn=>btn.addEventListener("click",()=>{
+    document.getElementById("mType").value=btn.dataset.m2Type;
+    document.getElementById("mType").dispatchEvent(new Event("change",{bubbles:true}));
+  }));
+  document.getElementById("mType")?.addEventListener("change",m2RefreshQuickTypes);
+  const splits=document.getElementById("movementSplitRows"),splitDetails=document.getElementById("movementSplitDetails");
+  splitDetails?.addEventListener("toggle",()=>{
+    if(splitDetails.open&&!splits.children.length){
+      const total=num(document.getElementById("mAmount").value),cats=categoriesOfType("Gasto");
+      const a=Math.round(total*50)/100,b=Math.max(0,Math.round((total-a)*100)/100);
+      m2AddSplitRow(cats[0]?.id,a||"");m2AddSplitRow(cats[1]?.id||cats[0]?.id,b||"");
+    }
+    m2SplitMessage();
+  });
+  document.getElementById("addMovementSplit")?.addEventListener("click",()=>{
+    const used=new Set([...splits.querySelectorAll(".m2-split-category")].map(el=>el.value));
+    const next=categoriesOfType("Gasto").find(c=>!used.has(c.id));
+    if(!next)return alert("No hay otras categorías de Gasto disponibles.");
+    m2AddSplitRow(next.id);
+  });
+  splits?.addEventListener("click",e=>{
+    if(e.target.closest("[data-m2-remove-split]")){e.target.closest(".m2-split-row")?.remove();m2SplitMessage()}
+  });
+  splits?.addEventListener("input",m2SplitMessage);
+  splits?.addEventListener("change",m2SplitMessage);
+  document.getElementById("mAmount")?.addEventListener("input",m2SplitMessage);
+  ["movementDateFrom","movementDateTo","movementAccountFilter","movementCurrencyFilter","movementAmountMin","movementAmountMax"].forEach(id=>{
+    const el=document.getElementById(id);
+    el?.addEventListener(id.includes("Amount")?"input":"change",renderMovements);
+  });
+  document.getElementById("movementClearFilters")?.addEventListener("click",()=>{
+    for(const key of ["movementDateFrom","movementDateTo","movementAccountFilter","movementCurrencyFilter","movementAmountMin","movementAmountMax","movementSearch","movementTypeFilter","movementCategoryFilter"]){
+      const el=document.getElementById(key);if(el)el.value="";
+    }
+    renderMovements();
+  });
+  document.getElementById("addMovementTemplateBtn")?.addEventListener("click",()=>m2OpenTemplate());
+  document.getElementById("mtType")?.addEventListener("change",()=>m2TemplateCategoryOptions());
+  document.getElementById("cancelMovementTemplate")?.addEventListener("click",()=>document.getElementById("movementTemplateDialog").close());
+  document.getElementById("movementTemplateForm")?.addEventListener("submit",e=>{e.preventDefault();m2SaveTemplate()});
+  document.getElementById("manageMovementAccounts")?.addEventListener("click",()=>{
+    document.getElementById("newMovementAccount").value="";
+    document.getElementById("movementAccountsList").textContent="Cuentas disponibles: "+m2Accounts().join(" · ");
+    document.getElementById("movementAccountsDialog").showModal();
+  });
+  document.getElementById("closeMovementAccounts")?.addEventListener("click",()=>document.getElementById("movementAccountsDialog").close());
+  document.getElementById("movementAccountForm")?.addEventListener("submit",e=>{
+    e.preventDefault();const input=document.getElementById("newMovementAccount");
+    const name=input.value.trim();
+    if(!name)return;
+    if(m2Accounts().some(a=>a.toLocaleLowerCase("es")===name.toLocaleLowerCase("es")))return alert("Esta cuenta ya existe.");
+    data.accounts=data.accounts||[];data.accounts.push(name);
+    save();m2RefreshAccounts(name);
+    document.getElementById("movementAccountsList").textContent="Cuentas disponibles: "+m2Accounts().join(" · ");
+    input.value="";
+    renderMovements();
+  });
+  document.addEventListener("click",e=>{
+    const edit=e.target.closest("[data-m2-edit]");
+    if(edit){const m=data.movements.find(x=>x.id===edit.dataset.m2Edit);if(m)m2OpenComposer(m);return}
+    const repeat=e.target.closest("[data-m2-repeat]");
+    if(repeat){const m=data.movements.find(x=>x.id===repeat.dataset.m2Repeat);if(m)m2OpenComposer(m,{repeat:true});return}
+    const schedule=e.target.closest("[data-m2-schedule]");
+    if(schedule){const m=data.movements.find(x=>x.id===schedule.dataset.m2Schedule);if(m)m2OpenTemplate(m);return}
+    const post=e.target.closest("[data-m2-post-template]");
+    if(post){const t=data.movementTemplates.find(x=>x.id===post.dataset.m2PostTemplate);if(t)m2PrepareScheduled(t);return}
+    const editTemplate=e.target.closest("[data-m2-edit-template]");
+    if(editTemplate){const t=data.movementTemplates.find(x=>x.id===editTemplate.dataset.m2EditTemplate);if(t)m2OpenTemplate(t);return}
+    const toggle=e.target.closest("[data-m2-toggle-template]");
+    if(toggle){
+      const t=data.movementTemplates.find(x=>x.id===toggle.dataset.m2ToggleTemplate);
+      if(t){t.active=!t.active;save();m2RenderTemplates()}
+      return;
+    }
+  });
+}
+
 function initV7(){
   refreshV7MovementCategoryFilter();
   const advancedDetails=document.getElementById("dashboardAdvancedDetails");
@@ -4420,10 +4944,10 @@ function initV7(){
     document.getElementById("movementTypeFilter").value=btn.dataset.v7MovementType||"";
     renderMovements();
   }));
-  document.getElementById("movementForm")?.addEventListener("submit",()=>setTimeout(()=>{if(composer)composer.hidden=true;refreshV7MovementCategoryFilter()},0));
+
 }
 
-bind();bindReportStudio();initV7();initR8();initUiPreferences();initLiquidityChartInteraction();initModulesBeta();initDataIntegrityNotice();renderDashboard();updateCurrencyHeader();setTimeout(()=>{if(needsDailyFx())openFxDialog(true)},80);
+bind();bindReportStudio();initV7();initR8();initMovements2();initUiPreferences();initLiquidityChartInteraction();initModulesBeta();initDataIntegrityNotice();renderDashboard();updateCurrencyHeader();setTimeout(()=>{if(needsDailyFx())openFxDialog(true)},80);
 </script>
 </body>
 </html>
