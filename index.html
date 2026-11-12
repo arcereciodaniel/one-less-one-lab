@@ -817,7 +817,25 @@ footer,html[data-sidebar="collapsed"] footer{
 .r8-section-heading{display:flex;justify-content:space-between;gap:8px;align-items:center;color:var(--muted);font-size:.67rem;font-weight:760;text-transform:uppercase;letter-spacing:.06em;margin:0 0 7px}
 .r8-section-heading strong{color:var(--muted);font-size:.74rem;font-variant-numeric:tabular-nums}
 .r8-budget-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 0;font-size:.8rem;min-width:0}
-.r8-budget-row-label{min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)}
+.r8-budget-row-label{min-width:0;flex:1;color:var(--text);display:flex;flex-direction:column;align-items:flex-start;gap:2px}
+.r8-budget-row-label>span{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.r8-over-budget{display:flex;align-items:center;flex-wrap:wrap;gap:5px;font-size:.69rem;color:var(--danger);line-height:1.35}
+.r8-over-budget button{font-size:inherit;color:inherit;text-decoration:underline;text-underline-offset:2px;font-weight:680;border:0;background:transparent;padding:1px 0;cursor:pointer}
+.r8-over-budget button:hover{opacity:.75}
+.r8-month-copy{border:1px solid var(--border);background:var(--surface);color:var(--text);padding:5px 9px;border-radius:7px;font-size:.72rem;font-weight:630;cursor:pointer;white-space:nowrap}
+.r8-month-copy:hover{background:var(--surface-hover);border-color:color-mix(in srgb,var(--accent) 32%,var(--border))}
+.one-budget-copy-dialog{width:min(440px,calc(100vw - 30px));max-width:440px;max-height:90vh;overflow:auto;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text);padding:22px 23px}
+.one-budget-copy-dialog::backdrop{background:rgba(0,0,0,.33)}
+.one-budget-copy-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px}
+.one-budget-copy-head h2{font-size:1.15rem;line-height:1.25;margin:0}
+.one-budget-copy-head button{border:0;background:transparent;color:var(--muted);font-size:1.4rem;cursor:pointer;padding:0 5px}
+.one-budget-copy-context{font-size:.83rem;color:var(--text);margin:0 0 13px}
+.one-budget-copy-preview{padding:11px 13px;border:1px solid var(--border);background:var(--surface-2);border-radius:8px;display:grid;gap:8px;font-size:.78rem}
+.one-budget-copy-preview>div{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.one-budget-copy-preview span{color:var(--muted)}.one-budget-copy-preview strong{font-variant-numeric:tabular-nums}
+.one-budget-copy-note{margin:13px 0 18px;font-size:.76rem;line-height:1.55;color:var(--muted)}
+.one-budget-copy-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+@media(max-width:590px){.r8-month-actions{flex-wrap:wrap;justify-content:flex-start}.one-budget-copy-dialog{padding:18px 16px}}
 .r8-value-button{white-space:nowrap;background:transparent;border:1px solid transparent;padding:4px 0 4px 8px;border-radius:5px;cursor:text;text-align:right;font-weight:640;font-size:.8rem;color:var(--text);font-variant-numeric:tabular-nums}
 .r8-value-button:hover,.r8-value-button:focus-visible{background:var(--surface-hover);border-color:var(--border);padding-left:8px;padding-right:5px;outline:none}
 .r8-edit-controls{display:flex;gap:5px;align-items:center;max-width:195px;min-width:0}
@@ -1368,6 +1386,15 @@ header nav button.one-add-module-button:focus-visible{outline:2px solid var(--ac
         </div>
       </div>
     </div>
+    <dialog id="copyBudgetDialog" class="one-budget-copy-dialog" aria-labelledby="copyBudgetTitle">
+      <form id="copyBudgetForm">
+        <div class="one-budget-copy-head"><h2 id="copyBudgetTitle">Copiar presupuesto anterior</h2><button type="button" id="closeCopyBudgetDialog" aria-label="Cerrar">×</button></div>
+        <p id="copyBudgetContext" class="one-budget-copy-context"></p>
+        <div id="copyBudgetPreview" class="one-budget-copy-preview"></div>
+        <p class="one-budget-copy-note">Se copiarán los importes planificados de ambas quincenas. Los ingresos automáticos se calcularán para el mes de destino. <strong>No se duplican movimientos ni se modifican saldos reales.</strong></p>
+        <div class="one-budget-copy-actions"><button class="btn secondary" type="button" id="cancelCopyBudget">Cancelar</button><button class="btn" type="submit" id="confirmCopyBudget">Copiar presupuesto</button></div>
+      </form>
+    </dialog>
     <details class="r8-plan-options" id="r8PlanOptions">
       <summary>Opciones de período, categorías y planificación</summary>
     <div class="toolbar v7-plan-toolbar">
