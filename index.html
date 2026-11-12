@@ -979,6 +979,8 @@ html[data-theme="dark"]{
 .one-dashboard-reconcile-toolbar p{margin:0;font-size:.76rem;color:var(--muted)}
 @media(max-width:1120px){.one-dashboard-analytics-grid{grid-template-columns:1fr}}
 @media(max-width:680px){.one-dashboard-analytics-grid>.v7-card{padding:15px 13px}}
+.one-liquidity-empty{min-height:220px;display:flex;align-items:center;justify-content:center;text-align:center;padding:32px;color:var(--muted);font-size:.84rem;line-height:1.6;background:var(--surface-2);border:1px dashed var(--border);border-radius:8px}
+#cashChart[hidden],#cashChartEmpty[hidden]{display:none!important}
 </style>
 </head>
 <body>
@@ -987,7 +989,7 @@ html[data-theme="dark"]{
   <div class="topbar">
     <div class="brand" aria-label="one + one, by rastro.">
       <div class="r8-brand-lockup"><span class="r8-wordmark">one + one</span><span class="r8-byline">by <strong>rastro.</strong></span></div>
-      <small class="brand-version">v8.0.2 LAB</small>
+      <small class="brand-version">v8.0.4 LAB</small>
     </div>
     <nav id="nav">
       <button data-view="dashboard" class="active"><span class="nav-icon" aria-hidden="true">⌂</span><span>Inicio</span></button>
@@ -1082,9 +1084,10 @@ html[data-theme="dark"]{
           <div class="v7-mini-badge">6 meses</div>
         </div>
         <div class="one-chart-legend" id="cashChartLegend" aria-label="Leyenda del gráfico de liquidez">
-          <span class="one-chart-legend-item"><span class="one-chart-swatch one-chart-line" aria-hidden="true"></span>Saldo operativo · cierre de cada mes</span>
+          <span class="one-chart-legend-item"><span class="one-chart-swatch one-chart-line" aria-hidden="true"></span>Saldo operativo real · cierres mensuales y hoy</span>
         </div>
-        <canvas id="cashChart" aria-label="Evolución del saldo operativo al cierre de cada mes" aria-describedby="cashChartLegend"></canvas>
+        <canvas id="cashChart" aria-label="Evolución del saldo operativo real, con cierres mensuales históricos y saldo de hoy" aria-describedby="cashChartLegend"></canvas>
+        <div id="cashChartEmpty" class="one-liquidity-empty" role="status" hidden>Registra tu primer movimiento o actualiza tu saldo real para comenzar a visualizar la evolución de tu liquidez.</div>
       </div>
       <div class="v7-card v7-insight-card" id="dashboardInsight"></div>
     </div>
@@ -1349,7 +1352,7 @@ html[data-theme="dark"]{
   </section>
 
 </main>
-<footer>one + one · by rastro. · v8.0.2 LAB · CRC/USD · Datos locales · No envía información a ningún servidor.</footer>
+<footer>one + one · by rastro. · v8.0.4 LAB · CRC/USD · Datos locales · No envía información a ningún servidor.</footer>
 </div>
 
 
@@ -3038,6 +3041,37 @@ let reportActiveTab="overview";
 function reportPct(v,digits=0){return Number.isFinite(Number(v))?`${(Number(v)*100).toFixed(digits)}%`:"—"}
 function reportShortMonth(month){if(!month)return "";const [y,m]=month.split("-").map(Number);return new Intl.DateTimeFormat("es-CR",{month:"short",year:"2-digit",timeZone:"UTC"}).format(new Date(Date.UTC(y,m-1,1))).replace(".","")}
 function reportDaysBetween(a,b){const A=new Date(a+"T00:00:00Z"),B=new Date(b+"T00:00:00Z");return Math.round((B-A)/86400000)}
+function liquidityHistorySeries(maxMonths=6){
+  // Evolución REAL: usa exactamente el cálculo operativo del dashboard.
+  // No usamos el cierre presupuestado ni inventamos puntos para meses sin historia.
+  const today=todayIso();
+  const signals=[
+    ...(data.movements||[]).filter(m=>m.date&&m.date<=today&&
+      (m.type==="Ingreso"||m.type==="Gasto"||m.type==="Pago deuda")).map(m=>m.date),
+    ...(data.reconciliations||[]).filter(r=>r.date&&r.date<=today).map(r=>r.date),
+    ...(data.reserveMovements||[]).filter(t=>t.date&&t.date<=today).map(t=>t.date),
+    ...(data.periods||[]).filter(p=>p.opening!==null&&p.opening!==undefined&&p.opening!=="")
+      .map(p=>p.date).filter(d=>d&&d<=today)
+  ];
+  const start=signals.sort()[0];
+  if(!start){
+    const balance=actualBalanceAt(today);
+    return Number.isFinite(balance)&&balance!==0?[{date:today,month:today.slice(0,7),label:"Hoy",balance}]:[];
+  }
+  const [year,month]=today.slice(0,7).split("-").map(Number);
+  const points=[];
+  for(let offset=Math.max(1,maxMonths)-1;offset>=0;offset--){
+    const marker=new Date(Date.UTC(year,month-1-offset,1));
+    const key=marker.toISOString().slice(0,7);
+    const monthEnd=new Date(Date.UTC(marker.getUTCFullYear(),marker.getUTCMonth()+1,0)).toISOString().slice(0,10);
+    const asOf=monthEnd<today?monthEnd:today;
+    if(asOf<start)continue;
+    const balance=actualBalanceAt(asOf);
+    if(!Number.isFinite(balance))continue;
+    points.push({date:asOf,month:key,label:key===today.slice(0,7)?"Hoy":reportShortMonth(key),balance});
+  }
+  return points;
+}
 function reportMonthlySeries(){
   const rows=allActualRows(), months=availableBudgetMonths();
   return months.map(month=>{
@@ -3148,8 +3182,8 @@ function drawReportGroupedBars(canvas,labels,a,b,colors=["#4dab7a","#eb6864"]){
 function drawReportLine(canvas,labels,series){
   const base=reportCanvasBase(canvas);if(!base)return;const {ctx,w,h,p,text,grid}=base,all=series.flatMap(s=>s.values.filter(v=>v!==null&&v!==undefined&&Number.isFinite(Number(v))).map(Number));if(!all.length){ctx.fillStyle=text;ctx.textAlign="center";ctx.fillText("Sin datos suficientes",w/2,h/2);return}const min=Math.min(0,...all),max=Math.max(1,...all),span=max-min||1,plotW=w-p.l-p.r,plotH=h-p.t-p.b;ctx.font="11px system-ui";ctx.strokeStyle=grid;ctx.fillStyle=text;
   for(let i=0;i<=4;i++){const y=p.t+plotH*i/4;ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(w-p.r,y);ctx.stroke();ctx.textAlign="right";ctx.fillText(reportMoneyShort(max-span*i/4),p.l-8,y+4)}
-  series.forEach(s=>{ctx.save();ctx.strokeStyle=s.color;ctx.fillStyle=s.color;ctx.lineWidth=2.4;ctx.setLineDash(s.dashed?[6,5]:[]);ctx.beginPath();let started=false;s.values.forEach((v,i)=>{if(v===null||v===undefined||!Number.isFinite(Number(v)))return;const x=p.l+(labels.length===1?0:i*plotW/(labels.length-1)),y=p.t+(max-Number(v))/span*plotH;if(started)ctx.lineTo(x,y);else{ctx.moveTo(x,y);started=true}});ctx.stroke();ctx.setLineDash([]);s.values.forEach((v,i)=>{if(v===null||v===undefined||!Number.isFinite(Number(v)))return;const x=p.l+(labels.length===1?0:i*plotW/(labels.length-1)),y=p.t+(max-Number(v))/span*plotH;ctx.beginPath();ctx.arc(x,y,3.2,0,Math.PI*2);ctx.fill()});ctx.restore()});
-  labels.forEach((l,i)=>{if(labels.length>9&&i%2===1)return;const x=p.l+(labels.length===1?0:i*plotW/(labels.length-1));ctx.fillStyle=text;ctx.textAlign="center";ctx.fillText(l,x,h-16)});ctx.textAlign="left";
+  series.forEach(s=>{ctx.save();ctx.strokeStyle=s.color;ctx.fillStyle=s.color;ctx.lineWidth=2.4;ctx.setLineDash(s.dashed?[6,5]:[]);ctx.beginPath();let started=false;s.values.forEach((v,i)=>{if(v===null||v===undefined||!Number.isFinite(Number(v)))return;const x=p.l+(labels.length===1?plotW/2:i*plotW/(labels.length-1)),y=p.t+(max-Number(v))/span*plotH;if(started)ctx.lineTo(x,y);else{ctx.moveTo(x,y);started=true}});ctx.stroke();ctx.setLineDash([]);s.values.forEach((v,i)=>{if(v===null||v===undefined||!Number.isFinite(Number(v)))return;const x=p.l+(labels.length===1?plotW/2:i*plotW/(labels.length-1)),y=p.t+(max-Number(v))/span*plotH;ctx.beginPath();ctx.arc(x,y,3.2,0,Math.PI*2);ctx.fill()});ctx.restore()});
+  labels.forEach((l,i)=>{if(labels.length>9&&i%2===1)return;const x=p.l+(labels.length===1?plotW/2:i*plotW/(labels.length-1));ctx.fillStyle=text;ctx.textAlign="center";ctx.fillText(l,x,h-16)});ctx.textAlign="left";
 }
 function drawReportHorizontalBars(canvas,labels,a,b){
   const height=Math.max(280,70+labels.length*42),base=reportCanvasBase(canvas,height);if(!base)return;const {ctx,w,h,p,text,grid}=base,max=Math.max(1,...a,...b),left=Math.min(Math.max(112,w*.26),180),plotLeft=left,plotW=w-plotLeft-25,rowH=(h-42)/Math.max(1,labels.length);ctx.font="11px system-ui";
@@ -3641,7 +3675,16 @@ function applyTheme(){
 function saveUiPrefs(){localStorage.setItem(UI_PREFS_KEY,JSON.stringify(uiPrefs))}
 function initUiPreferences(){
  document.documentElement.lang='es';
- document.querySelectorAll('[data-theme-choice]').forEach(b=>b.addEventListener('click',()=>{uiPrefs.theme=b.dataset.themeChoice;saveUiPrefs();applyTheme()}));
+ document.querySelectorAll('[data-theme-choice]').forEach(b=>b.addEventListener('click',()=>{
+   uiPrefs.theme=b.dataset.themeChoice;
+   saveUiPrefs();
+   applyTheme();
+   // Canvas se pinta en JS: al cambiar de tema hay que redibujarlo.
+   requestAnimationFrame(()=>{
+     if(document.getElementById("view-dashboard")?.classList.contains("active"))renderDashboard();
+     else if(document.getElementById("view-reports")?.classList.contains("active"))renderReports();
+   });
+ }));
  const sidebarToggle=document.getElementById('sidebarToggle');
  if(sidebarToggle){sidebarToggle.addEventListener('click',()=>{uiPrefs.sidebarCollapsed=!uiPrefs.sidebarCollapsed;saveUiPrefs();applyTheme()})}
  document.querySelectorAll('.dialog-close').forEach(b=>b.addEventListener('click',()=>b.closest('dialog')?.close()));
@@ -3719,13 +3762,27 @@ renderDashboard=function(){
     v7Kpi("▭","purple","Pagos de deuda",money(debtPaid),`${periodMovs.filter(m=>m.type==="Pago deuda").length} movimientos`,"")
   ].join("");
 
-  const hist=(typeof reportMonthlySeries==="function"?reportMonthlySeries():[]).filter(r=>r.month<=todayIso().slice(0,7)).slice(-6);
-  const labels=hist.map(r=>reportShortMonth(r.month));
-  const balances=hist.map(r=>r.closing);
+  const hist=liquidityHistorySeries(6);
+  const labels=hist.map(r=>r.label);
+  const balances=hist.map(r=>r.balance);
   const liquidityColor=getComputedStyle(document.documentElement).getPropertyValue("--one-chart-liquidity").trim()||"#c8cfcd";
-  if(labels.length&&typeof drawReportLine==="function")drawReportLine(document.getElementById("cashChart"),labels,[{values:balances,color:liquidityColor}]);
-  else if(typeof drawReportLine==="function")drawReportLine(document.getElementById("cashChart"),["Hoy"],[{values:[operating],color:liquidityColor}]);
-  document.getElementById("dashboardChartMeta").textContent=labels.length?`${labels[0]} – ${labels.at(-1)}`:"Sin historial suficiente";
+  const cashCanvas=document.getElementById("cashChart"),emptyChart=document.getElementById("cashChartEmpty");
+  if(cashCanvas)cashCanvas.hidden=!hist.length;
+  if(emptyChart){
+    emptyChart.hidden=!!hist.length;
+    if(!hist.length)emptyChart.textContent="Aún no hay saldos operativos reales hasta hoy. El presupuesto es una proyección; para iniciar este historial, registrá un movimiento real o actualizá tu saldo en Conciliación de saldo.";
+  }
+  if(hist.length&&cashCanvas&&typeof drawReportLine==="function"){
+    // Dibujar con el tamaño final del contenedor para evitar un canvas vacío.
+    requestAnimationFrame(()=>{
+      if(cashCanvas.hidden||!cashCanvas.isConnected||!document.getElementById("view-dashboard")?.classList.contains("active"))return;
+      drawReportLine(cashCanvas,labels,[{values:balances,color:liquidityColor}]);
+    });
+  }
+  document.getElementById("dashboardChartMeta").textContent=
+    hist.length>1?`${hist[0].label} – Hoy · saldo operativo real`:
+    hist.length===1?`Saldo operativo de hoy: ${money(hist[0].balance)} · historial en formación`:
+    "Aún no hay saldos operativos reales registrados";
 
   const usage=summary.plannedExpense?summary.realExpense/summary.plannedExpense:null;
   const insight=document.getElementById("dashboardInsight");
@@ -3912,7 +3969,7 @@ function initV7(){
   document.getElementById("movementForm")?.addEventListener("submit",()=>setTimeout(()=>{if(composer)composer.hidden=true;refreshV7MovementCategoryFilter()},0));
 }
 
-bind();bindReportStudio();initV7();initR8();renderDashboard();updateCurrencyHeader();initUiPreferences();setTimeout(()=>{if(needsDailyFx())openFxDialog(true)},80);
+bind();bindReportStudio();initV7();initR8();initUiPreferences();renderDashboard();updateCurrencyHeader();setTimeout(()=>{if(needsDailyFx())openFxDialog(true)},80);
 </script>
 </body>
 </html>
