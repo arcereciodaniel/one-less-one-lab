@@ -1007,7 +1007,7 @@ html[data-theme="dark"]{
   <div class="topbar">
     <div class="brand" aria-label="one - one, by rastro.">
       <div class="r8-brand-lockup"><span class="r8-wordmark">one - one</span><span class="r8-byline">by <strong>rastro.</strong></span></div>
-      <small class="brand-version">v8.1.2 LAB</small>
+      <small class="brand-version">v8.1.3 LAB</small>
     </div>
     <nav id="nav">
       <button data-view="dashboard" class="active"><span class="nav-icon" aria-hidden="true">⌂</span><span>Inicio</span></button>
@@ -1036,6 +1036,7 @@ html[data-theme="dark"]{
 
 <main>
   <section class="view active" id="view-dashboard">
+    <div class="note" id="dataIntegrityNotice" role="status" hidden></div>
     <div class="v7-page-head">
       <div>
         <div class="v7-eyebrow">INICIO</div>
@@ -1378,7 +1379,7 @@ html[data-theme="dark"]{
   </section>
 
 </main>
-<footer>one - one · by rastro. · v8.1.2 LAB · CRC/USD · Datos locales · No envía información a ningún servidor.</footer>
+<footer>one - one · by rastro. · v8.1.3 LAB · CRC/USD · Datos locales · No envía información a ningún servidor.</footer>
 </div>
 
 
@@ -1597,6 +1598,8 @@ html[data-theme="dark"]{
 <script>
 "use strict";
 const STORAGE_KEY = "rastro_lab_v7_1_data_v1";
+const INTEGRITY_SNAPSHOT_KEY=STORAGE_KEY+"_pre_integrity_fix_v813";
+var storageReadError=false,storageHasSavedData=false;
 const UI_STORAGE_KEY = "rastro_lab_v7_1_ui_v1";
 const RECEIVABLE_CLEAN_START_KEY = "rastro_lab_v7_1_receivables_v1";
 function loadUiState(){
@@ -1797,6 +1800,10 @@ function migrateData(raw){
   raw.sharedCharges=Array.isArray(raw.sharedCharges)?raw.sharedCharges:[];
   raw.receivableRecurring=Array.isArray(raw.receivableRecurring)?raw.receivableRecurring:[];
   raw.categories=Array.isArray(raw.categories)?raw.categories:[];
+  // Datos recientes usan IDs: no reconstruir nombres de campos heredados.
+  const modernCategorySchema=num(raw.categorySchemaVersion)>=1 ||
+    (raw.categories.length>0&&raw.periods.some(p=>Object.keys(p.categoryBudgets||{}).length>0));
+  const importLegacyCategories=!modernCategorySchema;
 
   // Ciclo de vida de fondos objetivo (v5.4): archivar conserva saldo e historial,
   // pero evita nuevos aportes hasta reactivar el fondo.
@@ -1912,33 +1919,37 @@ function migrateData(raw){
     if(type==="Ingreso"&&candidate.incomeConfig)row.incomeConfig=normalizeIncomeConfig(candidate.incomeConfig);
     normalizedCategories.push(row);categoryMap.set(key,row);return row;
   }
-  // Primero respeta lo que el usuario ya personalizó; después agrega solo defaults faltantes.
+  // La lista del usuario es autoritativa; no volver a agregar defaults renombrados o eliminados.
   raw.categories.forEach(c=>addMigratedCategory(c));
-  DEFAULT_CATEGORIES.forEach(c=>addMigratedCategory(clone(c)));
-  // Descubre categorías históricas que pudieran existir en respaldos personalizados.
-  // Si el nombre ya existe, conserva su clasificación financiera actual y evita duplicados visuales.
-  raw.movements.forEach(m=>{
-    const name=m.category||"Otros",existing=normalizedCategories.find(c=>cleanName(c.name).toLocaleLowerCase("es")===cleanName(name).toLocaleLowerCase("es"));
-    if(!existing)addMigratedCategory({name,type:allowedCategoryTypes.has(m.type)?m.type:"Gasto",budgetable:m.type!=="Movimiento patrimonial",active:true});
-  });
-  raw.periods.forEach(p=>Object.keys(p.budgets||{}).forEach(name=>{
-    const defaultType=DEFAULT_CATEGORIES.find(c=>c.name===name)?.type||"Gasto";
-    addMigratedCategory({name,type:defaultType,budgetable:true,active:true});
-  }));
+  if(importLegacyCategories){
+    if(!raw.categories.length)DEFAULT_CATEGORIES.forEach(c=>addMigratedCategory(clone(c)));
+    raw.movements.forEach(m=>{
+      if(m.categoryId&&normalizedCategories.some(c=>c.id===m.categoryId))return;
+      const name=cleanName(m.category||"Otros");
+      if(!normalizedCategories.some(c=>cleanName(c.name).toLocaleLowerCase("es")===name.toLocaleLowerCase("es")))
+        addMigratedCategory({name,type:allowedCategoryTypes.has(m.type)?m.type:"Gasto",budgetable:m.type!=="Movimiento patrimonial",active:true});
+    });
+    raw.periods.forEach(p=>Object.keys(p.budgets||{}).forEach(name=>{
+      const defaultType=DEFAULT_CATEGORIES.find(c=>c.name===name)?.type||"Gasto";
+      addMigratedCategory({name,type:defaultType,budgetable:true,active:true});
+    }));
+  }
   raw.categories=normalizedCategories.sort((a,b)=>num(a.sort)-num(b.sort)||a.name.localeCompare(b.name,"es"));
   const findCat=(name,type)=>categoryMap.get(categoryKey(name,type))||raw.categories.find(c=>cleanName(c.name).toLocaleLowerCase("es")===cleanName(name).toLocaleLowerCase("es"));
-  const primaryIncome=findCat("Ingreso Daniel","Ingreso"), otherIncomeCat=findCat("Otros ingresos","Ingreso");
+  const primaryIncome=findCat("Ingreso Daniel","Ingreso")||normalizedCategories.find(c=>c.id==="cat-income-daniel");
+  const otherIncomeCat=findCat("Otros ingresos","Ingreso");
   raw.periods.forEach(p=>{
     p.categoryBudgets=p.categoryBudgets&&typeof p.categoryBudgets==="object"?p.categoryBudgets:{};
     p.categoryBudgetCurrencies=p.categoryBudgetCurrencies&&typeof p.categoryBudgetCurrencies==="object"?p.categoryBudgetCurrencies:{};
-    // Solo migra los campos legacy si todavía no están representados en el nuevo esquema.
-    if(primaryIncome && p.categoryBudgets[primaryIncome.id]===undefined){p.categoryBudgets[primaryIncome.id]=num(p.income);p.categoryBudgetCurrencies[primaryIncome.id]=normalizeCurrency(p.incomeCurrency||"CRC")}
-    if(otherIncomeCat && p.categoryBudgets[otherIncomeCat.id]===undefined){p.categoryBudgets[otherIncomeCat.id]=num(p.otherIncome);p.categoryBudgetCurrencies[otherIncomeCat.id]=normalizeCurrency(p.otherIncomeCurrency||"CRC")}
-    Object.entries(p.budgets||{}).forEach(([name,amount])=>{
-      const inferred=DEFAULT_CATEGORIES.find(c=>c.name===name)?.type||"Gasto",cat=findCat(name,inferred)||findCat(name,"Gasto");if(!cat)return;
-      if(p.categoryBudgets[cat.id]===undefined)p.categoryBudgets[cat.id]=num(amount);
-      if(!p.categoryBudgetCurrencies[cat.id])p.categoryBudgetCurrencies[cat.id]=normalizeCurrency(p.budgetCurrencies?.[name]||"CRC");
-    });
+    if(importLegacyCategories){
+      if(primaryIncome && p.categoryBudgets[primaryIncome.id]===undefined){p.categoryBudgets[primaryIncome.id]=num(p.income);p.categoryBudgetCurrencies[primaryIncome.id]=normalizeCurrency(p.incomeCurrency||"CRC")}
+      if(otherIncomeCat && p.categoryBudgets[otherIncomeCat.id]===undefined){p.categoryBudgets[otherIncomeCat.id]=num(p.otherIncome);p.categoryBudgetCurrencies[otherIncomeCat.id]=normalizeCurrency(p.otherIncomeCurrency||"CRC")}
+      Object.entries(p.budgets||{}).forEach(([name,amount])=>{
+        const inferred=DEFAULT_CATEGORIES.find(c=>c.name===name)?.type||"Gasto",cat=findCat(name,inferred)||findCat(name,"Gasto");if(!cat)return;
+        if(p.categoryBudgets[cat.id]===undefined)p.categoryBudgets[cat.id]=num(amount);
+        if(!p.categoryBudgetCurrencies[cat.id])p.categoryBudgetCurrencies[cat.id]=normalizeCurrency(p.budgetCurrencies?.[name]||"CRC");
+      });
+    }
     Object.keys(p.categoryBudgets).forEach(cid=>{p.categoryBudgetCurrencies[cid]=normalizeCurrency(p.categoryBudgetCurrencies[cid]||"CRC");if(!p.categoryBudgetSources[cid])p.categoryBudgetSources[cid]="manual"});
   });
   const incomingIncomeSchema=num(raw.incomeSchemaVersion);
@@ -1987,27 +1998,37 @@ function migrateData(raw){
     const linked=raw.periods.find(p=>periodKey(p)===m.period);if(linked)m.quarter=budgetQuarter(linked);
   });
   raw.quarters=planningQuartersFrom(raw.periods);
+  raw.categorySchemaVersion=1;
   raw.version=6.2;
   return raw;
 }
 function load(){
   try{
     const saved=localStorage.getItem(STORAGE_KEY);
-    const migrated=migrateData(saved?JSON.parse(saved):clone(initialData));
-    // v5.7: inicio limpio solicitado para el módulo Por cobrar.
-    // Se ejecuta una sola vez en este navegador y NO toca movimientos, deudas, presupuesto ni capital.
-    if(!localStorage.getItem(RECEIVABLE_CLEAN_START_KEY)){
-      migrated.sharedChargeGroups=[];
-      migrated.sharedCharges=[];
-      migrated.receivableRecurring=[];
-      migrated.version=6.2;
-      localStorage.setItem(RECEIVABLE_CLEAN_START_KEY,"1");
-      localStorage.setItem(STORAGE_KEY,JSON.stringify(migrated));
+    storageHasSavedData=saved!==null;
+    if(saved!==null){
+      // Guardar una copia intacta antes de reinterpretar categorías/periodos.
+      try{if(localStorage.getItem(INTEGRITY_SNAPSHOT_KEY)===null)localStorage.setItem(INTEGRITY_SNAPSHOT_KEY,saved)}
+      catch(e){console.warn("No se pudo crear copia preventiva del historial",e)}
     }
-    return migrated;
-  }catch(e){console.error(e);return migrateData(clone(initialData))}
+    return migrateData(saved!==null?JSON.parse(saved):clone(initialData));
+  }catch(e){
+    storageReadError=true;
+    console.error("Error al leer datos locales; se bloquea el guardado.",e);
+    return migrateData(clone(initialData));
+  }
 }
-function save(){data.version=6.2;data.currencySchemaVersion=1;data.categorySchemaVersion=1;data.incomeSchemaVersion=1;localStorage.setItem(STORAGE_KEY,JSON.stringify(data))}
+function initDataIntegrityNotice(){
+  const note=document.getElementById("dataIntegrityNotice");
+  if(!note)return;
+  if(storageReadError){note.hidden=false;note.textContent="No se pudo leer el historial guardado. El guardado está bloqueado para protegerlo. Restaurá un respaldo JSON.";}
+  else if(!storageHasSavedData){note.hidden=false;note.textContent="No se encontró historial guardado en este navegador y dirección. Si ya utilizabas la aplicación, comprobá la dirección original o restaurá tu respaldo; los datos iniciales no son tu historial.";}
+}
+function save(){
+  if(storageReadError){alert("No se puede guardar: no se pudo leer el historial. Restaurá un respaldo antes de continuar.");return}
+  data.version=6.2;data.currencySchemaVersion=1;data.categorySchemaVersion=1;data.incomeSchemaVersion=1;
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(data));
+}
 function num(v){return Number(v)||0}
 function normalizeCurrency(v){return String(v||"").toUpperCase()==="USD"?"USD":"CRC"}
 function currentRates(){
@@ -4091,7 +4112,7 @@ function initV7(){
   document.getElementById("movementForm")?.addEventListener("submit",()=>setTimeout(()=>{if(composer)composer.hidden=true;refreshV7MovementCategoryFilter()},0));
 }
 
-bind();bindReportStudio();initV7();initR8();initUiPreferences();initLiquidityChartInteraction();renderDashboard();updateCurrencyHeader();setTimeout(()=>{if(needsDailyFx())openFxDialog(true)},80);
+bind();bindReportStudio();initV7();initR8();initUiPreferences();initLiquidityChartInteraction();initDataIntegrityNotice();renderDashboard();updateCurrencyHeader();setTimeout(()=>{if(needsDailyFx())openFxDialog(true)},80);
 </script>
 </body>
 </html>
