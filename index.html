@@ -1020,6 +1020,20 @@ html[data-theme="dark"]{
 .one-modules-dialog .one-module-footer{display:flex;justify-content:flex-end;padding:16px 20px;border-top:1px solid var(--border)}
 #view-shared h1{font-size:2.05rem;letter-spacing:-.045em}
 #view-shared .receivable-group,#view-shared .month-navigator{box-shadow:none}
+/* Cobros beta · recordatorios de Inicio */
+.one-collections-widget{margin:0 0 14px}
+.one-collections-head{display:flex;align-items:start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.one-collections-head h2{margin:0 0 5px;font-size:1.02rem}
+.one-collections-head p{font-size:.76rem;color:var(--muted);margin:0}
+.one-collections-summary{display:flex;flex-wrap:wrap;align-items:center;gap:9px 18px;color:var(--muted);font-size:.76rem;margin:15px 0}
+.one-collections-summary strong{color:var(--text);font-size:.92rem;font-variant-numeric:tabular-nums}
+.one-collections-list{display:grid;gap:8px}
+.one-collections-row{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:11px 13px;background:var(--surface-2);border:1px solid var(--border);border-radius:9px}
+.one-collections-row strong{font-size:.83rem;color:var(--text)}
+.one-collections-row small{display:block;margin-top:4px;font-size:.73rem;color:var(--muted)}
+.one-collections-amount{font-size:.87rem;font-weight:750;font-variant-numeric:tabular-nums;white-space:nowrap}
+.one-collections-overdue{color:var(--danger)!important}
+@media(max-width:580px){.one-collections-row{align-items:flex-start;flex-direction:column}}
 </style>
 </head>
 <body>
@@ -1028,7 +1042,7 @@ html[data-theme="dark"]{
   <div class="topbar">
     <div class="brand" aria-label="one - one, by rastro.">
       <div class="r8-brand-lockup"><span class="r8-wordmark">one - one</span><span class="r8-byline">by <strong>rastro.</strong></span></div>
-      <small class="brand-version">v8.1.5 LAB</small>
+      <small class="brand-version">v8.2.0 LAB</small>
     </div>
     <nav id="nav">
       <button data-view="dashboard" class="active"><span class="nav-icon" aria-hidden="true">⌂</span><span>Inicio</span></button>
@@ -1144,6 +1158,14 @@ html[data-theme="dark"]{
       <div class="v7-card v7-insight-card" id="dashboardInsight"></div>
     </div>
 
+    <section class="v7-card one-collections-widget" id="dashboardCollectionsCard" hidden>
+      <div class="one-collections-head">
+        <div><h2>Cobros por recordar <span class="one-beta-tag">BETA</span></h2><p>Fechas y montos pendientes que necesitan seguimiento.</p></div>
+        <button class="btn secondary small" id="openCollectionsFromHome" type="button">Ver cobros</button>
+      </div>
+      <div class="one-collections-summary" id="dashboardCollectionsSummary"></div>
+      <div class="one-collections-list" id="dashboardCollectionsList"></div>
+    </section>
     <div class="v7-bottom-grid">
       <div class="v7-card" id="dashboardDebtCommitmentsCard">
         <div class="v7-card-head">
@@ -1404,7 +1426,7 @@ html[data-theme="dark"]{
   </section>
 
 </main>
-<footer>one - one · by rastro. · v8.1.5 LAB · CRC/USD · Datos locales · No envía información a ningún servidor.</footer>
+<footer>one - one · by rastro. · v8.2.0 LAB · CRC/USD · Datos locales · No envía información a ningún servidor.</footer>
 </div>
 
 
@@ -1445,6 +1467,7 @@ html[data-theme="dark"]{
       <div class="field"><label>Persona</label><input id="scPerson" required></div>
       <div class="field"><label>Mes de cobro</label><input type="month" id="scMonth" required></div>
       <div class="field"><label>Fecha del cargo</label><input type="date" id="scDate" required></div>
+       <div class="field"><label>Recordarme cobrar el</label><input type="date" id="scDueDate" required></div>
       <div class="field"><label>Tipo</label><select id="scKind"><option>Suscripción</option><option>Préstamo</option><option>Compra compartida</option><option>Uso / consumo</option><option>Otro</option></select></div>
       <div class="field wide"><label>Concepto / detalle</label><input id="scDescription" placeholder="Ej. Netflix, préstamo, cena, compra de entradas" required></div>
       <div class="field"><label>Monto</label><div class="money-input"><input id="scAmount" type="number" min="0" step="0.01" required><select id="scCurrency"><option value="CRC">CRC ₡</option><option value="USD">USD $</option></select></div></div>
@@ -1679,6 +1702,7 @@ function initModulesBeta(){
   document.getElementById("moduleDebtsToggle")?.addEventListener("change",e=>oneSetModuleEnabled("debts",e.target.checked));
   document.getElementById("moduleCollectionsToggle")?.addEventListener("change",e=>oneSetModuleEnabled("shared",e.target.checked));
   document.getElementById("closeModulesBtn")?.addEventListener("click",()=>document.getElementById("modulesDialog")?.close());
+  document.getElementById("openCollectionsFromHome")?.addEventListener("click",()=>navigate("shared"));
 }
 function planMonthOpenPreference(month){
   return uiState.planMonths?.[month]!==false;
@@ -1887,8 +1911,8 @@ function migrateData(raw){
     g.closedReason=g.status==="archived"?(g.closedReason||"Grupo finalizado"):"";
     delete g.archived;
   });
-  raw.sharedCharges.forEach(c=>{c.id=c.id||id();c.groupId=c.groupId||"";c.person=c.person||"";c.date=c.date||todayIso();c.chargeMonth=c.chargeMonth||monthKey(c.date);c.kind=c.kind||"Uso / consumo";c.description=c.description||"";c.amount=num(c.amount);c.currency=normalizeCurrency(c.currency||"CRC");c.fxBuy=num(c.fxBuy);c.fxSell=num(c.fxSell);c.fxRef=num(c.fxRef);c.fxDate=c.fxDate||"";c.status=c.status==="paid"?"paid":"pending";c.paidAt=c.status==="paid"?(c.paidAt||c.date):"";c.notes=c.notes||"";c.sourceRecurringId=c.sourceRecurringId||""});
-  raw.receivableRecurring.forEach(t=>{t.id=t.id||id();t.groupId=t.groupId||"";t.person=t.person||"";t.startMonth=t.startMonth||todayIso().slice(0,7);t.endMonth=t.endMonth||"";t.day=Math.max(1,Math.min(31,num(t.day)||1));t.kind=t.kind||"Suscripción";t.description=t.description||"";t.amount=num(t.amount);t.currency=normalizeCurrency(t.currency||"CRC");t.notes=t.notes||""});
+  raw.sharedCharges.forEach(c=>{c.id=c.id||id();c.groupId=c.groupId||"";c.person=c.person||"";c.date=c.date||todayIso();c.dueDate=c.dueDate||c.date;c.chargeMonth=c.chargeMonth||monthKey(c.date);c.kind=c.kind||"Uso / consumo";c.description=c.description||"";c.amount=num(c.amount);c.currency=normalizeCurrency(c.currency||"CRC");c.fxBuy=num(c.fxBuy);c.fxSell=num(c.fxSell);c.fxRef=num(c.fxRef);c.fxDate=c.fxDate||"";c.status=c.status==="paid"?"paid":"pending";c.paidAt=c.status==="paid"?(c.paidAt||c.date):"";c.notes=c.notes||"";c.sourceRecurringId=c.sourceRecurringId||""});
+  raw.receivableRecurring.forEach(t=>{t.id=t.id||id();t.groupId=t.groupId||"";t.person=t.person||"";t.startMonth=t.startMonth||todayIso().slice(0,7);t.endMonth=t.endMonth||"";t.day=Math.max(1,Math.min(31,num(t.day)||1));t.reminderDay=Math.max(1,Math.min(31,num(t.reminderDay)||t.day));t.kind=t.kind||"Suscripción";t.description=t.description||"";t.amount=num(t.amount);t.currency=normalizeCurrency(t.currency||"CRC");t.notes=t.notes||""});
 
   // Ciclo de vida de deudas (v5.1): una deuda archivada conserva su historial,
   // pero deja de sumar en deuda activa y deja de aparecer para nuevos pagos.
@@ -3001,7 +3025,7 @@ function ensureRecurringChargesForMonth(month){
     if(!recurringApplies(t,month))continue;
     const exists=(data.sharedCharges||[]).some(c=>c.sourceRecurringId===t.id&&(c.chargeMonth||monthKey(c.date))===month);
     if(exists)continue;
-    data.sharedCharges.push({id:id(),groupId:t.groupId,person:t.person,date:recurringChargeDate(t,month),chargeMonth:month,kind:t.kind,description:t.description,amount:num(t.amount),currency:normalizeCurrency(t.currency||"CRC"),...currentFxSnapshot(),status:"pending",paidAt:"",notes:t.notes||"",sourceRecurringId:t.id,createdAt:new Date().toISOString()});
+    data.sharedCharges.push({id:id(),groupId:t.groupId,person:t.person,date:recurringChargeDate(t,month),dueDate:recurringChargeDate({...t,day:t.reminderDay||t.day},month),chargeMonth:month,kind:t.kind,description:t.description,amount:num(t.amount),currency:normalizeCurrency(t.currency||"CRC"),...currentFxSnapshot(),status:"pending",paidAt:"",notes:t.notes||"",sourceRecurringId:t.id,createdAt:new Date().toISOString()});
     changed=true;
   }
   if(changed)save();
@@ -3058,6 +3082,7 @@ function openSharedCharge(c=null,preferredGroupId=""){
   document.getElementById("scPerson").value=c?.person||group?.person||"";
   document.getElementById("scMonth").value=c?.chargeMonth||selectedMonth;
   document.getElementById("scDate").value=c?.date||todayIso();
+  document.getElementById("scDueDate").value=c?.dueDate||c?.date||todayIso();
   document.getElementById("scKind").value=c?.kind||"Uso / consumo";
   document.getElementById("scDescription").value=c?.description||"";
   document.getElementById("scAmount").value=num(c?.amount);
@@ -3092,7 +3117,7 @@ function receivableAmountCRC(c){return currentToCRC(c.amount,c.currency||"CRC","
 function groupRecurringCount(groupId,month){const g=sharedGroupById(groupId);if(g&&sharedGroupStatus(g)==="archived")return 0;return (data.receivableRecurring||[]).filter(t=>(t.groupId||"")===groupId&&recurringApplies(t,month)).length}
 function receivableRowsTable(rows,sectionKey="",month=selectedReceivableMonth()){
   const headCheck=rows.length?`<input class="charge-check" type="checkbox" data-select-shared-section="${sectionKey}" aria-label="Seleccionar todos">`:"";
-  return `<div class="table-wrap"><table><thead><tr><th>${headCheck}</th><th>Fecha</th><th>Persona</th><th>Tipo</th><th>Concepto</th><th>Monto</th><th>Estado</th><th>Notas</th><th></th></tr></thead><tbody>${rows.length?rows.map(c=>{const carry=isReceivableCarryover(c,month),origin=c.chargeMonth||monthKey(c.date);return `<tr><td><input class="charge-check" type="checkbox" data-select-shared="${c.id}" ${sharedSelectedChargeIds.has(c.id)?"checked":""} aria-label="Seleccionar cobro"></td><td>${dateLabel(c.date)}${carry?`<br><span class="overdue-badge">Arrastre de ${monthLabel(origin)}</span>`:""}</td><td>${c.person||"—"}</td><td><span class="pill">${c.kind}</span>${c.sourceRecurringId?`<span class="recurring-badge">Mensual</span>`:""}</td><td>${c.description}</td><td class="num">${money(receivableAmountCRC(c))}${originalHint(c.amount,c.currency)}</td><td><span class="status-badge ${c.status==="paid"?"active":"archived"}">${c.status==="paid"?"Pagado":"Pendiente"}</span></td><td>${c.notes||""}</td><td><div class="actions">${!c.groupId?`<button class="btn small" data-group-one-shared="${c.id}">Agrupar</button>`:""}<button class="btn secondary small" data-edit-shared-charge="${c.id}">Editar</button>${c.status==="paid"?`<button class="btn secondary small" data-reopen-shared-charge="${c.id}">Reabrir</button>`:`<button class="btn secondary small" data-pay-shared-charge="${c.id}">Marcar pagado</button>`}<button class="btn danger small" data-delete-shared-charge="${c.id}">${c.sourceRecurringId?"Cancelar recurrencia":"Eliminar"}</button></div></td></tr>`}).join(""):`<tr><td colspan="9" class="empty">Sin cobros ni pendientes arrastrados en ${monthLabel(month)}.</td></tr>`}</tbody></table></div>`;
+  return `<div class="table-wrap"><table><thead><tr><th>${headCheck}</th><th>Fecha</th><th>Recordar</th><th>Persona</th><th>Tipo</th><th>Concepto</th><th>Monto</th><th>Estado</th><th>Notas</th><th></th></tr></thead><tbody>${rows.length?rows.map(c=>{const carry=isReceivableCarryover(c,month),origin=c.chargeMonth||monthKey(c.date);return `<tr><td><input class="charge-check" type="checkbox" data-select-shared="${c.id}" ${sharedSelectedChargeIds.has(c.id)?"checked":""} aria-label="Seleccionar cobro"></td><td>${dateLabel(c.date)}${carry?`<br><span class="overdue-badge">Arrastre de ${monthLabel(origin)}</span>`:""}</td><td>${dateLabel(c.dueDate||c.date)}</td><td>${c.person||"—"}</td><td><span class="pill">${c.kind}</span>${c.sourceRecurringId?`<span class="recurring-badge">Mensual</span>`:""}</td><td>${c.description}</td><td class="num">${money(receivableAmountCRC(c))}${originalHint(c.amount,c.currency)}</td><td><span class="status-badge ${c.status==="paid"?"active":"archived"}">${c.status==="paid"?"Pagado":"Pendiente"}</span></td><td>${c.notes||""}</td><td><div class="actions">${!c.groupId?`<button class="btn small" data-group-one-shared="${c.id}">Agrupar</button>`:""}<button class="btn secondary small" data-edit-shared-charge="${c.id}">Editar</button>${c.status==="paid"?`<button class="btn secondary small" data-reopen-shared-charge="${c.id}">Reabrir</button>`:`<button class="btn secondary small" data-pay-shared-charge="${c.id}">Marcar pagado</button>`}<button class="btn danger small" data-delete-shared-charge="${c.id}">${c.sourceRecurringId?"Cancelar recurrencia":"Eliminar"}</button></div></td></tr>`}).join(""):`<tr><td colspan="10" class="empty">Sin cobros ni pendientes arrastrados en ${monthLabel(month)}.</td></tr>`}</tbody></table></div>`;
 }
 function renderSharedCharges(){
   const monthEl=document.getElementById("sharedStatementMonth");
@@ -3688,15 +3713,15 @@ function bind(){
   });
   document.getElementById("sharedChargeForm").addEventListener("submit",e=>{
     e.preventDefault();
-    const cid=document.getElementById("scId").value,existing=data.sharedCharges.find(c=>c.id===cid),status=document.getElementById("scStatus").value,recurring=document.getElementById("scRecurring").checked,chargeMonth=document.getElementById("scMonth").value,date=document.getElementById("scDate").value;
+    const cid=document.getElementById("scId").value,existing=data.sharedCharges.find(c=>c.id===cid),status=document.getElementById("scStatus").value,recurring=document.getElementById("scRecurring").checked,chargeMonth=document.getElementById("scMonth").value,date=document.getElementById("scDate").value,dueDate=document.getElementById("scDueDate").value||date;
     let sourceRecurringId=existing?.sourceRecurringId||"";
-    const base={groupId:document.getElementById("scGroup").value,person:document.getElementById("scPerson").value.trim(),date,chargeMonth,kind:document.getElementById("scKind").value,description:document.getElementById("scDescription").value.trim(),amount:num(document.getElementById("scAmount").value),currency:normalizeCurrency(document.getElementById("scCurrency").value),...currentFxSnapshot(),status,paidAt:status==="paid"?(existing?.paidAt||todayIso()):"",notes:document.getElementById("scNotes").value.trim()};
+    const base={groupId:document.getElementById("scGroup").value,person:document.getElementById("scPerson").value.trim(),date,dueDate,chargeMonth,kind:document.getElementById("scKind").value,description:document.getElementById("scDescription").value.trim(),amount:num(document.getElementById("scAmount").value),currency:normalizeCurrency(document.getElementById("scCurrency").value),...currentFxSnapshot(),status,paidAt:status==="paid"?(existing?.paidAt||todayIso()):"",notes:document.getElementById("scNotes").value.trim()};
     if(recurring){
       let template=(data.receivableRecurring||[]).find(t=>t.id===sourceRecurringId);
       if(!template){sourceRecurringId=id();template={id:sourceRecurringId,startMonth:chargeMonth,endMonth:""};data.receivableRecurring.push(template)}
-      Object.assign(template,{groupId:base.groupId,person:base.person,day:Number(String(date).slice(8,10))||1,kind:base.kind,description:base.description,amount:base.amount,currency:base.currency,notes:base.notes,startMonth:template.startMonth&&template.startMonth<chargeMonth?template.startMonth:chargeMonth,endMonth:""});
+      Object.assign(template,{groupId:base.groupId,person:base.person,day:Number(String(date).slice(8,10))||1,reminderDay:Number(String(dueDate).slice(8,10))||1,kind:base.kind,description:base.description,amount:base.amount,currency:base.currency,notes:base.notes,startMonth:template.startMonth&&template.startMonth<chargeMonth?template.startMonth:chargeMonth,endMonth:""});
       // Actualizar copias automáticas futuras que todavía no representan historia pasada.
-      (data.sharedCharges||[]).filter(c=>c.sourceRecurringId===sourceRecurringId&&(c.chargeMonth||monthKey(c.date))>=chargeMonth&&c.id!==cid).forEach(c=>Object.assign(c,{groupId:base.groupId,person:base.person,date:recurringChargeDate(template,c.chargeMonth||monthKey(c.date)),kind:base.kind,description:base.description,amount:base.amount,currency:base.currency,...currentFxSnapshot(),notes:base.notes}));
+      (data.sharedCharges||[]).filter(c=>c.sourceRecurringId===sourceRecurringId&&(c.chargeMonth||monthKey(c.date))>=chargeMonth&&c.id!==cid).forEach(c=>Object.assign(c,{groupId:base.groupId,person:base.person,date:recurringChargeDate(template,c.chargeMonth||monthKey(c.date)),dueDate:recurringChargeDate({...template,day:template.reminderDay},c.chargeMonth||monthKey(c.date)),kind:base.kind,description:base.description,amount:base.amount,currency:base.currency,...currentFxSnapshot(),notes:base.notes}));
     }else if(sourceRecurringId){
       const template=(data.receivableRecurring||[]).find(t=>t.id===sourceRecurringId);if(template)template.endMonth=shiftMonthKey(chargeMonth,-1);sourceRecurringId="";
     }
@@ -3951,6 +3976,32 @@ function initLiquidityChartInteraction(){
   });
 }
 
+
+function oneCobroDueDate(c){return c.dueDate||c.date||todayIso()}
+function onePendingCobros(){
+  return [...(data.sharedCharges||[])].filter(c=>c.status!=="paid").sort((a,b)=>
+    oneCobroDueDate(a).localeCompare(oneCobroDueDate(b))||String(a.person||"").localeCompare(String(b.person||""),"es"));
+}
+function renderCobrosReminderWidget(){
+  const card=document.getElementById("dashboardCollectionsCard");
+  if(!card)return;
+  const active=oneModuleEnabled("shared");
+  card.hidden=!active;
+  if(!active)return;
+  if((data.receivableRecurring||[]).length)ensureRecurringChargesForMonth(todayIso().slice(0,7));
+  const today=todayIso(),upTo=addDaysIso(today,7),pending=onePendingCobros();
+  const overdue=pending.filter(c=>oneCobroDueDate(c)<today),dueSoon=pending.filter(c=>oneCobroDueDate(c)<=upTo);
+  const visible=(dueSoon.length?dueSoon:pending).slice(0,5),total=pending.reduce((sum,c)=>sum+receivableAmountCRC(c),0);
+  document.getElementById("dashboardCollectionsSummary").innerHTML=
+    `<span>Pendiente total: <strong>${money(total)}</strong></span><span>${overdue.length} vencidos</span><span>${dueSoon.length} para cobrar pronto (7 días o vencidos)</span>`;
+  document.getElementById("dashboardCollectionsList").innerHTML=visible.length?visible.map(c=>{
+    const date=oneCobroDueDate(c),days=Math.round((Date.parse(date+"T00:00:00Z")-Date.parse(today+"T00:00:00Z"))/86400000);
+    const status=days<0?"Vencido":days===0?"Cobrar hoy":days===1?"Mañana":`Recordar ${dateLabel(date)}`;
+    const group=sharedGroupById(c.groupId),person=c.person||group?.person||"Sin persona";
+    return `<div class="one-collections-row"><div><strong>${safe(person)} · ${safe(c.description||c.kind)}</strong><small class="${days<=0?"one-collections-overdue":""}">${safe(status)}${group?` · ${safe(group.name)}`:""}</small></div><span class="one-collections-amount">${money(receivableAmountCRC(c))}</span></div>`;
+  }).join(""):`<div class="empty">Todavía no hay cobros pendientes. Podés agregar el primero desde Cobros.</div>`;
+}
+
 const renderDashboardLegacy=renderDashboard;
 renderDashboard=function(){
   const {level,value}=hierarchicalSelection("dashboard");
@@ -4034,6 +4085,7 @@ renderDashboard=function(){
   const cat=categoryReportFiltered(level,value),rows=summary.rows;
   document.getElementById("dashboardCategories").innerHTML=categoryTable(cat);
   const expCanvas=document.getElementById("expenseChart");
+  renderCobrosReminderWidget();
   if(expCanvas){
     const chartLabels=rows.map(r=>level==="quarter"?`${monthLabel(r.budgetMonth).slice(0,3)} ${r.fortnight}Q`:level==="month"?`${r.fortnight}.ª`:dateLabel(r.date).replace(/ de /g," "));
     drawBarChart(expCanvas,chartLabels.length?chartLabels:["Sin datos"],chartLabels.length?rows.map(r=>r.expenses):[0],chartLabels.length?rows.map(r=>r.actualExpenses):[0]);
