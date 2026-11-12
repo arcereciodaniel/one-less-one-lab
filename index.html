@@ -1148,6 +1148,19 @@ header nav button.one-add-module-button:focus-visible{outline:2px solid var(--ac
 .one-move-dialog .m2-quick-types button{background:transparent;border:0;border-radius:7px;font-size:.76rem;padding:10px 4px}
 .one-move-dialog .m2-quick-types button.active{background:var(--surface);color:var(--text);box-shadow:0 1px 5px rgba(0,0,0,.10)}
 .one-move-dialog .m2-quick-types button[hidden]{display:none!important}
+.one-move-split-toggle{display:inline-flex;align-items:center;gap:6px;margin:-7px 0 17px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-size:.78rem;font-weight:640;border-radius:8px;padding:8px 11px}
+.one-move-split-toggle:hover{color:var(--text);background:var(--surface-hover)}
+.one-move-split-toggle[aria-pressed="true"]{background:var(--surface-2);border-color:var(--accent);color:var(--text)}
+.one-move-split-toggle[hidden],#movementSplitDetails[hidden]{display:none!important}
+.one-move-split-panel{grid-column:1/-1;padding:14px;border:1px solid var(--border);border-radius:9px;background:var(--surface-2)}
+.one-move-split-head strong{display:block;font-size:.82rem;font-weight:700;color:var(--text)}
+.one-move-split-head span{display:block;margin:3px 0 12px;color:var(--muted);font-size:.73rem}
+.one-move-split-panel .m2-splits{margin:0 0 11px}
+.one-move-split-panel .m2-split-row{grid-template-columns:minmax(130px,1fr) minmax(95px,.65fr) 28px;gap:8px}
+.one-move-split-panel .m2-status{margin-top:11px;font-size:.75rem}
+.one-move-split-panel .m2-status.is-complete{color:var(--success)}
+.one-move-split-panel .m2-status.is-pending{color:var(--muted)}
+@media(max-width:420px){.one-move-split-panel{padding:12px 10px}.one-move-split-panel .m2-split-row{grid-template-columns:minmax(90px,1fr) minmax(78px,.75fr) 28px;gap:5px}.one-move-split-panel .m2-split-row input,.one-move-split-panel .m2-split-row select{min-width:0;font-size:.74rem;padding:7px 5px}.one-move-split-panel .m2-split-row [data-m2-remove-split]{padding:5px}}
 .one-move-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
 .one-move-form .field{min-width:0}
 .one-move-form .field.wide,.one-move-form .one-move-amount{grid-column:1/-1}
@@ -1421,10 +1434,17 @@ header nav button.one-add-module-button:focus-visible{outline:2px solid var(--ac
       <div id="movementComposer" class="one-move-composer" hidden>
         <div class="one-move-composer-head"><div><h2 id="movementComposerTitle">Nuevo movimiento</h2><p class="muted">Registralo en segundos.</p></div><button class="v7-icon-button" id="closeMovementComposer" aria-label="Cerrar" type="button">×</button></div>
         <div class="m2-quick-types" id="movementQuickTypes" role="group" aria-label="Tipo de movimiento"><button type="button" data-m2-type="Gasto" class="active" aria-pressed="true">Gasto</button><button type="button" data-m2-type="Ingreso" aria-pressed="false">Ingreso</button><button type="button" data-m2-type="Pago deuda" aria-pressed="false">Pago deuda</button></div>
+        <button type="button" id="movementSplitToggle" class="one-move-split-toggle" aria-pressed="false" aria-controls="movementSplitDetails">＋ Dividir entre categorías</button>
         <form id="movementForm" class="form-grid one-move-form">
           <input type="hidden" id="mEditId"><input type="hidden" id="mScheduledId"><select id="mType" required hidden aria-hidden="true"></select>
           <div class="field one-move-amount"><label for="mAmount">Monto</label><div class="money-input"><input id="mAmount" type="number" min="0" step=".01" inputmode="decimal" placeholder="0.00" required><select id="mCurrency" aria-label="Moneda"><option value="CRC">CRC ₡</option><option value="USD">USD $</option></select></div></div>
           <div class="field" id="mCategoryField"><label for="mCategory">Categoría</label><select id="mCategory" required></select></div>
+          <section id="movementSplitDetails" class="one-move-split-panel" hidden aria-label="División del gasto">
+            <div class="one-move-split-head"><strong>Distribución del gasto</strong><span>Un solo movimiento, varias categorías</span></div>
+            <div class="m2-splits" id="movementSplitRows"></div>
+            <button class="btn secondary small" type="button" id="addMovementSplit">＋ Agregar categoría</button>
+            <div class="m2-status" id="movementSplitStatus" aria-live="polite"></div>
+          </section>
           <div class="field" id="mDebtField"><label for="mDebt">¿Qué préstamo o tarjeta vas a pagar?</label><select id="mDebt"></select><small class="r8-debt-field-help">La categoría de pago se asigna automáticamente.</small></div>
           <div class="field wide"><label for="mDescription">Descripción</label><input id="mDescription" placeholder="¿En qué gastaste?"></div>
           <div class="field"><label for="mDate">Fecha</label><input type="date" id="mDate" required></div>
@@ -1433,7 +1453,6 @@ header nav button.one-add-module-button:focus-visible{outline:2px solid var(--ac
             <div class="field"><label>Método de pago</label><select id="mPaymentMethod"><option value="">No especificado</option><option>Transferencia</option><option>SINPE</option><option>Tarjeta de débito</option><option>Tarjeta de crédito</option><option>Efectivo</option><option>Otro</option></select></div>
             <div class="field wide"><button type="button" class="btn secondary small" id="manageMovementAccounts">Administrar cuentas</button></div>
           </div></details>
-          <details class="m2-more" id="movementSplitDetails"><summary>Dividir entre categorías</summary><p class="m2-helper">Un solo movimiento financiero; la suma de categorías debe coincidir con el monto total.</p><div class="m2-splits" id="movementSplitRows"></div><button class="btn secondary small" type="button" id="addMovementSplit">+ Otra categoría</button><div class="m2-status" id="movementSplitStatus"></div></details>
           <div class="form-actions one-move-form-actions"><button class="btn" id="movementSubmitBtn" type="submit">Registrar</button><button class="btn secondary" type="button" id="movementCancelEdit" hidden>Cancelar</button></div>
         </form>
       </div>
@@ -3805,7 +3824,7 @@ function m2AddSplitRow(categoryId="",amount=""){
 }
 function m2GetSplits(){
   const box=document.getElementById("movementSplitRows");
-  if(!document.getElementById("movementSplitDetails")?.open)return {splits:[],error:""};
+  if(!m2IsSplitMode())return {splits:[],error:""};
   if(!box?.children.length)return {splits:[],error:"Agregá al menos dos categorías o cerrá la opción de división."};
   const splits=[...box.querySelectorAll(".m2-split-row")].map(row=>({
     categoryId:row.querySelector(".m2-split-category").value,
@@ -3822,10 +3841,39 @@ function m2GetSplits(){
 function m2SplitMessage(){
   const el=document.getElementById("movementSplitStatus");if(!el)return;
   const box=document.getElementById("movementSplitRows");
-  if(!box?.children.length){el.textContent="Agregá al menos dos categorías para dividir el gasto.";return}
-  const totals=[...box.querySelectorAll(".m2-split-amount")].reduce((s,input)=>s+num(input.value),0);
-  const original=num(document.getElementById("mAmount")?.value);
-  el.textContent=`Asignado: ${totals.toFixed(2)} / Total: ${original.toFixed(2)}`;
+  if(!box?.children.length){el.textContent="Agregá al menos dos categorías para dividir el gasto.";el.className="m2-status is-pending";return}
+  const allocated=[...box.querySelectorAll(".m2-split-amount")].reduce((sum,input)=>sum+num(input.value),0);
+  const total=num(document.getElementById("mAmount")?.value),difference=Math.round((total-allocated)*100)/100;
+  const fmt=n=>Number(n).toLocaleString("es-CR",{minimumFractionDigits:2,maximumFractionDigits:2});
+  const complete=total>0&&Math.abs(difference)<.005&&box.children.length>=2;
+  el.className="m2-status "+(complete?"is-complete":"is-pending");
+  el.textContent=complete?`✓ Distribución completa · ${fmt(allocated)} de ${fmt(total)}`:
+    `Asignado: ${fmt(allocated)} de ${fmt(total)} · ${difference>=0?"Faltan":"Excede"} ${fmt(Math.abs(difference))}`;
+}
+/* El formulario tiene exactamente un modo de categorización activo. */
+function m2IsSplitMode(){
+  return document.getElementById("mType")?.value==="Gasto"&&
+    document.getElementById("movementSplitToggle")?.getAttribute("aria-pressed")==="true";
+}
+function m2SetSplitMode(enabled,{createRows=true}={}){
+  const toggle=document.getElementById("movementSplitToggle");
+  const panel=document.getElementById("movementSplitDetails");
+  const box=document.getElementById("movementSplitRows");
+  const active=!!enabled&&document.getElementById("mType")?.value==="Gasto";
+  if(active&&createRows&&!box.children.length){
+    const categories=categoriesOfType("Gasto");
+    if(categories.length<2){alert("Necesitás al menos dos categorías de gasto activas para dividir un movimiento.");return}
+    const selected=document.getElementById("mCategory")?.value;
+    const first=categories.find(c=>c.id===selected)||categories[0];
+    const second=categories.find(c=>c.id!==first.id);
+    m2AddSplitRow(first.id);
+    m2AddSplitRow(second.id);
+  }
+  toggle.setAttribute("aria-pressed",String(active));
+  toggle.textContent=active?"✓ Dividiendo entre categorías":"＋ Dividir entre categorías";
+  panel.hidden=!active;
+  updateMovementFields();
+  m2SplitMessage();
 }
 function m2ResetComposer(close=true){
   const form=document.getElementById("movementForm");form?.reset();
@@ -3835,7 +3883,7 @@ function m2ResetComposer(close=true){
   document.getElementById("movementSubmitBtn").textContent="Registrar";
   document.getElementById("movementCancelEdit").hidden=true;
   document.getElementById("movementSplitRows").innerHTML="";
-  document.getElementById("movementSplitDetails").open=false;
+  m2SetSplitMode(false,{createRows:false});
   document.getElementById("movementAdvancedFields").open=false;
   document.getElementById("mDate").value=todayIso();
   document.getElementById("mType").value="Gasto";
@@ -3869,8 +3917,8 @@ function m2OpenComposer(m=null,{repeat=false,scheduledId=""}={}){
     document.getElementById("mCurrency").value=normalizeCurrency(m.currency);
     document.getElementById("mPaymentMethod").value=m.paymentMethod||"";
     if((m.splits||[]).length){
-      document.getElementById("movementSplitDetails").open=true;
       m.splits.forEach(x=>m2AddSplitRow(x.categoryId,x.amount));
+      m2SetSplitMode(true,{createRows:false});
     }
     document.getElementById("movementAdvancedFields").open=!!(m.account||m.paymentMethod);
   }
@@ -3972,8 +4020,11 @@ function m2SaveTemplate(){
 function m2RefreshQuickTypes(){
   const type=document.getElementById("mType")?.value;
   document.querySelectorAll("[data-m2-type]").forEach(b=>{const active=b.dataset.m2Type===type;b.classList.toggle("active",active);b.setAttribute("aria-pressed",String(active));b.hidden=b.dataset.m2Type==="Pago deuda"&&!oneModuleEnabled("debts")&&type!=="Pago deuda";});
-  const split=document.getElementById("movementSplitDetails");
-  if(split){split.hidden=type!=="Gasto";if(type!=="Gasto")split.open=false}
+  const toggle=document.getElementById("movementSplitToggle");
+  if(toggle)toggle.hidden=type!=="Gasto";
+  if(type!=="Gasto"&&m2IsSplitMode())m2SetSplitMode(false,{createRows:false});
+  else if(type!=="Gasto")m2SetSplitMode(false,{createRows:false});
+  updateMovementFields();
 }
 
 function updateMovementFields(){
@@ -3981,7 +4032,9 @@ function updateMovementFields(){
   const payment=type==="Pago deuda";
   const categoryField=document.getElementById("mCategoryField"),debtField=document.getElementById("mDebtField");
   const debtSelect=document.getElementById("mDebt"),categorySelect=document.getElementById("mCategory");
-  if(categoryField)categoryField.hidden=payment;
+  const split=m2IsSplitMode();
+  if(categoryField)categoryField.hidden=payment||split;
+  if(categorySelect)categorySelect.required=!payment&&!split;
   if(debtField)debtField.hidden=!payment;
   if(debtSelect)debtSelect.required=payment;
   if(payment){
@@ -4154,22 +4207,29 @@ function bind(){
     if(editId&&!existing)return alert("El movimiento que intentás editar ya no existe.");
     const date=document.getElementById("mDate").value,p=periodForDate(date);
     if(!p)return alert("La fecha no pertenece a los trimestres configurados. Configurá el período desde Presupuesto.");
-    const type=document.getElementById("mType").value,categoryId=document.getElementById("mCategory").value;
+    const type=document.getElementById("mType").value,selectedCategoryId=document.getElementById("mCategory").value;
     const debtId=document.getElementById("mDebt").value,debtObj=data.debts.find(d=>d.id===debtId);
     if(type==="Pago deuda"&&!debtObj)return alert("Seleccioná la deuda o acreedor.");
-    const category=categoryById(categoryId);
-    if(!category||category.type!==type)return alert("Seleccioná una categoría válida para el tipo de movimiento.");
-    if(!categoryIsActive(category)&&(!existing||existing.categoryId!==categoryId))return alert("La categoría seleccionada está archivada; elegí una categoría activa.");
     const amount=Number(document.getElementById("mAmount").value);
     if(!Number.isFinite(amount)||amount<=0)return alert("El monto debe ser mayor que cero.");
     const currency=normalizeCurrency(document.getElementById("mCurrency").value);
-    const details=document.getElementById("movementSplitDetails");
     const distribution=type==="Gasto"?m2GetSplits():{splits:[],error:""};
     if(distribution.error)return alert(distribution.error);
     const splits=distribution.splits;
+    const categoryId=splits.length?splits[0].categoryId:selectedCategoryId;
+    const category=categoryById(categoryId);
+    if(!category||category.type!==type)return alert("Seleccioná una categoría válida para el tipo de movimiento.");
+    const historicalCategories=new Set([existing?.categoryId,...(existing?.splits||[]).map(x=>x.categoryId)]);
+    if(!categoryIsActive(category)&&!historicalCategories.has(categoryId))
+      return alert("La categoría seleccionada está archivada; elegí una categoría activa.");
+    for(const line of splits){
+      const splitCategory=categoryById(line.categoryId);
+      if(!splitCategory||splitCategory.type!=="Gasto"||(!categoryIsActive(splitCategory)&&!historicalCategories.has(line.categoryId)))
+        return alert("Una categoría de la división ya no está disponible. Elegí una categoría activa.");
+    }
     const obj={...existing,id:existing?.id||id(),seq:existing?.seq||data.movementSeq+1,
-      createdAt:existing?.createdAt||new Date().toISOString(),date,type,categoryId:splits.length?splits[0].categoryId:categoryId,
-      category:categoryById(splits.length?splits[0].categoryId:categoryId)?.name||category.name,
+      createdAt:existing?.createdAt||new Date().toISOString(),date,type,categoryId,
+      category:category.name,
       splits,debtId:type==="Pago deuda"?(debtObj?.id||""):"",debt:type==="Pago deuda"?(debtObj?.name||""):"",
       account:document.getElementById("mAccount").value,
       paymentMethod:document.getElementById("mPaymentMethod").value,
@@ -4893,14 +4953,9 @@ function initMovements2(){
     document.getElementById("mType").dispatchEvent(new Event("change",{bubbles:true}));
   }));
   document.getElementById("mType")?.addEventListener("change",m2RefreshQuickTypes);
-  const splits=document.getElementById("movementSplitRows"),splitDetails=document.getElementById("movementSplitDetails");
-  splitDetails?.addEventListener("toggle",()=>{
-    if(splitDetails.open&&!splits.children.length){
-      const total=num(document.getElementById("mAmount").value),cats=categoriesOfType("Gasto");
-      const a=Math.round(total*50)/100,b=Math.max(0,Math.round((total-a)*100)/100);
-      m2AddSplitRow(cats[0]?.id,a||"");m2AddSplitRow(cats[1]?.id||cats[0]?.id,b||"");
-    }
-    m2SplitMessage();
+  const splits=document.getElementById("movementSplitRows");
+  document.getElementById("movementSplitToggle")?.addEventListener("click",()=>{
+    m2SetSplitMode(!m2IsSplitMode());
   });
   document.getElementById("addMovementSplit")?.addEventListener("click",()=>{
     const used=new Set([...splits.querySelectorAll(".m2-split-category")].map(el=>el.value));
