@@ -962,6 +962,11 @@ html[data-theme="dark"]{
 #cashChartLegend{margin-top:-4px;margin-bottom:9px}
 #expenseChartLegend{padding:0 0 9px;border-bottom:1px solid var(--border)}
 @media(max-width:530px){.one-chart-legend{gap:9px 13px}}
+
+/* one + one · Inicio centrado en tres indicadores operativos */
+#view-dashboard #kpiGrid{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:760px){#view-dashboard #kpiGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:480px){#view-dashboard #kpiGrid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -3672,7 +3677,6 @@ renderDashboard=function(){
   const operating=actualBalanceAt(todayIso());
   const previous=actualBalanceAt(v7IsoDateOffset(-30));
   const delta=operating-previous;
-  const reserves=reserveTotals(todayIso());
   const periodMovs=selectedMovements(level,value);
   const realIncome=periodMovs.filter(m=>m.type==="Ingreso").reduce((s,m)=>s+movementAmountCRC(m),0);
   const realExpenses=periodMovs.filter(m=>m.type==="Gasto").reduce((s,m)=>s+movementAmountCRC(m),0);
@@ -3696,8 +3700,7 @@ renderDashboard=function(){
   document.getElementById("kpiGrid").innerHTML=[
     v7Kpi("↑","green","Ingresos del periodo",money(realIncome||summary.plannedIncome),realIncome?"Registrados":"Según presupuesto",realIncome?"good":""),
     v7Kpi("↓","red","Gastos del periodo",money(realExpenses||summary.realExpense),realExpenses?"Registrados":"Sin movimientos",""),
-    v7Kpi("▭","purple","Pagos de deuda",money(debtPaid),`${periodMovs.filter(m=>m.type==="Pago deuda").length} movimientos`,""),
-    v7Kpi("◇","blue","Ahorro / capital",money(reserves.total),`${reserves.goalTotal>0?money(reserves.goalTotal)+" en metas":"Sin metas registradas"}`,"")
+    v7Kpi("▭","purple","Pagos de deuda",money(debtPaid),`${periodMovs.filter(m=>m.type==="Pago deuda").length} movimientos`,"")
   ].join("");
 
   const hist=(typeof reportMonthlySeries==="function"?reportMonthlySeries():[]).filter(r=>r.month<=todayIso().slice(0,7)).slice(-6);
