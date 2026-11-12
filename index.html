@@ -1002,6 +1002,24 @@ html[data-theme="dark"]{
 .one-liquidity-tooltip-caption{font-size:.67rem;color:var(--muted);margin-top:3px}
 .one-liquidity-help{font-size:.7rem;color:var(--muted);margin:7px 0 0}
 
+/* Optional app modules · beta */
+#nav button[hidden],#dashboardDebtCommitmentsCard[hidden],#dashboardCollectionsCard[hidden]{display:none!important}
+#view-shared.active{display:block!important}
+.v7-bottom-grid.one-single-column{grid-template-columns:1fr}
+.one-beta-tag{display:inline-block;margin-left:5px;padding:2px 6px;border:1px solid var(--border);border-radius:5px;color:var(--muted);font-size:.61rem;font-weight:750;vertical-align:middle}
+#manageModulesBtn{white-space:nowrap;font-size:.7rem;font-weight:650}
+.one-modules-dialog{width:min(520px,calc(100vw - 30px));max-height:85vh;overflow:auto;padding:0;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text)}
+.one-modules-dialog header{position:static!important;display:block!important;padding:20px 22px!important;background:var(--surface)!important;border-bottom:1px solid var(--border)!important;width:auto!important}
+.one-modules-dialog h2{margin:0 0 7px;font-size:1.2rem}
+.one-modules-dialog p{font-size:.79rem;line-height:1.5;color:var(--muted);margin:0}
+.one-module-fixed{padding:11px 13px;margin:16px 20px;background:var(--surface-2);border-radius:7px;color:var(--muted);font-size:.8rem}
+.one-module-item{display:flex;align-items:start;gap:12px;margin:12px 20px;padding:14px;border:1px solid var(--border);border-radius:9px;cursor:pointer}
+.one-module-item input{width:18px;height:18px;flex:0 0 auto;margin:3px 0;accent-color:var(--text)}
+.one-module-item strong{display:block;font-size:.87rem}
+.one-module-item small{display:block;font-size:.77rem;line-height:1.45;color:var(--muted);margin-top:4px}
+.one-modules-dialog .one-module-footer{display:flex;justify-content:flex-end;padding:16px 20px;border-top:1px solid var(--border)}
+#view-shared h1{font-size:2.05rem;letter-spacing:-.045em}
+#view-shared .receivable-group,#view-shared .month-navigator{box-shadow:none}
 </style>
 </head>
 <body>
@@ -1016,9 +1034,11 @@ html[data-theme="dark"]{
       <button data-view="dashboard" class="active"><span class="nav-icon" aria-hidden="true">⌂</span><span>Inicio</span></button>
       <button data-view="plan"><span class="nav-icon" aria-hidden="true">◔</span><span>Presupuesto</span></button>
       <button data-view="movements"><span class="nav-icon" aria-hidden="true">≡</span><span>Movimientos</span></button>
-      <button data-view="debts"><span class="nav-icon" aria-hidden="true">▭</span><span>Deudas</span></button>
+      <button data-view="debts" data-optional-module="debts"><span class="nav-icon" aria-hidden="true">▭</span><span>Deudas</span></button>
+      <button data-view="shared" data-optional-module="shared"><span class="nav-icon" aria-hidden="true">◷</span><span>Cobros <span class="one-beta-tag">BETA</span></span></button>
     </nav>
     <div class="header-actions">
+        <button type="button" id="manageModulesBtn" title="Habilitar u ocultar módulos">Módulos ⚙</button>
         <div class="ui-switch" aria-label="Tema">
         <button type="button" data-theme-choice="light" title="Tema claro">☀</button>
         <button type="button" data-theme-choice="dark" title="Tema oscuro">☾</button>
@@ -1125,7 +1145,7 @@ html[data-theme="dark"]{
     </div>
 
     <div class="v7-bottom-grid">
-      <div class="v7-card">
+      <div class="v7-card" id="dashboardDebtCommitmentsCard">
         <div class="v7-card-head">
           <div><h2>Próximos compromisos</h2><p>Lo que necesita tu atención primero.</p></div>
         </div>
@@ -1308,8 +1328,8 @@ html[data-theme="dark"]{
   </section>
 
   <section class="view" id="view-shared">
-    <h1>Por cobrar</h1>
-    <p class="sub">Controla cualquier dinero que otras personas te deban: préstamos, compras compartidas, consumos de una tarjeta, suscripciones u otros reintegros.</p>
+    <h1>Cobros <span class="one-beta-tag">BETA</span></h1>
+    <p class="sub">Registrá lo que te deben, agrupalo por persona o motivo y elegí cuándo recordarte cobrarlo. Los cargos mensuales se generan automáticamente mientras estén activos.</p>
     <div class="receivable-toolbar">
       <div class="month-navigator" aria-label="Navegar por mes">
         <button class="month-nav-btn" id="sharedPrevMonth" type="button" title="Mes anterior" aria-label="Mes anterior">‹</button>
@@ -1327,7 +1347,7 @@ html[data-theme="dark"]{
       </div>
       <input type="hidden" id="sharedStatementMonth">
     </div>
-    <div class="receivable-helper">Podés registrar cobros sin grupo y organizarlos después. Los pendientes de meses anteriores se arrastran automáticamente al mes visible hasta que los marques como pagados.</div>
+    <div class="receivable-helper">Podés combinar varios cargos de la misma persona en un grupo. Los cobros pendientes de meses anteriores siguen visibles hasta que los marques como pagados. Los recordatorios aparecen dentro de la aplicación, no como avisos externos.</div>
     <div class="receivable-bulk" id="sharedBulkActions">
       <strong id="sharedSelectedCount">0 cobros seleccionados</strong>
       <div class="actions">
@@ -1388,6 +1408,13 @@ html[data-theme="dark"]{
 </div>
 
 
+<dialog id="modulesDialog" class="one-modules-dialog" aria-labelledby="modulesDialogTitle">
+  <div style="padding:20px 22px;border-bottom:1px solid var(--border)"><h2 id="modulesDialogTitle">Personalizar módulos</h2><p>Elegí qué herramientas se muestran. Al ocultar un módulo se conservan todos los datos.</p></div>
+  <div class="one-module-fixed"><strong>Siempre visibles:</strong> Inicio · Presupuesto · Movimientos</div>
+  <label class="one-module-item"><input type="checkbox" id="moduleDebtsToggle"><span><strong>Deudas</strong><small>Préstamos, tarjetas y pagos pendientes.</small></span></label>
+  <label class="one-module-item"><input type="checkbox" id="moduleCollectionsToggle"><span><strong>Cobros · Beta</strong><small>Personas, cargos compartidos, recurrencias y recordatorios en Inicio.</small></span></label>
+  <div class="one-module-footer"><button type="button" class="btn" id="closeModulesBtn">Listo</button></div>
+</dialog>
 <dialog id="categoryManagerDialog" class="rastro-category-manager">
   <div class="rastro-category-manager-header"><div><strong>Tu estructura financiera</strong><p>Administrá tus categorías sin abandonar el presupuesto o los movimientos.</p></div><button type="button" class="v7-icon-button" id="closeCategoryManager" aria-label="Cerrar">×</button></div>
   <div id="categoryManagerMount"></div>
@@ -1617,6 +1644,41 @@ function loadUiState(){
 let uiState=loadUiState();
 function saveUiState(){
   try{localStorage.setItem(UI_STORAGE_KEY,JSON.stringify(uiState))}catch{}
+}
+const ONE_DEFAULT_SHOW_COBROS=false;
+const ONE_OPTIONAL_MODULES=new Set(["debts","shared"]);
+function oneModuleEnabled(name){
+  if(!ONE_OPTIONAL_MODULES.has(name))return true;
+  if(typeof uiState.modules?.[name]==="boolean")return uiState.modules[name];
+  if(name==="debts")return !!((data.debts||[]).length||(data.movements||[]).some(m=>m.type==="Pago deuda"));
+  return ONE_DEFAULT_SHOW_COBROS||!!((data.sharedCharges||[]).length||(data.sharedChargeGroups||[]).length||(data.receivableRecurring||[]).length);
+}
+function oneRefreshModuleVisibility(){
+  for(const name of ONE_OPTIONAL_MODULES){
+    const btn=document.querySelector(`#nav [data-optional-module="${name}"]`);
+    if(btn)btn.hidden=!oneModuleEnabled(name);
+  }
+  const debt=document.getElementById("dashboardDebtCommitmentsCard");
+  if(debt)debt.hidden=!oneModuleEnabled("debts");
+  document.querySelector("#view-dashboard .v7-bottom-grid")?.classList.toggle("one-single-column",!oneModuleEnabled("debts"));
+  const debtInput=document.getElementById("moduleDebtsToggle"),cobrosInput=document.getElementById("moduleCollectionsToggle");
+  if(debtInput)debtInput.checked=oneModuleEnabled("debts");
+  if(cobrosInput)cobrosInput.checked=oneModuleEnabled("shared");
+  const current=document.querySelector(".view.active")?.id?.replace("view-","");
+  if(ONE_OPTIONAL_MODULES.has(current)&&!oneModuleEnabled(current))navigate("dashboard");
+}
+function oneSetModuleEnabled(name,value){
+  if(!ONE_OPTIONAL_MODULES.has(name))return;
+  uiState.modules={...(uiState.modules||{}),[name]:!!value};saveUiState();
+  oneRefreshModuleVisibility();
+  if(document.getElementById("view-dashboard")?.classList.contains("active"))renderDashboard();
+}
+function initModulesBeta(){
+  oneRefreshModuleVisibility();
+  document.getElementById("manageModulesBtn")?.addEventListener("click",()=>{oneRefreshModuleVisibility();document.getElementById("modulesDialog")?.showModal()});
+  document.getElementById("moduleDebtsToggle")?.addEventListener("change",e=>oneSetModuleEnabled("debts",e.target.checked));
+  document.getElementById("moduleCollectionsToggle")?.addEventListener("change",e=>oneSetModuleEnabled("shared",e.target.checked));
+  document.getElementById("closeModulesBtn")?.addEventListener("click",()=>document.getElementById("modulesDialog")?.close());
 }
 function planMonthOpenPreference(month){
   return uiState.planMonths?.[month]!==false;
@@ -2504,6 +2566,7 @@ function syncQuarterSelectors(){
   ["movement"].forEach(prefix=>syncPeriodFilter(prefix));
 }
 function navigate(view){
+  if(ONE_OPTIONAL_MODULES.has(view)&&!oneModuleEnabled(view))view="dashboard";
   document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id===`view-${view}`));
   document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===view));
   if(view==="dashboard")renderDashboard();
@@ -4128,7 +4191,7 @@ function initV7(){
   document.getElementById("movementForm")?.addEventListener("submit",()=>setTimeout(()=>{if(composer)composer.hidden=true;refreshV7MovementCategoryFilter()},0));
 }
 
-bind();bindReportStudio();initV7();initR8();initUiPreferences();initLiquidityChartInteraction();initDataIntegrityNotice();renderDashboard();updateCurrencyHeader();setTimeout(()=>{if(needsDailyFx())openFxDialog(true)},80);
+bind();bindReportStudio();initV7();initR8();initUiPreferences();initLiquidityChartInteraction();initModulesBeta();initDataIntegrityNotice();renderDashboard();updateCurrencyHeader();setTimeout(()=>{if(needsDailyFx())openFxDialog(true)},80);
 </script>
 </body>
 </html>
