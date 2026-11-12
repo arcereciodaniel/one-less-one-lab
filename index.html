@@ -940,6 +940,29 @@ footer,html[data-sidebar="collapsed"] footer{
 .rastro-category-spotlight th{color:var(--muted);font-weight:650;background:var(--surface-2)}
 .rastro-category-spotlight td{font-variant-numeric:tabular-nums}
 @media(max-width:680px){.rastro-category-spotlight{padding:15px 13px}.rastro-category-spotlight-filters .period-filter>div{min-width:120px;flex:1 1 140px}}
+
+/* one + one · Leyendas explícitas y consistentes para gráficos */
+:root{
+  --one-chart-budget:#a0a7b0;
+  --one-chart-real:#37352f;
+  --one-chart-liquidity:#595f67;
+}
+html[data-theme="dark"]{
+  --one-chart-budget:#77818b;
+  --one-chart-real:#dce0df;
+  --one-chart-liquidity:#c8cfcd;
+}
+.one-chart-legend{display:flex;align-items:center;gap:11px 22px;flex-wrap:wrap;margin:0 0 13px;color:var(--muted);font-size:.74rem}
+.one-chart-legend-item{display:inline-flex;gap:7px;align-items:center;min-width:0}
+.one-chart-legend-item strong{color:var(--text);font-size:.74rem;font-weight:650}
+.one-chart-position{font-size:.66rem;color:var(--muted)}
+.one-chart-swatch{display:inline-block;width:12px;height:12px;border-radius:3px;flex:0 0 auto}
+.one-chart-budget{background:var(--one-chart-budget)}
+.one-chart-real{background:var(--one-chart-real)}
+.one-chart-line{width:20px;height:0;border-radius:0;border-top:3px solid var(--one-chart-liquidity)}
+#cashChartLegend{margin-top:-4px;margin-bottom:9px}
+#expenseChartLegend{padding:0 0 9px;border-bottom:1px solid var(--border)}
+@media(max-width:530px){.one-chart-legend{gap:9px 13px}.one-chart-position{font-size:.62rem}}
 </style>
 </head>
 <body>
@@ -1032,7 +1055,10 @@ footer,html[data-sidebar="collapsed"] footer{
           </div>
           <div class="v7-mini-badge">6 meses</div>
         </div>
-        <canvas id="cashChart" aria-label="Evolución de la liquidez"></canvas>
+        <div class="one-chart-legend" id="cashChartLegend" aria-label="Leyenda del gráfico de liquidez">
+          <span class="one-chart-legend-item"><span class="one-chart-swatch one-chart-line" aria-hidden="true"></span>Saldo operativo · cierre de cada mes</span>
+        </div>
+        <canvas id="cashChart" aria-label="Evolución del saldo operativo al cierre de cada mes" aria-describedby="cashChartLegend"></canvas>
       </div>
       <div class="v7-card v7-insight-card" id="dashboardInsight"></div>
     </div>
@@ -1052,14 +1078,18 @@ footer,html[data-sidebar="collapsed"] footer{
       </div>
     </div>
 
-    <details class="v7-details">
+    <details class="v7-details" id="dashboardAdvancedDetails">
       <summary>Ver análisis y controles avanzados</summary>
       <div class="v7-details-body">
 
         <div class="card reconcile" id="reconcileStatus"></div>
         <div class="v7-card" style="margin-top:14px">
           <div class="v7-card-head"><div><h2>Presupuesto vs. real</h2><p>Comparación de egresos del periodo seleccionado.</p></div></div>
-          <canvas id="expenseChart" aria-label="Gráfico de egresos presupuestados y reales"></canvas>
+          <div class="one-chart-legend" id="expenseChartLegend" aria-label="Leyenda del gráfico de presupuesto frente a real">
+            <span class="one-chart-legend-item"><span class="one-chart-swatch one-chart-budget" aria-hidden="true"></span><strong>Presupuesto</strong><span class="one-chart-position">barra izquierda</span></span>
+            <span class="one-chart-legend-item"><span class="one-chart-swatch one-chart-real" aria-hidden="true"></span><strong>Real</strong><span class="one-chart-position">barra derecha</span></span>
+          </div>
+          <canvas id="expenseChart" aria-label="Comparación de egresos: barra izquierda presupuesto, barra derecha gasto real" aria-describedby="expenseChartLegend"></canvas>
         </div>
 
       </div>
@@ -3142,13 +3172,30 @@ function drawBase(canvas){
   return {ctx,w:rect.width,h:280,p:{l:48,r:16,t:20,b:38}};
 }
 function drawBarChart(canvas,labels,a,b){
-  const {ctx,w,h,p}=drawBase(canvas), max=Math.max(1,...a,...b), plotW=w-p.l-p.r, plotH=h-p.t-p.b, group=plotW/labels.length;
-  ctx.strokeStyle="#d0d5dd";ctx.fillStyle="#667085";ctx.font="12px system-ui";
-  for(let i=0;i<=4;i++){const y=p.t+plotH*i/4;ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(w-p.r,y);ctx.stroke();ctx.fillText(money(max*(1-i/4)).replace("CRC","").trim(),2,y+4)}
-  labels.forEach((l,i)=>{const bw=Math.min(24,group*.28),x=p.l+i*group+group/2;const ah=a[i]/max*plotH,bh=b[i]/max*plotH;
-    ctx.fillStyle="#2563eb";ctx.fillRect(x-bw-2,p.t+plotH-ah,bw,ah);ctx.fillStyle="#f97316";ctx.fillRect(x+2,p.t+plotH-bh,bw,bh);
-    ctx.fillStyle="#667085";ctx.textAlign="center";ctx.fillText(l,x,h-14)
-  });ctx.textAlign="left";
+  if(!canvas||canvas.getBoundingClientRect().width<40)return; // No dibujar con el panel cerrado.
+  const {ctx,w,h,p}=drawBase(canvas);
+  const theme=getComputedStyle(document.documentElement);
+  const budgetColor=theme.getPropertyValue("--one-chart-budget").trim()||"#77818b";
+  const realColor=theme.getPropertyValue("--one-chart-real").trim()||"#dce0df";
+  const gridColor=theme.getPropertyValue("--border").trim()||"#3b3b3b";
+  const labelColor=theme.getPropertyValue("--muted").trim()||"#9b9b98";
+  const max=Math.max(1,...a.map(v=>Number(v)||0),...b.map(v=>Number(v)||0));
+  const plotW=w-p.l-p.r,plotH=h-p.t-p.b,group=plotW/Math.max(1,labels.length);
+  ctx.strokeStyle=gridColor;ctx.fillStyle=labelColor;ctx.font="12px system-ui";
+  for(let i=0;i<=4;i++){
+    const y=p.t+plotH*i/4;
+    ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(w-p.r,y);ctx.stroke();
+    ctx.textAlign="left";ctx.fillText(reportMoneyShort(max*(1-i/4)),4,y+4);
+  }
+  labels.forEach((label,i)=>{
+    const bw=Math.max(5,Math.min(24,group*.28)),x=p.l+i*group+group/2;
+    const ah=Math.max(0,(Number(a[i])||0)/max*plotH),bh=Math.max(0,(Number(b[i])||0)/max*plotH);
+    // Presupuesto: izquierda. Real: derecha. Coincide con la leyenda visible.
+    ctx.fillStyle=budgetColor;ctx.fillRect(x-bw-2,p.t+plotH-ah,bw,ah);
+    ctx.fillStyle=realColor;ctx.fillRect(x+2,p.t+plotH-bh,bw,bh);
+    ctx.fillStyle=labelColor;ctx.textAlign="center";ctx.fillText(label,x,h-14);
+  });
+  ctx.textAlign="left";
 }
 function drawLineChart(canvas,labels,a,b){
   const valid=[...a,...b].filter(v=>v!==null&&v!==undefined&&Number.isFinite(Number(v))).map(Number);
@@ -3657,8 +3704,9 @@ renderDashboard=function(){
   const hist=(typeof reportMonthlySeries==="function"?reportMonthlySeries():[]).filter(r=>r.month<=todayIso().slice(0,7)).slice(-6);
   const labels=hist.map(r=>reportShortMonth(r.month));
   const balances=hist.map(r=>r.closing);
-  if(labels.length&&typeof drawReportLine==="function")drawReportLine(document.getElementById("cashChart"),labels,[{values:balances,color:"#2383e2",fill:true}]);
-  else drawLineChart(document.getElementById("cashChart"),["Hoy"],[operating],[operating]);
+  const liquidityColor=getComputedStyle(document.documentElement).getPropertyValue("--one-chart-liquidity").trim()||"#c8cfcd";
+  if(labels.length&&typeof drawReportLine==="function")drawReportLine(document.getElementById("cashChart"),labels,[{values:balances,color:liquidityColor}]);
+  else if(typeof drawReportLine==="function")drawReportLine(document.getElementById("cashChart"),["Hoy"],[{values:[operating],color:liquidityColor}]);
   document.getElementById("dashboardChartMeta").textContent=labels.length?`${labels[0]} – ${labels.at(-1)}`:"Sin historial suficiente";
 
   const usage=summary.plannedExpense?summary.realExpense/summary.plannedExpense:null;
@@ -3830,6 +3878,10 @@ function refreshV7MovementCategoryFilter(){
 }
 function initV7(){
   refreshV7MovementCategoryFilter();
+  const advancedDetails=document.getElementById("dashboardAdvancedDetails");
+  advancedDetails?.addEventListener("toggle",()=>{
+    if(advancedDetails.open&&document.getElementById("view-dashboard")?.classList.contains("active"))renderDashboard();
+  });
   const composer=document.getElementById("movementComposer");
   document.getElementById("toggleMovementComposer")?.addEventListener("click",()=>{composer.hidden=!composer.hidden;if(!composer.hidden)setTimeout(()=>document.getElementById("mDescription")?.focus(),30)});
   document.getElementById("closeMovementComposer")?.addEventListener("click",()=>composer.hidden=true);
