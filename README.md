@@ -1,13 +1,23 @@
 # one - one — Lab
 
-Laboratorio de **one - one**, software de finanzas personales desarrollado por **rastro.**
+Laboratorio de **one - one**, software de finanzas personales desarrollado por **rastro.** Esta versión mantiene categorías genéricas y almacenamiento independiente de la versión Daniel.
 
-**Concepto:** ingresos menos gastos = saldo real. El laboratorio mantiene las mismas funciones que la versión personal, con categorías genéricas y datos independientes para pruebas.
+**Versión:** v8.2.0 LAB — primera beta de módulos opcionales y Cobros.
 
-- Identidad visual: blanco, negro y escala de grises.
-- Marca de aplicación: **one - one**.
-- Versión: **v8.1.1 LAB**.
-- Datos: almacenados localmente en el navegador, separados de la versión Daniel.
-- Repositorio: conserva por compatibilidad su URL histórica `one-plus-one-lab`.
+## Navegación personalizable
 
-> No restablecer los datos del navegador para aplicar una actualización del nombre.
+- **Fijos:** Inicio, Presupuesto y Movimientos.
+- **Opcionales:** Deudas y Cobros (beta). Activá u ocultá cada uno desde **Módulos ⚙** en la barra superior.
+- Ocultar un módulo no elimina sus datos. Las preferencias se guardan en el navegador.
+
+## Cobros — Beta
+
+El módulo permite registrar persona, concepto, fecha del cargo, fecha de recordatorio, importe, moneda y notas. Los cargos pueden agruparse por persona o motivo y configurarse como mensuales. El módulo incluye estados pendiente/pagado y un recordatorio visible en Inicio para cobros vencidos o próximos.
+
+**Alcance:** los avisos aparecen dentro de la aplicación; no se envían notificaciones de sistema ni correos. Marcar un cobro como pagado no registra automáticamente un ingreso en Movimientos.
+
+## Datos
+
+Los registros se guardan localmente en el navegador, sin sincronizarse con la versión Daniel. Antes de limpiar datos o cambiar de navegador, utilizá **Respaldar** para exportar el archivo JSON. Los módulos opcionales no modifican los movimientos ni los presupuestos existentes.
+
+Repositorio: `arcereciodaniel/one-less-one-lab`.
