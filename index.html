@@ -3144,7 +3144,7 @@ function renderMovements(){
   const value=document.getElementById("movementPeriod").value;
   const type=document.getElementById("movementTypeFilter").value;
   const rows=selectedMovements(level,value).filter(m=>!type||m.type===type).sort((a,b)=>b.date.localeCompare(a.date));
-  document.getElementById("movementCount").textContent=`${rows.length} movimientos · ${selectedLabel(level,value)}`;
+  document.getElementById("movementCount").textContent=`${rows.length} movimientos`;
   document.getElementById("movementTable").innerHTML=`<thead><tr><th>Fecha</th><th>Mes presupuestario</th><th>Quincena</th><th>Tipo</th><th>Categoría</th><th>Deuda</th><th>Cuenta</th><th>Descripción</th><th>Monto</th><th></th></tr></thead><tbody>${
     rows.length?rows.map(m=>{const p=movementPeriod(m);return `<tr><td>${dateLabel(m.date)}</td><td>${p?monthLabel(p.budgetMonth):""}</td><td class="center">${p?(p.fortnight===1?"1.ª":"2.ª"):""}</td><td><span class="pill">${m.type}</span></td><td>${safe(movementCategoryName(m))}</td><td>${movementDebtName(m)}</td><td>${m.account||""}</td><td>${m.description||""}</td><td class="num">${money(movementAmountCRC(m))}${originalHint(m.amount,m.currency)}</td><td><button class="btn danger small" data-delete-movement="${m.id}">Eliminar</button></td></tr>`}).join(""):`<tr><td colspan="10" class="empty">Aún no hay movimientos en este periodo.</td></tr>`
   }</tbody>`;
@@ -4852,7 +4852,7 @@ function m2RefreshMovementToolbar(level,value){
 }
 renderMovements=function(){
   const {level,value,scope,rows}=m2FilteredMovementRows();
-  document.getElementById("movementCount").textContent=`${rows.length} movimientos · ${selectedLabel(level,value)}`;
+  document.getElementById("movementCount").textContent=`${rows.length} movimientos`;
 
   m2RefreshMovementToolbar(level,value);
   const income=rows.filter(m=>m.type==="Ingreso").reduce((s,m)=>s+movementAmountCRC(m),0);
