@@ -3878,6 +3878,7 @@ function m2OpenComposer(m=null,{repeat=false,scheduledId=""}={}){
   document.getElementById("movementComposer").hidden=false;
   const dialog=document.getElementById("movementComposerDialog");if(dialog&&!dialog.open)dialog.showModal();
   document.getElementById("mAmount").focus({preventScroll:true});
+  if(repeat)document.getElementById("mAmount").select();
 }
 
 
@@ -4273,14 +4274,14 @@ function bind(){
     const pay=e.target.closest("[data-pay-debt]");
     if(pay){
       const d=data.debts.find(x=>x.id===pay.dataset.payDebt);if(!d||debtStatus(d)==="archived")return;navigate("movements");
+      m2OpenComposer();
       document.getElementById("mType").value="Pago deuda";
       refreshMovementCategorySelect();
       document.getElementById("mDebt").value=d.id;
       const suggested=suggestDebtCategoryId(d);if(suggested)document.getElementById("mCategory").value=suggested;
       document.getElementById("mDescription").value=`Pago ${d.name}`;
-      updateMovementFields();
-      const composer=document.getElementById("movementComposer");if(composer)composer.hidden=false;
-      document.getElementById("mAmount").focus();
+      updateMovementFields();m2RefreshQuickTypes();
+      document.getElementById("mAmount").focus({preventScroll:true});
     }
   });
   document.addEventListener("change",e=>{
@@ -4769,7 +4770,7 @@ renderMovements=function(){
   const outflows=expense+debt,net=income-outflows;
   document.getElementById("movementSummary").innerHTML=[
     v7Kpi("↑","green","Ingresos",money(income),`${rows.filter(m=>m.type==="Ingreso").length} movimientos`,"good"),
-    v7Kpi("↓","red","Salidas",money(outflows),`${rows.filter(m=>m.type!=="Ingreso").length} movimientos · incluye deudas`,""),
+    v7Kpi("↓","red","Salidas",money(outflows),`${rows.filter(m=>m.type==="Gasto"||m.type==="Pago deuda").length} movimientos · incluye deudas`,""),
     v7Kpi("↗","blue","Neto",v7SignedMoney(net),`${rows.length} movimientos`,net>=0?"good":"bad")
   ].join("");
 
@@ -4921,6 +4922,8 @@ function initMovements2(){
     for(const key of ["movementDateFrom","movementDateTo","movementAccountFilter","movementCurrencyFilter","movementAmountMin","movementAmountMax","movementSearch","movementTypeFilter","movementCategoryFilter"]){
       const el=document.getElementById(key);if(el)el.value="";
     }
+    document.getElementById("movementLevel").value="month";
+    syncPeriodFilter("movement",currentFinancialContext().financialMonth);
     renderMovements();
   });
   document.getElementById("addMovementTemplateBtn")?.addEventListener("click",()=>m2OpenTemplate());
