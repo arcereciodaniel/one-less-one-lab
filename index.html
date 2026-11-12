@@ -3782,7 +3782,8 @@ function m2AddSplitRow(categoryId="",amount=""){
 }
 function m2GetSplits(){
   const box=document.getElementById("movementSplitRows");
-  if(!document.getElementById("movementSplitDetails")?.open||!box?.children.length)return {splits:[],error:""};
+  if(!document.getElementById("movementSplitDetails")?.open)return {splits:[],error:""};
+  if(!box?.children.length)return {splits:[],error:"Agregá al menos dos categorías o cerrá la opción de división."};
   const splits=[...box.querySelectorAll(".m2-split-row")].map(row=>({
     categoryId:row.querySelector(".m2-split-category").value,
     amount:Number(row.querySelector(".m2-split-amount").value)
@@ -3961,7 +3962,7 @@ function updateMovementFields(){
   if(payment){
     const d=(data.debts||[]).find(x=>x.id===debtSelect?.value);
     const suggested=suggestDebtCategoryId(d);
-    if(suggested&&categorySelect)categorySelect.value=suggested;
+    if(suggested&&categorySelect&&!document.getElementById("mEditId")?.value&&!document.getElementById("mScheduledId")?.value)categorySelect.value=suggested;
   }else if(debtSelect){debtSelect.value="";}
 }
 function refreshMovementCategorySelect(selected=""){
