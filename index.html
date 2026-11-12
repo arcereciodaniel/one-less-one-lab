@@ -1148,9 +1148,11 @@ header nav button.one-add-module-button:focus-visible{outline:2px solid var(--ac
 .one-move-dialog .m2-quick-types button{background:transparent;border:0;border-radius:7px;font-size:.76rem;padding:10px 4px}
 .one-move-dialog .m2-quick-types button.active{background:var(--surface);color:var(--text);box-shadow:0 1px 5px rgba(0,0,0,.10)}
 .one-move-dialog .m2-quick-types button[hidden]{display:none!important}
-.one-move-split-toggle{display:inline-flex;align-items:center;gap:6px;margin:-7px 0 17px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-size:.78rem;font-weight:640;border-radius:8px;padding:8px 11px}
-.one-move-split-toggle:hover{color:var(--text);background:var(--surface-hover)}
-.one-move-split-toggle[aria-pressed="true"]{background:var(--surface-2);border-color:var(--accent);color:var(--text)}
+.one-move-split-toggle{display:inline-flex;align-items:center;gap:6px;margin:-7px 0 17px;border:1px solid color-mix(in srgb,var(--accent) 38%,var(--border));background:var(--accent-soft);color:var(--accent);font-size:.79rem;font-weight:670;border-radius:8px;padding:9px 12px;transition:background .16s ease,border-color .16s ease}
+.one-move-split-toggle:hover{background:color-mix(in srgb,var(--accent) 15%,var(--surface));border-color:color-mix(in srgb,var(--accent) 65%,var(--border))}
+.one-move-split-toggle:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.one-move-split-toggle[aria-pressed="true"]{background:color-mix(in srgb,var(--accent) 17%,var(--surface));border-color:var(--accent);color:var(--accent)}
+.one-move-legacy-fields{display:none!important}
 .one-move-split-toggle[hidden],#movementSplitDetails[hidden]{display:none!important}
 .one-move-split-panel{grid-column:1/-1;padding:14px;border:1px solid var(--border);border-radius:9px;background:var(--surface-2)}
 .one-move-split-head strong{display:block;font-size:.82rem;font-weight:700;color:var(--text)}
@@ -1448,11 +1450,11 @@ header nav button.one-add-module-button:focus-visible{outline:2px solid var(--ac
           <div class="field" id="mDebtField"><label for="mDebt">¿Qué préstamo o tarjeta vas a pagar?</label><select id="mDebt"></select><small class="r8-debt-field-help">La categoría de pago se asigna automáticamente.</small></div>
           <div class="field wide"><label for="mDescription">Descripción</label><input id="mDescription" placeholder="¿En qué gastaste?"></div>
           <div class="field"><label for="mDate">Fecha</label><input type="date" id="mDate" required></div>
-          <details class="m2-more" id="movementAdvancedFields"><summary>Opciones adicionales · cuenta y método de pago</summary><div class="form-grid">
-            <div class="field"><label>Cuenta</label><select id="mAccount"></select></div>
-            <div class="field"><label>Método de pago</label><select id="mPaymentMethod"><option value="">No especificado</option><option>Transferencia</option><option>SINPE</option><option>Tarjeta de débito</option><option>Tarjeta de crédito</option><option>Efectivo</option><option>Otro</option></select></div>
-            <div class="field wide"><button type="button" class="btn secondary small" id="manageMovementAccounts">Administrar cuentas</button></div>
-          </div></details>
+          <!-- Se conservan los valores históricos al editar, pero ya no se ofrecen como opciones de captura. -->
+          <div class="one-move-legacy-fields" hidden aria-hidden="true">
+            <select id="mAccount" tabindex="-1" aria-label="Cuenta histórica"></select>
+            <select id="mPaymentMethod" tabindex="-1" aria-label="Método de pago histórico"><option value="">No especificado</option><option>Transferencia</option><option>SINPE</option><option>Tarjeta de débito</option><option>Tarjeta de crédito</option><option>Efectivo</option><option>Otro</option></select>
+          </div>
           <div class="form-actions one-move-form-actions"><button class="btn" id="movementSubmitBtn" type="submit">Registrar</button><button class="btn secondary" type="button" id="movementCancelEdit" hidden>Cancelar</button></div>
         </form>
       </div>
@@ -3886,7 +3888,6 @@ function m2ResetComposer(close=true){
   document.getElementById("movementCancelEdit").hidden=true;
   document.getElementById("movementSplitRows").innerHTML="";
   m2SetSplitMode(false,{createRows:false});
-  document.getElementById("movementAdvancedFields").open=false;
   document.getElementById("mDate").value=todayIso();
   document.getElementById("mType").value="Gasto";
   document.getElementById("mCurrency").value=displayCurrency();
@@ -3922,7 +3923,6 @@ function m2OpenComposer(m=null,{repeat=false,scheduledId=""}={}){
       m.splits.forEach(x=>m2AddSplitRow(x.categoryId,x.amount));
       m2SetSplitMode(true,{createRows:false});
     }
-    document.getElementById("movementAdvancedFields").open=!!(m.account||m.paymentMethod);
   }
   updateMovementFields();m2RefreshQuickTypes();
   document.getElementById("movementComposer").hidden=false;
