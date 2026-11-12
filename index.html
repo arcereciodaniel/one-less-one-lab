@@ -1007,7 +1007,7 @@ html[data-theme="dark"]{
   <div class="topbar">
     <div class="brand" aria-label="one - one, by rastro.">
       <div class="r8-brand-lockup"><span class="r8-wordmark">one - one</span><span class="r8-byline">by <strong>rastro.</strong></span></div>
-      <small class="brand-version">v8.1.3 LAB</small>
+      <small class="brand-version">v8.1.4 LAB</small>
     </div>
     <nav id="nav">
       <button data-view="dashboard" class="active"><span class="nav-icon" aria-hidden="true">⌂</span><span>Inicio</span></button>
@@ -1379,7 +1379,7 @@ html[data-theme="dark"]{
   </section>
 
 </main>
-<footer>one - one · by rastro. · v8.1.3 LAB · CRC/USD · Datos locales · No envía información a ningún servidor.</footer>
+<footer>one - one · by rastro. · v8.1.4 LAB · CRC/USD · Datos locales · No envía información a ningún servidor.</footer>
 </div>
 
 
@@ -1839,7 +1839,8 @@ function migrateData(raw){
     p.budgetMonth=meta.budgetMonth;p.fortnight=meta.fortnight;
     p.key=p.key||`${p.quarter||budgetQuarterFromMonth(meta.budgetMonth)}-${p.n||index+1}`;
     p.quarter=budgetQuarterFromMonth(p.budgetMonth);
-    p.date=canonicalPaymentDate(p.budgetMonth,p.fortnight);
+    // No sobreescribir fechas personalizadas válidas al recargar un presupuesto.
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(String(p.date||"")))p.date=canonicalPaymentDate(p.budgetMonth,p.fortnight);
     p.budgets=p.budgets||{};
     p.budgetCurrencies=p.budgetCurrencies&&typeof p.budgetCurrencies==="object"?p.budgetCurrencies:{};
     p.categoryBudgets=p.categoryBudgets&&typeof p.categoryBudgets==="object"?p.categoryBudgets:{};
