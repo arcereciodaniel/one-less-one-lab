@@ -1165,7 +1165,8 @@ header nav button.one-add-module-button:focus-visible{outline:2px solid var(--ac
 @media(max-width:420px){.one-move-split-panel{padding:12px 10px}.one-move-split-panel .m2-split-row{grid-template-columns:minmax(90px,1fr) minmax(78px,.75fr) 28px;gap:5px}.one-move-split-panel .m2-split-row input,.one-move-split-panel .m2-split-row select{min-width:0;font-size:.74rem;padding:7px 5px}.one-move-split-panel .m2-split-row [data-m2-remove-split]{padding:5px}}
 .one-move-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
 .one-move-form .field{min-width:0}
-.one-move-form .field.wide,.one-move-form .one-move-amount{grid-column:1/-1}
+.one-move-form .field.wide,.one-move-form .one-move-amount,.one-move-form .one-move-date,.one-move-form .one-move-category{grid-column:1/-1}
+.one-move-form .one-move-date input,.one-move-form .one-move-category select{width:100%}
 .one-move-form .one-move-amount input{font-size:1.5rem;font-weight:720;min-height:50px}
 .one-move-form .money-input{grid-template-columns:minmax(0,1fr) 100px}
 .one-move-form .m2-more{grid-column:1/-1}
@@ -1440,7 +1441,8 @@ header nav button.one-add-module-button:focus-visible{outline:2px solid var(--ac
         <form id="movementForm" class="form-grid one-move-form">
           <input type="hidden" id="mEditId"><input type="hidden" id="mScheduledId"><select id="mType" required hidden aria-hidden="true"></select>
           <div class="field one-move-amount"><label for="mAmount">Monto</label><div class="money-input"><input id="mAmount" type="number" min="0" step=".01" inputmode="decimal" placeholder="0.00" required><select id="mCurrency" aria-label="Moneda"><option value="CRC">CRC ₡</option><option value="USD">USD $</option></select></div></div>
-          <div class="field" id="mCategoryField"><label for="mCategory">Categoría</label><select id="mCategory" required></select></div>
+          <div class="field one-move-date"><label for="mDate">Fecha</label><input type="date" id="mDate" required></div>
+          <div class="field one-move-category" id="mCategoryField"><label for="mCategory">Categoría</label><select id="mCategory" required></select></div>
           <section id="movementSplitDetails" class="one-move-split-panel" hidden aria-label="División del gasto">
             <div class="one-move-split-head"><strong>Distribución del gasto</strong><span>Un solo movimiento, varias categorías</span></div>
             <div class="m2-splits" id="movementSplitRows"></div>
@@ -1449,7 +1451,6 @@ header nav button.one-add-module-button:focus-visible{outline:2px solid var(--ac
           </section>
           <div class="field" id="mDebtField"><label for="mDebt">¿Qué préstamo o tarjeta vas a pagar?</label><select id="mDebt"></select><small class="r8-debt-field-help">La categoría de pago se asigna automáticamente.</small></div>
           <div class="field wide"><label for="mDescription">Descripción</label><input id="mDescription" placeholder="¿En qué gastaste?"></div>
-          <div class="field"><label for="mDate">Fecha</label><input type="date" id="mDate" required></div>
           <!-- Se conservan los valores históricos al editar, pero ya no se ofrecen como opciones de captura. -->
           <div class="one-move-legacy-fields" hidden aria-hidden="true">
             <select id="mAccount" tabindex="-1" aria-label="Cuenta histórica"></select>
