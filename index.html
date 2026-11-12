@@ -3843,7 +3843,9 @@ function m2SplitMessage(){
   const box=document.getElementById("movementSplitRows");
   if(!box?.children.length){el.textContent="Agregá al menos dos categorías para dividir el gasto.";el.className="m2-status is-pending";return}
   const allocated=[...box.querySelectorAll(".m2-split-amount")].reduce((sum,input)=>sum+num(input.value),0);
-  const total=num(document.getElementById("mAmount")?.value),difference=Math.round((total-allocated)*100)/100;
+  const amountInput=document.getElementById("mAmount");
+  const total=num(amountInput?.value),difference=Math.round((total-allocated)*100)/100;
+  if(!amountInput?.value||total<=0){el.textContent="Ingresá el monto total y asigná cuánto corresponde a cada categoría.";el.className="m2-status is-pending";return}
   const fmt=n=>Number(n).toLocaleString("es-CR",{minimumFractionDigits:2,maximumFractionDigits:2});
   const complete=total>0&&Math.abs(difference)<.005&&box.children.length>=2;
   el.className="m2-status "+(complete?"is-complete":"is-pending");
@@ -4022,9 +4024,8 @@ function m2RefreshQuickTypes(){
   document.querySelectorAll("[data-m2-type]").forEach(b=>{const active=b.dataset.m2Type===type;b.classList.toggle("active",active);b.setAttribute("aria-pressed",String(active));b.hidden=b.dataset.m2Type==="Pago deuda"&&!oneModuleEnabled("debts")&&type!=="Pago deuda";});
   const toggle=document.getElementById("movementSplitToggle");
   if(toggle)toggle.hidden=type!=="Gasto";
-  if(type!=="Gasto"&&m2IsSplitMode())m2SetSplitMode(false,{createRows:false});
-  else if(type!=="Gasto")m2SetSplitMode(false,{createRows:false});
-  updateMovementFields();
+  if(type!=="Gasto")m2SetSplitMode(false,{createRows:false});
+  else updateMovementFields();
 }
 
 function updateMovementFields(){
