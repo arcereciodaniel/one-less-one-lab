@@ -4,10 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#191919">
-  <title>one + one · by rastro.</title>
-  <link rel="manifest" href="./site.webmanifest?v=534">
-  <meta name="apple-mobile-web-app-title" content="one + one">
-  <link rel="icon" href="data:,">
+  <meta name="application-name" content="One Less One">
+  <meta name="description" content="One Less One: organizá ingresos, gastos, presupuestos y tu saldo real en un solo lugar.">
+  <title>One Less One · by rastro.</title>
+  <link rel="manifest" href="./site.webmanifest?v=810">
+  <meta name="apple-mobile-web-app-title" content="One Less One">
+  <link rel="icon" type="image/svg+xml" href="./one-less-one-icon.svg?v=810">
   <style>
     :root{
       --navy:#17324d;--teal:#2f7477;--bg:#f5f7f9;--card:#fff;--text:#17212b;
@@ -921,7 +923,7 @@ footer,html[data-sidebar="collapsed"] footer{
  main,html[data-sidebar="collapsed"] main{padding-top:20px!important}
 }
 
-/* Product identity · one + one by rastro. */
+/* Product identity · one less one by rastro. */
 .r8-brand-lockup{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:max-content}
 .r8-brand-lockup .r8-wordmark{font-size:1.49rem;letter-spacing:-.053em;line-height:1;font-weight:760}
 .r8-byline{font-size:.64rem;line-height:1.1;color:var(--muted);letter-spacing:.01em}
@@ -1003,9 +1005,9 @@ html[data-theme="dark"]{
 <div class="app">
 <header>
   <div class="topbar">
-    <div class="brand" aria-label="one + one, by rastro.">
-      <div class="r8-brand-lockup"><span class="r8-wordmark">one + one</span><span class="r8-byline">by <strong>rastro.</strong></span></div>
-      <small class="brand-version">v8.0.5 LAB</small>
+    <div class="brand" aria-label="One Less One, by rastro.">
+      <div class="r8-brand-lockup"><span class="r8-wordmark">one less one</span><span class="r8-byline">by <strong>rastro.</strong></span></div>
+      <small class="brand-version">v8.1.0 LAB</small>
     </div>
     <nav id="nav">
       <button data-view="dashboard" class="active"><span class="nav-icon" aria-hidden="true">⌂</span><span>Inicio</span></button>
@@ -1182,7 +1184,7 @@ html[data-theme="dark"]{
       <button class="btn secondary" type="button" data-manage-categories>Administrar categorías</button>
     </div>
     <details class="v7-inline-help">
-      <summary>Cómo interpreta Rastro tus quincenas</summary>
+      <summary>Cómo interpreta One Less One tus quincenas</summary>
       <div class="note"><strong>Regla de lectura:</strong> pago del 28 = 1.ª quincena del mes siguiente; pago del 14 = 2.ª quincena del mes actual. <strong>Proyección adaptativa:</strong> al conciliar tu saldo real, ese monto se vuelve el nuevo punto de partida y se arrastra hacia las quincenas futuras.</div>
     </details>
     </details>
@@ -1210,7 +1212,7 @@ html[data-theme="dark"]{
 
     <div class="v7-card v7-composer" id="movementComposer" hidden>
       <div class="v7-card-head">
-        <div><h2>Nuevo movimiento</h2><p>Registralo una vez y Rastro actualiza el resto.</p></div>
+        <div><h2>Nuevo movimiento</h2><p>Registralo una vez y One Less One actualiza el resto.</p></div>
         <button class="v7-icon-button" id="closeMovementComposer" type="button" aria-label="Cerrar">×</button>
       </div>
       <form id="movementForm" class="form-grid">
@@ -1294,7 +1296,7 @@ html[data-theme="dark"]{
     <div class="v7-debt-list" id="debtList"></div>
 
     <details class="v7-inline-help">
-      <summary>Cómo calcula Rastro el saldo restante</summary>
+      <summary>Cómo calcula One Less One el saldo restante</summary>
       <div class="note"><strong>Pagado registrado</strong> suma únicamente los movimientos creados con tipo <em>Pago deuda</em> y vinculados a esa deuda. El saldo restante es una estimación basada en saldos iniciales y pagos vinculados. Al corregir el saldo base, revisá los pagos históricos para evitar descontarlos dos veces.</div>
     </details>
   </section>
@@ -1362,7 +1364,7 @@ html[data-theme="dark"]{
   <section class="view" id="view-categories">
     <h1>Categorías</h1>
     <p class="sub">Personaliza cómo llamas a tus ingresos, gastos y compromisos. Los ingresos también pueden tener frecuencia, monto esperado y proyección automática conectada directamente con Presupuesto.</p>
-    <div class="note"><strong>Tu personalización se conserva.</strong> Puedes mantener nombres como Ingreso Walmart, Ingreso Filtro o Préstamo BN. Rastro separa el nombre visible de su función financiera para que puedas personalizarlo sin perder historial ni romper el presupuesto.</div>
+    <div class="note"><strong>Tu personalización se conserva.</strong> Puedes mantener nombres como Ingreso Walmart, Ingreso Filtro o Préstamo BN. One Less One separa el nombre visible de su función financiera para que puedas personalizarlo sin perder historial ni romper el presupuesto.</div>
     <div class="toolbar">
       <button class="btn" id="addCategoryBtn">Nueva categoría</button>
       <div><label>Mostrar</label><select id="categoryStatusFilter"><option value="active">Activas</option><option value="archived">Archivadas</option><option value="all">Todas</option></select></div>
@@ -1376,7 +1378,7 @@ html[data-theme="dark"]{
   </section>
 
 </main>
-<footer>one + one · by rastro. · v8.0.5 LAB · CRC/USD · Datos locales · No envía información a ningún servidor.</footer>
+<footer>one + one · by rastro. · v8.1.0 LAB · CRC/USD · Datos locales · No envía información a ningún servidor.</footer>
 </div>
 
 
@@ -1415,7 +1417,7 @@ html[data-theme="dark"]{
       <div class="field"><label>Monto</label><div class="money-input"><input id="scAmount" type="number" min="0" step="0.01" required><select id="scCurrency"><option value="CRC">CRC ₡</option><option value="USD">USD $</option></select></div></div>
       <div class="field"><label>Estado</label><select id="scStatus"><option value="pending">Pendiente</option><option value="paid">Pagado</option></select></div>
       <div class="field wide">
-        <label class="check-row"><input type="checkbox" id="scRecurring"><span><strong>Repetir automáticamente cada mes</strong><small>Úsalo para suscripciones o cargos fijos. Rastro creará el cobro en los meses siguientes hasta que lo elimines/canceles.</small></span></label>
+        <label class="check-row"><input type="checkbox" id="scRecurring"><span><strong>Repetir automáticamente cada mes</strong><small>Úsalo para suscripciones o cargos fijos. One Less One creará el cobro en los meses siguientes hasta que lo elimines/canceles.</small></span></label>
       </div>
       <div class="field wide"><label>Notas</label><input id="scNotes"></div>
       <div class="dialog-actions wide"><button type="button" class="btn secondary" id="cancelSharedChargeBtn">Cancelar</button><button type="submit" class="btn">Guardar</button></div>
@@ -1530,7 +1532,7 @@ html[data-theme="dark"]{
         <label class="check-row"><input type="checkbox" id="cBudgetable"><span><strong>Incluir en Presupuesto</strong><small>Si está activo, esta categoría aparecerá como una línea editable dentro de Presupuesto. Los movimientos patrimoniales normalmente se dejan fuera.</small></span></label>
       </div>
       <div class="income-config-panel" id="incomeConfigFields" hidden>
-        <div class="income-config-head"><div><strong>Planificación del ingreso</strong><small>Configúralo una vez y Rastro podrá prellenar automáticamente tus presupuestos futuros.</small></div><span class="category-type income">Ingreso</span></div>
+        <div class="income-config-head"><div><strong>Planificación del ingreso</strong><small>Configúralo una vez y One Less One podrá prellenar automáticamente tus presupuestos futuros.</small></div><span class="category-type income">Ingreso</span></div>
         <div class="income-config-grid">
           <div class="field"><label>Tipo de ingreso</label><select id="cIncomeSubtype"><option>Salario</option><option>Negocio</option><option>Freelance</option><option>Pensión</option><option>Renta</option><option>Comisión</option><option>Otro</option></select></div>
           <div class="field"><label>Comportamiento</label><select id="cIncomeBehavior"><option value="fixed">Fijo</option><option value="variable">Variable</option></select></div>
@@ -1547,7 +1549,7 @@ html[data-theme="dark"]{
           </div>
           <div class="income-schedule" id="incomeScheduleMonthly" hidden>
             <div class="field"><label>Día de pago</label><input id="cIncomeMonthlyDay" type="number" min="1" max="31" step="1"></div>
-            <div class="income-projection-note">Rastro asignará el pago a la quincena financiera que corresponda según la fecha.</div>
+            <div class="income-projection-note">One Less One asignará el pago a la quincena financiera que corresponda según la fecha.</div>
           </div>
           <div class="income-schedule" id="incomeScheduleWeekly" hidden>
             <div class="field"><label>Día de la semana</label><select id="cIncomeWeekday"><option value="1">Lunes</option><option value="2">Martes</option><option value="3">Miércoles</option><option value="4">Jueves</option><option value="5">Viernes</option><option value="6">Sábado</option><option value="0">Domingo</option></select></div>
@@ -1562,7 +1564,7 @@ html[data-theme="dark"]{
             <div class="income-projection-note">Ideal para aguinaldos, bonos, trabajos puntuales u otros ingresos que esperas una sola vez.</div>
           </div>
           <div class="income-schedule" id="incomeScheduleIrregular" hidden>
-            <div class="income-projection-note"><strong>Ingreso irregular:</strong> permanecerá disponible en Presupuesto, pero Rastro no asumirá que llegará automáticamente. Podrás presupuestarlo manualmente en cada período.</div>
+            <div class="income-projection-note"><strong>Ingreso irregular:</strong> permanecerá disponible en Presupuesto, pero One Less One no asumirá que llegará automáticamente. Podrás presupuestarlo manualmente en cada período.</div>
           </div>
         </div>
       </div>
@@ -1575,14 +1577,14 @@ html[data-theme="dark"]{
   <div class="dialog-body">
 <button class="dialog-close" type="button" aria-label="Cerrar">×</button>
     <h2>Tipo de cambio del día</h2>
-    <p class="muted">Rastro usa compra y venta para valorar correctamente dólares por cobrar, deudas, metas y movimientos. El selector CRC/USD solo cambia la visualización; nunca reescribe el monto original.</p>
+    <p class="muted">One Less One usa compra y venta para valorar correctamente dólares por cobrar, deudas, metas y movimientos. El selector CRC/USD solo cambia la visualización; nunca reescribe el monto original.</p>
     <form id="fxForm">
       <div class="fx-grid">
         <div class="field"><label>Fecha</label><input id="fxDate" type="date" required></div>
         <div class="field"><label>Compra (CRC por USD)</label><input id="fxBuy" type="number" min="1" step="0.01" required></div>
         <div class="field"><label>Venta (CRC por USD)</label><input id="fxSell" type="number" min="1" step="0.01" required></div>
       </div>
-      <div class="fx-help" style="margin-top:12px"><strong>Compra:</strong> cuánto recibes en colones cuando entregas dólares. <strong>Venta:</strong> cuánto te cuesta comprar dólares con colones. Para la visualización general Rastro usa el punto medio entre ambos.</div>
+      <div class="fx-help" style="margin-top:12px"><strong>Compra:</strong> cuánto recibes en colones cuando entregas dólares. <strong>Venta:</strong> cuánto te cuesta comprar dólares con colones. Para la visualización general One Less One usa el punto medio entre ambos.</div>
       <div class="fx-history" id="fxHistoryList"></div>
       <div class="dialog-actions">
         <button type="button" class="btn secondary" id="useLastFxBtn">Usar último registrado</button>
@@ -3907,7 +3909,7 @@ renderDashboard=function(){
   const usage=summary.plannedExpense?summary.realExpense/summary.plannedExpense:null;
   const insight=document.getElementById("dashboardInsight");
   if(usage===null){
-    insight.innerHTML=`<div class="v7-insight-icon">↗</div><h3>Tu lectura está lista para crecer</h3><p>Definí presupuesto y registrá movimientos reales para que Rastro pueda comparar ritmo, desviaciones y proyección.</p><span class="v7-status-pill">○ Faltan datos reales</span>`;
+    insight.innerHTML=`<div class="v7-insight-icon">↗</div><h3>Tu lectura está lista para crecer</h3><p>Definí presupuesto y registrá movimientos reales para que One Less One pueda comparar ritmo, desviaciones y proyección.</p><span class="v7-status-pill">○ Faltan datos reales</span>`;
   }else if(usage<=.85){
     insight.innerHTML=`<div class="v7-insight-icon">▥</div><h3>Vas dentro de tu ritmo de gasto</h3><p>Has utilizado ${(usage*100).toFixed(0)}% del presupuesto de egresos del periodo seleccionado.</p><span class="v7-status-pill">✓ Todo se ve bien</span>`;
   }else if(usage<=1){
