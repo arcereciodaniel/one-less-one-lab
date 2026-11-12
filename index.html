@@ -928,6 +928,18 @@ footer,html[data-sidebar="collapsed"] footer{
 .r8-byline strong{font-weight:670;color:var(--text)}
 @media(max-width:590px){.r8-brand-lockup .r8-wordmark{font-size:1.31rem}.r8-byline{font-size:.61rem}}
 
+
+/* one + one · Estado por categoría visible como primer análisis */
+.rastro-category-spotlight{margin:0 0 16px;padding:20px 22px;border-radius:12px}
+.rastro-category-spotlight .v7-card-head{margin-bottom:12px}
+.rastro-category-spotlight-filters .toolbar{margin:0 0 14px;padding:0;background:transparent}
+.rastro-category-spotlight-filters .period-filter{display:flex;flex-wrap:wrap;gap:9px;align-items:flex-end;width:100%}
+.rastro-category-spotlight-filters .period-filter>div{min-width:130px;flex:0 1 190px}
+.rastro-category-spotlight .table-wrap{border-top:1px solid var(--border)}
+.rastro-category-spotlight table{min-width:660px}
+.rastro-category-spotlight th{color:var(--muted);font-weight:650;background:var(--surface-2)}
+.rastro-category-spotlight td{font-variant-numeric:tabular-nums}
+@media(max-width:680px){.rastro-category-spotlight{padding:15px 13px}.rastro-category-spotlight-filters .period-filter>div{min-width:120px;flex:1 1 140px}}
 </style>
 </head>
 <body>
@@ -988,6 +1000,29 @@ footer,html[data-sidebar="collapsed"] footer{
 
     <div class="v7-kpis" id="kpiGrid"></div>
 
+    <section class="v7-card rastro-category-spotlight" aria-labelledby="dashboardCategoryTitle">
+      <div class="v7-card-head">
+        <div><h2 id="dashboardCategoryTitle">Estado por categoría</h2><p>Presupuesto, gasto real y disponibilidad por categoría.</p></div>
+      </div>
+      <div class="rastro-category-spotlight-filters">
+        <div class="toolbar">
+          <div class="period-filter" id="dashboardFilters">
+            <div><label>Vista</label>
+              <select id="dashboardLevel">
+                <option value="quarter" selected>Trimestre</option>
+                <option value="month">Mes</option>
+                <option value="fortnight">Quincena</option>
+              </select>
+            </div>
+            <div id="dashboardQuarterWrap"><label>Trimestre</label><select id="dashboardQuarter"></select></div>
+            <div id="dashboardMonthWrap" class="month-select" hidden><label>Mes</label><select id="dashboardMonth"></select></div>
+            <div id="dashboardFortnightWrap" hidden><label>Quincena</label><select id="dashboardFortnight"><option value="1">Quincena 1</option><option value="2">Quincena 2</option></select></div>
+          </div>
+        </div>
+      </div>
+      <div class="table-wrap" id="dashboardCategories"></div>
+    </section>
+
     <div class="v7-main-grid">
       <div class="v7-card v7-chart-card">
         <div class="v7-card-head">
@@ -1020,29 +1055,13 @@ footer,html[data-sidebar="collapsed"] footer{
     <details class="v7-details">
       <summary>Ver análisis y controles avanzados</summary>
       <div class="v7-details-body">
-        <div class="toolbar">
-          <div class="period-filter" id="dashboardFilters">
-            <div><label>Vista</label>
-              <select id="dashboardLevel">
-                <option value="quarter" selected>Trimestre</option>
-                <option value="month">Mes</option>
-                <option value="fortnight">Quincena</option>
-              </select>
-            </div>
-            <div id="dashboardQuarterWrap"><label>Trimestre</label><select id="dashboardQuarter"></select></div>
-            <div id="dashboardMonthWrap" class="month-select" hidden><label>Mes</label><select id="dashboardMonth"></select></div>
-            <div id="dashboardFortnightWrap" hidden><label>Quincena</label><select id="dashboardFortnight"><option value="1">Quincena 1</option><option value="2">Quincena 2</option></select></div>
-          </div>
-        </div>
+
         <div class="card reconcile" id="reconcileStatus"></div>
         <div class="v7-card" style="margin-top:14px">
           <div class="v7-card-head"><div><h2>Presupuesto vs. real</h2><p>Comparación de egresos del periodo seleccionado.</p></div></div>
           <canvas id="expenseChart" aria-label="Gráfico de egresos presupuestados y reales"></canvas>
         </div>
-        <div class="v7-card" style="margin-top:14px">
-          <div class="v7-card-head"><div><h2>Estado por categoría</h2><p>Detalle operativo del periodo.</p></div></div>
-          <div class="table-wrap" id="dashboardCategories"></div>
-        </div>
+
       </div>
     </details>
   </section>
