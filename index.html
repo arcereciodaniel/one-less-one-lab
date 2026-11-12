@@ -1106,6 +1106,60 @@ header nav button.one-add-module-button:focus-visible{outline:2px solid var(--ac
 .m2-balance-row{display:flex;justify-content:space-between;gap:10px;font-size:.8rem;padding:8px 0;border-top:1px solid var(--border)}
 .m2-balance-row strong{font-variant-numeric:tabular-nums}
 @media(max-width:720px){.m2-split-row{grid-template-columns:1fr 1fr auto}.v7-transaction-row.m2-row{grid-template-columns:36px minmax(0,1fr) auto}.v7-transaction-row.m2-row .v7-category-chip{display:none}.m2-feed-actions{grid-column:2/-1;justify-self:end}}
+
+/* Movimientos Simple & Smart */
+.one-move-period{display:flex;align-items:center;justify-content:center;gap:14px;margin:0 0 18px}
+.one-move-period>button{width:35px;height:35px;display:grid;place-items:center;border:1px solid var(--border);border-radius:9px;background:var(--surface);color:var(--text);font-size:1.3rem}
+.one-move-period>button:disabled{opacity:.35;cursor:not-allowed}
+.one-move-period>div{display:flex;align-items:center;justify-content:center;min-width:200px;gap:10px}
+#movementPeriodHeading{text-transform:capitalize;font-size:1.02rem}
+#movementTodayPeriod{border:0;background:var(--surface-2);border-radius:6px;color:var(--muted);font-size:.7rem;padding:5px 7px}
+.one-move-kpis{grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:16px}
+.one-move-toolbar{display:flex;align-items:start;gap:10px;margin-bottom:15px;position:relative;z-index:10}
+.one-move-search{flex:1;min-width:0;height:42px}
+.one-move-search input{width:100%}
+.one-move-filters{flex:0 0 auto;position:relative}
+.one-move-filters>summary{list-style:none;display:flex;align-items:center;gap:7px;height:42px;border:1px solid var(--border);border-radius:9px;background:var(--surface);padding:0 14px;font-size:.79rem;font-weight:650;cursor:pointer}
+.one-move-filters>summary::-webkit-details-marker{display:none}
+.one-move-filter-count{border-radius:99px;background:var(--surface-hover);padding:1px 6px;font-size:.7rem}
+.one-move-filter-popover{position:absolute;right:0;top:calc(100% + 8px);width:min(590px,calc(100vw - 32px));max-height:70vh;overflow:auto;z-index:15;padding:17px;background:var(--surface);border:1px solid var(--border);border-radius:11px;box-shadow:0 15px 35px rgba(0,0,0,.14)}
+.one-move-filter-popover>p{font-size:.76rem;margin:0 0 11px}
+.one-move-filter-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.one-move-filter-grid .field{min-width:0}.one-move-filter-grid select,.one-move-filter-grid input{width:100%}
+.one-move-filter-footer{display:flex;justify-content:flex-end;gap:7px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:13px;margin-top:15px}
+.one-move-scheduled{margin-bottom:13px}.one-move-scheduled>summary{cursor:pointer;font-size:.83rem}.one-move-scheduled small{color:var(--muted);font-weight:400;margin-left:10px}.one-move-scheduled #movementTemplatesList{padding-top:12px;margin:0}
+.one-move-feed{padding:18px 20px}
+.one-move-feed .v7-transaction-row{grid-template-columns:38px minmax(0,1.2fr) minmax(90px,.6fr) auto minmax(116px,max-content)}
+.one-move-feed .m2-feed-actions{display:flex;gap:3px;align-items:center;flex-wrap:nowrap}
+.one-move-row-more{position:relative}
+.one-move-row-more>summary{list-style:none;border-radius:6px;padding:5px 8px;color:var(--muted);font-size:1rem;cursor:pointer}
+.one-move-row-more>summary::-webkit-details-marker{display:none}
+.one-move-row-menu{position:absolute;right:0;top:calc(100% + 5px);z-index:11;min-width:160px;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 10px 25px rgba(0,0,0,.15);padding:4px}
+.one-move-row-menu button{display:block;text-align:left;width:100%;border:0;padding:9px;white-space:nowrap}
+.one-move-row-menu button[data-delete-movement]{color:var(--danger)}
+.one-move-insights{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+.one-move-insights>details{min-width:0}.one-move-insights>details>summary{cursor:pointer;font-size:.84rem;font-weight:650}.one-move-insights>details>div{padding-top:12px}
+.one-move-insight-period{font-size:.72rem;color:var(--muted);margin:0 0 10px}
+.one-move-dialog{width:min(500px,calc(100vw - 28px));max-width:500px;max-height:min(90vh,780px);padding:0}
+.one-move-composer{padding:23px 25px 24px}
+.one-move-composer-head{display:flex;align-items:start;justify-content:space-between;gap:12px;margin-bottom:17px}
+.one-move-composer-head h2{margin:0 0 3px;font-size:1.3rem}.one-move-composer-head p{font-size:.77rem;margin:0}
+.one-move-dialog .m2-quick-types{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));padding:4px;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;margin-bottom:19px;gap:3px}
+.one-move-dialog .m2-quick-types button{background:transparent;border:0;border-radius:7px;font-size:.76rem;padding:10px 4px}
+.one-move-dialog .m2-quick-types button.active{background:var(--surface);color:var(--text);box-shadow:0 1px 5px rgba(0,0,0,.10)}
+.one-move-dialog .m2-quick-types button[hidden]{display:none!important}
+.one-move-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.one-move-form .field{min-width:0}
+.one-move-form .field.wide,.one-move-form .one-move-amount{grid-column:1/-1}
+.one-move-form .one-move-amount input{font-size:1.5rem;font-weight:720;min-height:50px}
+.one-move-form .money-input{grid-template-columns:minmax(0,1fr) 100px}
+.one-move-form .m2-more{grid-column:1/-1}
+.one-move-form .m2-more .form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.one-move-form .m2-more .field.wide{grid-column:1/-1}
+.one-move-form-actions{grid-column:1/-1;display:flex;gap:8px}.one-move-form-actions #movementSubmitBtn{flex:1}
+@media(max-width:950px){.one-move-feed .v7-transaction-row{grid-template-columns:38px minmax(0,1fr) auto minmax(116px,max-content)}.one-move-feed .v7-category-chip{display:none}}
+@media(max-width:650px){.one-move-insights{grid-template-columns:1fr}.one-move-feed{padding:15px 13px}.one-move-feed .v7-transaction-row{grid-template-columns:32px minmax(0,1fr) auto;gap:8px}.one-move-feed .m2-feed-actions{grid-column:2/-1;justify-content:flex-end}.one-move-composer{padding:19px 16px}.one-move-period>div{min-width:0}.one-move-scheduled small{display:block;margin:4px 0 0}}
+@media(max-width:420px){.one-move-filter-grid{grid-template-columns:1fr}.one-move-form{grid-template-columns:1fr}.one-move-form .field{grid-column:1/-1}.one-move-form .m2-more .form-grid{grid-template-columns:1fr}.one-move-dialog .m2-quick-types button{font-size:.68rem}}
 </style>
 </head>
 <body>
@@ -1317,104 +1371,73 @@ header nav button.one-add-module-button:focus-visible{outline:2px solid var(--ac
     </div>
   </section>
 
+
   <section class="view" id="view-movements">
-    <div class="v7-page-head">
-      <div>
-        <div class="v7-eyebrow">MOVIMIENTOS</div>
-        <h1>Movimientos</h1>
-        <p class="sub">Revisá todos tus ingresos y gastos reales en un solo lugar.</p>
-      </div>
-      <div class="v7-page-actions">
-        <button class="btn secondary" type="button" data-manage-categories>Categorías</button>
-        <button class="btn secondary" type="button" id="addMovementTemplateBtn">Programar frecuente</button>
-        <button class="btn" id="toggleMovementComposer" type="button">＋ Agregar movimiento</button>
-      </div>
+    <div class="v7-page-head"><div><div class="v7-eyebrow">MOVIMIENTOS</div><h1>Movimientos</h1><p class="sub">Tu actividad financiera, en orden.</p></div>
+      <div class="v7-page-actions"><button class="btn" id="toggleMovementComposer" type="button">＋ Agregar movimiento</button></div>
     </div>
-
-    <div class="v7-card v7-composer" id="movementComposer" hidden>
-      <div class="v7-card-head">
-        <div><h2 id="movementComposerTitle">Nuevo movimiento</h2><p>Registralo en segundos. Las opciones avanzadas son opcionales.</p></div>
-        <button class="v7-icon-button" id="closeMovementComposer" type="button" aria-label="Cerrar">×</button>
-      </div>
-      <div class="m2-quick-types" id="movementQuickTypes">
-          <button type="button" data-m2-type="Gasto" class="active">↓ Gasto</button>
-          <button type="button" data-m2-type="Ingreso">↑ Ingreso</button>
-          <button type="button" data-m2-type="Pago deuda">Pago deuda</button>
-        </div>
-        <form id="movementForm" class="form-grid">
-        <input type="hidden" id="mEditId"><input type="hidden" id="mScheduledId">
-        <div class="field"><label>Fecha</label><input type="date" id="mDate" required></div>
-        <div class="field"><label>Tipo</label><select id="mType" required></select></div>
-        <div class="field" id="mCategoryField"><label>Categoría</label><select id="mCategory" required></select></div>
-        <div class="field" id="mDebtField"><label>¿Qué préstamo o tarjeta vas a pagar?</label><select id="mDebt"></select><small class="r8-debt-field-help">La categoría de pago se asigna automáticamente.</small></div>
-        <details class="m2-more" id="movementAdvancedFields"><summary>Más opciones · cuenta y método de pago</summary>
-          <div class="form-grid">
-          <div class="field"><label>Cuenta</label><select id="mAccount"></select></div>
-          <div class="field"><label>Método de pago</label><select id="mPaymentMethod"><option value="">No especificado</option><option>Transferencia</option><option>SINPE</option><option>Tarjeta de débito</option><option>Tarjeta de crédito</option><option>Efectivo</option><option>Otro</option></select></div>
-          <div class="field wide"><button type="button" class="btn secondary small" id="manageMovementAccounts">Administrar cuentas</button></div>
-          </div></details>
-        <div class="field wide"><label>Descripción</label><input id="mDescription" placeholder="Ej. almuerzo, pago mínimo, salario"></div>
-        <div class="field"><label>Monto</label><div class="money-input"><input id="mAmount" type="number" min="0" step="0.01" required><select id="mCurrency"><option value="CRC">CRC ₡</option><option value="USD">USD $</option></select></div></div>
-        <details class="m2-more" id="movementSplitDetails"><summary>Dividir el gasto entre categorías</summary>
-         <p class="m2-helper">Un solo movimiento financiero; cada categoría recibe su porción. La suma debe coincidir con el monto total.</p>
-         <div class="m2-splits" id="movementSplitRows"></div>
-         <button class="btn secondary small" type="button" id="addMovementSplit">+ Otra categoría</button>
-         <div class="m2-status" id="movementSplitStatus"></div>
-        </details>
-        <div class="form-actions"><button class="btn" type="submit" id="movementSubmitBtn">Registrar</button><button type="button" class="btn secondary" id="movementCancelEdit" hidden>Cancelar edición</button></div>
-      </form>
+    <div class="one-move-period">
+      <button type="button" id="movementPreviousPeriod" aria-label="Período anterior">‹</button>
+      <div><strong id="movementPeriodHeading">Mes actual</strong><button type="button" id="movementTodayPeriod" title="Volver a este mes">Hoy</button></div>
+      <button type="button" id="movementNextPeriod" aria-label="Período siguiente">›</button>
     </div>
-
-    <div class="v7-filterbar">
-      <div class="v7-search"><span aria-hidden="true">⌕</span><input id="movementSearch" placeholder="Buscar por comercio, categoría o nota..."></div>
-      <div><label>Vista</label><select id="movementLevel"><option value="fortnight">Quincena</option><option value="month">Mes</option><option value="quarter" selected>Trimestre</option></select></div>
-      <div><label>Periodo</label><select id="movementPeriod"></select></div>
-      <div><label>Tipo</label><select id="movementTypeFilter"><option value="">Todos</option></select></div>
-      <div><label>Categoría</label><select id="movementCategoryFilter"><option value="">Todas</option></select></div>
-      <button class="btn secondary" id="exportMovementsCsv">Exportar CSV</button>
-    </div>
-
-    <div class="m2-filter-panel">
-      <div class="field"><label>Desde</label><input type="date" id="movementDateFrom"></div>
-      <div class="field"><label>Hasta</label><input type="date" id="movementDateTo"></div>
-      <div class="field"><label>Cuenta</label><select id="movementAccountFilter"><option value="">Todas</option></select></div>
-      <div class="field"><label>Moneda</label><select id="movementCurrencyFilter"><option value="">Todas</option><option value="CRC">CRC</option><option value="USD">USD</option></select></div>
-      <div class="field"><label>Mínimo original</label><input type="number" id="movementAmountMin" min="0" step=".01"></div>
-      <div class="field"><label>Máximo original</label><input type="number" id="movementAmountMax" min="0" step=".01"></div>
-      <button type="button" class="btn secondary small" id="movementClearFilters">Limpiar filtros</button>
-    </div>
-    <div class="v7-kpis" id="movementSummary"></div>
-
-    <div class="v7-card" id="movementTemplatesCard">
-       <div class="v7-card-head"><div><h2>Movimientos programados</h2><p>Recordatorios pendientes de confirmar. No afectan tu saldo hasta registrarlos.</p></div></div>
-       <div id="movementTemplatesList" class="m2-template-grid"></div>
-    </div>
-    <div class="v7-movement-layout">
-      <div class="v7-card v7-feed-card">
-        <div class="v7-card-head">
-          <div><h2>Historial</h2><p id="movementCount"></p></div>
-        </div>
-        <div class="v7-transaction-feed" id="movementFeed"></div>
-      </div>
-      <aside class="v7-stack">
-        <div class="v7-card" id="movementQuick"></div>
-        <div class="v7-card" id="movementAccountsSummary"></div>
-        <div class="v7-card">
-          <div class="v7-card-head"><div><h2>Atajos</h2><p>Vistas que usás con frecuencia.</p></div></div>
-          <div class="v7-shortcuts">
-            <button type="button" data-v7-movement-type="Gasto">Solo gastos <span>→</span></button>
-            <button type="button" data-v7-movement-type="Ingreso">Solo ingresos <span>→</span></button>
-            <button type="button" data-v7-movement-type="Pago deuda">Pagos de deuda <span>→</span></button>
-            <button type="button" data-v7-movement-type="">Todos los movimientos <span>→</span></button>
+    <div class="v7-kpis one-move-kpis" id="movementSummary"></div>
+    <div class="one-move-toolbar">
+      <div class="v7-search one-move-search"><span aria-hidden="true">⌕</span><input type="search" id="movementSearch" aria-label="Buscar movimientos" placeholder="Buscar movimientos..."></div>
+      <details id="movementFiltersDetails" class="one-move-filters">
+        <summary>☷ Filtros <span id="movementFiltersCount" class="one-move-filter-count" hidden></span></summary>
+        <div class="one-move-filter-popover"><p class="muted">Más opciones para buscar en tu historial.</p>
+          <div class="one-move-filter-grid">
+            <div class="field"><label>Agrupación</label><select id="movementLevel"><option value="month" selected>Mes</option><option value="fortnight">Quincena</option><option value="quarter">Trimestre</option></select></div>
+            <div class="field"><label>Período</label><select id="movementPeriod"></select></div>
+            <div class="field"><label>Tipo</label><select id="movementTypeFilter"><option value="">Todos</option></select></div>
+            <div class="field"><label>Categoría</label><select id="movementCategoryFilter"><option value="">Todas</option></select></div>
+            <div class="field"><label>Desde</label><input type="date" id="movementDateFrom"></div>
+            <div class="field"><label>Hasta</label><input type="date" id="movementDateTo"></div>
+            <div class="field"><label>Cuenta</label><select id="movementAccountFilter"><option value="">Todas</option></select></div>
+            <div class="field"><label>Moneda</label><select id="movementCurrencyFilter"><option value="">Todas</option><option value="CRC">CRC</option><option value="USD">USD</option></select></div>
+            <div class="field"><label>Monto mínimo</label><input type="number" min="0" step=".01" id="movementAmountMin"></div>
+            <div class="field"><label>Monto máximo</label><input type="number" min="0" step=".01" id="movementAmountMax"></div>
+          </div>
+          <div class="one-move-filter-footer">
+            <button class="btn secondary small" type="button" id="movementClearFilters">Limpiar filtros</button>
+            <button class="btn secondary small" type="button" id="exportMovementsCsv">Exportar CSV</button>
+            <button class="btn secondary small" type="button" data-manage-categories>Categorías</button>
           </div>
         </div>
-      </aside>
+      </details>
     </div>
-    <details class="v7-card m2-audit-card" id="movementAuditPanel">
-      <summary>Historial de cambios en movimientos</summary>
-      <p class="m2-helper">Registra los cambios realizados desde esta versión. No modifica tus movimientos históricos ni es una conciliación bancaria.</p>
-      <div id="movementAuditList"></div>
+    <details class="v7-card one-move-scheduled" id="movementTemplatesCard" hidden>
+      <summary><strong id="movementScheduledTitle">Programados</strong><small>Recordatorios que no afectan tu saldo hasta registrarlos.</small></summary>
+      <div id="movementTemplatesList" class="m2-template-grid"></div>
     </details>
+    <div class="v7-card v7-feed-card one-move-feed"><div class="v7-card-head"><div><h2>Historial</h2><p id="movementCount"></p></div></div><div class="v7-transaction-feed" id="movementFeed"></div></div>
+    <div class="one-move-insights">
+      <details class="v7-card"><summary>Gastos por categoría</summary><div id="movementQuick"></div></details>
+      <details class="v7-card"><summary>Actividad por cuenta</summary><div id="movementAccountsSummary"></div></details>
+    </div>
+    <details class="v7-card m2-audit-card" id="movementAuditPanel"><summary>Historial de cambios en movimientos</summary><p class="m2-helper">Registra los cambios realizados desde esta versión. No modifica tus movimientos históricos ni es una conciliación bancaria.</p><div id="movementAuditList"></div></details>
+    <dialog class="one-move-dialog" id="movementComposerDialog" aria-labelledby="movementComposerTitle">
+      <div id="movementComposer" class="one-move-composer" hidden>
+        <div class="one-move-composer-head"><div><h2 id="movementComposerTitle">Nuevo movimiento</h2><p class="muted">Registralo en segundos.</p></div><button class="v7-icon-button" id="closeMovementComposer" aria-label="Cerrar" type="button">×</button></div>
+        <div class="m2-quick-types" id="movementQuickTypes" role="group" aria-label="Tipo de movimiento"><button type="button" data-m2-type="Gasto" class="active" aria-pressed="true">Gasto</button><button type="button" data-m2-type="Ingreso" aria-pressed="false">Ingreso</button><button type="button" data-m2-type="Pago deuda" aria-pressed="false">Pago deuda</button></div>
+        <form id="movementForm" class="form-grid one-move-form">
+          <input type="hidden" id="mEditId"><input type="hidden" id="mScheduledId"><select id="mType" required hidden aria-hidden="true"></select>
+          <div class="field one-move-amount"><label for="mAmount">Monto</label><div class="money-input"><input id="mAmount" type="number" min="0" step=".01" inputmode="decimal" placeholder="0.00" required><select id="mCurrency" aria-label="Moneda"><option value="CRC">CRC ₡</option><option value="USD">USD $</option></select></div></div>
+          <div class="field" id="mCategoryField"><label for="mCategory">Categoría</label><select id="mCategory" required></select></div>
+          <div class="field" id="mDebtField"><label for="mDebt">¿Qué préstamo o tarjeta vas a pagar?</label><select id="mDebt"></select><small class="r8-debt-field-help">La categoría de pago se asigna automáticamente.</small></div>
+          <div class="field wide"><label for="mDescription">Descripción</label><input id="mDescription" placeholder="¿En qué gastaste?"></div>
+          <div class="field"><label for="mDate">Fecha</label><input type="date" id="mDate" required></div>
+          <details class="m2-more" id="movementAdvancedFields"><summary>Opciones adicionales · cuenta y método de pago</summary><div class="form-grid">
+            <div class="field"><label>Cuenta</label><select id="mAccount"></select></div>
+            <div class="field"><label>Método de pago</label><select id="mPaymentMethod"><option value="">No especificado</option><option>Transferencia</option><option>SINPE</option><option>Tarjeta de débito</option><option>Tarjeta de crédito</option><option>Efectivo</option><option>Otro</option></select></div>
+            <div class="field wide"><button type="button" class="btn secondary small" id="manageMovementAccounts">Administrar cuentas</button></div>
+          </div></details>
+          <details class="m2-more" id="movementSplitDetails"><summary>Dividir entre categorías</summary><p class="m2-helper">Un solo movimiento financiero; la suma de categorías debe coincidir con el monto total.</p><div class="m2-splits" id="movementSplitRows"></div><button class="btn secondary small" type="button" id="addMovementSplit">+ Otra categoría</button><div class="m2-status" id="movementSplitStatus"></div></details>
+          <div class="form-actions one-move-form-actions"><button class="btn" id="movementSubmitBtn" type="submit">Registrar</button><button class="btn secondary" type="button" id="movementCancelEdit" hidden>Cancelar</button></div>
+        </form>
+      </div>
+    </dialog>
   </section>
 
   <section class="view" id="view-debts">
@@ -3818,7 +3841,7 @@ function m2ResetComposer(close=true){
   document.getElementById("mType").value="Gasto";
   document.getElementById("mCurrency").value=displayCurrency();
   refreshMovementCategorySelect();refreshDebtSelect();m2RefreshAccounts("");updateMovementFields();m2RefreshQuickTypes();
-  if(close)document.getElementById("movementComposer").hidden=true;
+  if(close){const dialog=document.getElementById("movementComposerDialog");if(dialog?.open)dialog.close();document.getElementById("movementComposer").hidden=true;}
 }
 function m2OpenComposer(m=null,{repeat=false,scheduledId=""}={}){
   m2ResetComposer(false);
@@ -3853,8 +3876,8 @@ function m2OpenComposer(m=null,{repeat=false,scheduledId=""}={}){
   }
   updateMovementFields();m2RefreshQuickTypes();
   document.getElementById("movementComposer").hidden=false;
-  document.getElementById("movementComposer").scrollIntoView?.({behavior:"smooth",block:"start"});
-  document.getElementById("mAmount").focus();
+  const dialog=document.getElementById("movementComposerDialog");if(dialog&&!dialog.open)dialog.showModal();
+  document.getElementById("mAmount").focus({preventScroll:true});
 }
 
 
@@ -3905,6 +3928,7 @@ function m2RenderTemplates(){
   const box=document.getElementById("movementTemplatesList");if(!box)return;
   const items=[...(data.movementTemplates||[])].sort((a,b)=>Number(b.active)-Number(a.active)||String(a.nextDate).localeCompare(String(b.nextDate)));
   const card=document.getElementById("movementTemplatesCard");if(card)card.hidden=items.length===0;
+  const heading=document.getElementById("movementScheduledTitle");if(heading){const due=items.filter(t=>t.active&&t.nextDate<=todayIso()).length;heading.textContent=due?`Programados · ${due} por confirmar`:`Programados · ${items.length}`;}
   const freq={weekly:"Semanal",fortnightly:"Cada 14 días",monthly:"Mensual",yearly:"Anual"};
   box.innerHTML=items.length?items.map(t=>{
     const isDue=t.active&&t.nextDate<=todayIso(),cls=t.active?(isDue?" · Por confirmar":" · Próximo"):" · Pausado";
@@ -3946,7 +3970,7 @@ function m2SaveTemplate(){
 
 function m2RefreshQuickTypes(){
   const type=document.getElementById("mType")?.value;
-  document.querySelectorAll("[data-m2-type]").forEach(b=>b.classList.toggle("active",b.dataset.m2Type===type));
+  document.querySelectorAll("[data-m2-type]").forEach(b=>{const active=b.dataset.m2Type===type;b.classList.toggle("active",active);b.setAttribute("aria-pressed",String(active));b.hidden=b.dataset.m2Type==="Pago deuda"&&!oneModuleEnabled("debts")&&type!=="Pago deuda";});
   const split=document.getElementById("movementSplitDetails");
   if(split){split.hidden=type!=="Gasto";if(type!=="Gasto")split.open=false}
 }
@@ -4724,19 +4748,29 @@ renderPlan=function(){
   });
 };
 
+
+function m2RefreshMovementToolbar(level,value){
+  const label=document.getElementById("movementPeriodHeading");if(label)label.textContent=selectedLabel(level,value)||"Sin períodos";
+  const opts=filterOptions(level),i=opts.findIndex(o=>o.value===value);
+  document.getElementById("movementPreviousPeriod").disabled=i<=0;
+  document.getElementById("movementNextPeriod").disabled=i<0||i>=opts.length-1;
+  const fields=["movementTypeFilter","movementCategoryFilter","movementDateFrom","movementDateTo","movementAccountFilter","movementCurrencyFilter","movementAmountMin","movementAmountMax"];
+  const count=fields.filter(id=>!!document.getElementById(id)?.value).length+(level==="month"?0:1);
+  const badge=document.getElementById("movementFiltersCount");badge.hidden=count===0;badge.textContent=String(count);
+}
 renderMovements=function(){
   const {level,value,scope,rows}=m2FilteredMovementRows();
   document.getElementById("movementCount").textContent=`${rows.length} movimientos · ${selectedLabel(level,value)}`;
 
-  const income=scope.filter(m=>m.type==="Ingreso").reduce((s,m)=>s+movementAmountCRC(m),0);
-  const expense=scope.filter(m=>m.type==="Gasto").reduce((s,m)=>s+movementAmountCRC(m),0);
-  const debt=scope.filter(m=>m.type==="Pago deuda").reduce((s,m)=>s+movementAmountCRC(m),0);
-  const net=income-expense-debt;
+  m2RefreshMovementToolbar(level,value);
+  const income=rows.filter(m=>m.type==="Ingreso").reduce((s,m)=>s+movementAmountCRC(m),0);
+  const expense=rows.filter(m=>m.type==="Gasto").reduce((s,m)=>s+movementAmountCRC(m),0);
+  const debt=rows.filter(m=>m.type==="Pago deuda").reduce((s,m)=>s+movementAmountCRC(m),0);
+  const outflows=expense+debt,net=income-outflows;
   document.getElementById("movementSummary").innerHTML=[
-    v7Kpi("↑","green","Ingresos",money(income),`${scope.filter(m=>m.type==="Ingreso").length} movimientos`,"good"),
-    v7Kpi("↓","red","Gastos",money(expense),`${scope.filter(m=>m.type==="Gasto").length} movimientos`,""),
-    v7Kpi("▭","purple","Pagos de deuda",money(debt),`${scope.filter(m=>m.type==="Pago deuda").length} movimientos`,""),
-    v7Kpi("↗","blue","Neto",v7SignedMoney(net),`${scope.length} movimientos`,net>=0?"good":"bad")
+    v7Kpi("↑","green","Ingresos",money(income),`${rows.filter(m=>m.type==="Ingreso").length} movimientos`,"good"),
+    v7Kpi("↓","red","Salidas",money(outflows),`${rows.filter(m=>m.type!=="Ingreso").length} movimientos · incluye deudas`,""),
+    v7Kpi("↗","blue","Neto",v7SignedMoney(net),`${rows.length} movimientos`,net>=0?"good":"bad")
   ].join("");
 
   const groups=[];
@@ -4757,14 +4791,13 @@ renderMovements=function(){
         <div class="m2-feed-actions">
           <button type="button" data-m2-edit="${safe(m.id)}" title="Editar movimiento">Editar</button>
           <button type="button" data-m2-repeat="${safe(m.id)}" title="Duplicar como nuevo movimiento">Repetir</button>
-          <button type="button" data-m2-schedule="${safe(m.id)}" title="Programar este movimiento como recurrente">↻</button>
-          <button type="button" data-delete-movement="${safe(m.id)}" title="Eliminar movimiento">×</button>
+          <details class="one-move-row-more"><summary title="Más acciones" aria-label="Más acciones">···</summary><div class="one-move-row-menu"><button type="button" data-m2-schedule="${safe(m.id)}">Programar</button><button type="button" data-delete-movement="${safe(m.id)}">Eliminar</button></div></details>
          </div>
       </div>`
     }).join("")}
   </div>`).join(""):`<div class="empty">No hay movimientos que coincidan con esta vista.</div>`;
 
-  const expenseRows=scope.filter(m=>m.type==="Gasto"),tot=expenseRows.reduce((s,m)=>s+movementAmountCRC(m),0),byCat={};
+  const expenseRows=rows.filter(m=>m.type==="Gasto"),tot=expenseRows.reduce((s,m)=>s+movementAmountCRC(m),0),byCat={};
   expenseRows.forEach(m=>{
     if((m.splits||[]).length){
       const original=num(m.amount);
@@ -4772,10 +4805,10 @@ renderMovements=function(){
     }else{const k=movementCategoryName(m)||"Otros";byCat[k]=(byCat[k]||0)+movementAmountCRC(m)}
   });
   const ranked=Object.entries(byCat).sort((a,b)=>b[1]-a[1]).slice(0,5),topPct=tot&&ranked.length?Math.round(ranked[0][1]/tot*100):0;
-  document.getElementById("movementQuick").innerHTML=`<div class="v7-card-head"><div><h2>Vista rápida</h2><p>${selectedLabel(level,value)}</p></div></div>
+  document.getElementById("movementQuick").innerHTML=`<div class="one-move-insight-period">${selectedLabel(level,value)}</div>
     <div class="v7-donut-placeholder" style="--v7-pct:${topPct}%"><div class="v7-donut-center"><strong>${money(expense)}</strong><span>Gastos</span></div></div>
     <div class="v7-mini-bars">${ranked.length?ranked.map(([name,val])=>`<div class="v7-mini-bar"><div><div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:4px"><span>${v7SafeText(name)}</span><span>${tot?Math.round(val/tot*100):0}%</span></div><div class="v7-mini-bar-track"><span style="width:${tot?Math.min(100,val/tot*100):0}%"></span></div></div><strong style="font-size:.66rem;text-align:right">${money(val)}</strong></div>`).join(""):`<div class="muted" style="font-size:.72rem">Todavía no hay gastos reales en este periodo.</div>`}</div>`;
-  m2RenderAccountSummary(scope);m2RenderTemplates();m2RenderAudit();
+  m2RenderAccountSummary(rows);m2RenderTemplates();m2RenderAudit();
 };
 
 renderDebts=function(){
@@ -4844,13 +4877,15 @@ function refreshV7MovementCategoryFilter(){
 function initMovements2(){
   const form=document.getElementById("movementForm"),composer=document.getElementById("movementComposer");
   m2ResetComposer(true);
+  document.getElementById("movementLevel").value="month";
+  syncPeriodFilter("movement",currentFinancialContext().financialMonth);
   m2RefreshAccounts("");
   m2RenderTemplates();
-  document.getElementById("toggleMovementComposer")?.addEventListener("click",()=>{
-    // El listener de la interfaz principal ya alternó el panel.
-    if(!composer.hidden)m2OpenComposer();
-  });
+  document.getElementById("toggleMovementComposer")?.addEventListener("click",()=>m2OpenComposer());
   document.getElementById("closeMovementComposer")?.addEventListener("click",()=>m2ResetComposer());
+  const dialog=document.getElementById("movementComposerDialog");
+  dialog?.addEventListener("cancel",e=>{e.preventDefault();m2ResetComposer()});
+  dialog?.addEventListener("click",e=>{if(e.target===dialog)m2ResetComposer()});
   document.getElementById("movementCancelEdit")?.addEventListener("click",()=>m2ResetComposer());
   document.querySelectorAll("[data-m2-type]").forEach(btn=>btn.addEventListener("click",()=>{
     document.getElementById("mType").value=btn.dataset.m2Type;
@@ -4935,15 +4970,18 @@ function initV7(){
   advancedDetails?.addEventListener("toggle",()=>{
     if(advancedDetails.open&&document.getElementById("view-dashboard")?.classList.contains("active"))renderDashboard();
   });
-  const composer=document.getElementById("movementComposer");
-  document.getElementById("toggleMovementComposer")?.addEventListener("click",()=>{composer.hidden=!composer.hidden;if(!composer.hidden)setTimeout(()=>document.getElementById("mDescription")?.focus(),30)});
-  document.getElementById("closeMovementComposer")?.addEventListener("click",()=>composer.hidden=true);
   document.getElementById("movementSearch")?.addEventListener("input",renderMovements);
   document.getElementById("movementCategoryFilter")?.addEventListener("change",renderMovements);
-  document.querySelectorAll("[data-v7-movement-type]").forEach(btn=>btn.addEventListener("click",()=>{
-    document.getElementById("movementTypeFilter").value=btn.dataset.v7MovementType||"";
-    renderMovements();
-  }));
+  const step=delta=>{
+    const level=document.getElementById("movementLevel").value,select=document.getElementById("movementPeriod");
+    const options=filterOptions(level),index=options.findIndex(o=>o.value===select.value),next=options[index+delta];
+    if(next){select.value=next.value;renderMovements();}
+  };
+  document.getElementById("movementPreviousPeriod")?.addEventListener("click",()=>step(-1));
+  document.getElementById("movementNextPeriod")?.addEventListener("click",()=>step(1));
+  document.getElementById("movementTodayPeriod")?.addEventListener("click",()=>{document.getElementById("movementLevel").value="month";syncPeriodFilter("movement",currentFinancialContext().financialMonth);renderMovements()});
+  document.addEventListener("click",e=>{if(!e.target.closest(".one-move-filters"))document.getElementById("movementFiltersDetails")?.removeAttribute("open");if(!e.target.closest(".one-move-row-more"))document.querySelectorAll(".one-move-row-more[open]").forEach(d=>d.open=false)});
+
 
 }
 
