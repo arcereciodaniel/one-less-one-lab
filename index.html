@@ -1007,7 +1007,17 @@ html[data-theme="dark"]{
 #view-shared.active{display:block!important}
 .v7-bottom-grid.one-single-column{grid-template-columns:1fr}
 .one-beta-tag{display:inline-block;margin-left:5px;padding:2px 6px;border:1px solid var(--border);border-radius:5px;color:var(--muted);font-size:.61rem;font-weight:750;vertical-align:middle}
-#manageModulesBtn{white-space:nowrap;font-size:.7rem;font-weight:650}
+/* Acceso discreto a las herramientas opcionales, junto a Movimientos. */
+header nav button.one-add-module-button{
+  display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;
+  width:32px;min-width:32px;height:32px;margin-left:4px;padding:0!important;
+  border:1px solid var(--border)!important;border-radius:8px!important;
+  background:var(--surface-2)!important;color:var(--text)!important;
+  font-size:1.4rem!important;font-weight:450;line-height:1;letter-spacing:0;
+}
+header nav button.one-add-module-button:hover,
+header nav button.one-add-module-button[aria-expanded="true"]{background:var(--surface-hover)!important;border-color:var(--muted)!important}
+header nav button.one-add-module-button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .one-modules-dialog{width:min(520px,calc(100vw - 30px));max-height:85vh;overflow:auto;padding:0;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text)}
 .one-modules-dialog header{position:static!important;display:block!important;padding:20px 22px!important;background:var(--surface)!important;border-bottom:1px solid var(--border)!important;width:auto!important}
 .one-modules-dialog h2{margin:0 0 7px;font-size:1.2rem}
@@ -1042,17 +1052,17 @@ html[data-theme="dark"]{
   <div class="topbar">
     <div class="brand" aria-label="one - one, by rastro.">
       <div class="r8-brand-lockup"><span class="r8-wordmark">one - one</span><span class="r8-byline">by <strong>rastro.</strong></span></div>
-      <small class="brand-version">v8.2.0 LAB</small>
+      <small class="brand-version">v8.2.1 LAB</small>
     </div>
     <nav id="nav">
       <button data-view="dashboard" class="active"><span class="nav-icon" aria-hidden="true">⌂</span><span>Inicio</span></button>
       <button data-view="plan"><span class="nav-icon" aria-hidden="true">◔</span><span>Presupuesto</span></button>
       <button data-view="movements"><span class="nav-icon" aria-hidden="true">≡</span><span>Movimientos</span></button>
+      <button type="button" id="manageModulesBtn" class="one-add-module-button" title="Agregar o quitar herramientas" aria-label="Agregar o quitar herramientas" aria-haspopup="dialog" aria-controls="modulesDialog" aria-expanded="false">+</button>
       <button data-view="debts" data-optional-module="debts"><span class="nav-icon" aria-hidden="true">▭</span><span>Deudas</span></button>
       <button data-view="shared" data-optional-module="shared"><span class="nav-icon" aria-hidden="true">◷</span><span>Cobros <span class="one-beta-tag">BETA</span></span></button>
     </nav>
     <div class="header-actions">
-        <button type="button" id="manageModulesBtn" title="Habilitar u ocultar módulos">Módulos ⚙</button>
         <div class="ui-switch" aria-label="Tema">
         <button type="button" data-theme-choice="light" title="Tema claro">☀</button>
         <button type="button" data-theme-choice="dark" title="Tema oscuro">☾</button>
@@ -1426,12 +1436,12 @@ html[data-theme="dark"]{
   </section>
 
 </main>
-<footer>one - one · by rastro. · v8.2.0 LAB · CRC/USD · Datos locales · No envía información a ningún servidor.</footer>
+<footer>one - one · by rastro. · v8.2.1 LAB · CRC/USD · Datos locales · No envía información a ningún servidor.</footer>
 </div>
 
 
 <dialog id="modulesDialog" class="one-modules-dialog" aria-labelledby="modulesDialogTitle">
-  <div style="padding:20px 22px;border-bottom:1px solid var(--border)"><h2 id="modulesDialogTitle">Personalizar módulos</h2><p>Elegí qué herramientas se muestran. Al ocultar un módulo se conservan todos los datos.</p></div>
+  <div style="padding:20px 22px;border-bottom:1px solid var(--border)"><h2 id="modulesDialogTitle">Herramientas adicionales</h2><p>Activá las herramientas que querés utilizar. Podés ocultarlas cuando no las necesités sin perder sus datos.</p></div>
   <div class="one-module-fixed"><strong>Siempre visibles:</strong> Inicio · Presupuesto · Movimientos</div>
   <label class="one-module-item"><input type="checkbox" id="moduleDebtsToggle"><span><strong>Deudas</strong><small>Préstamos, tarjetas y pagos pendientes.</small></span></label>
   <label class="one-module-item"><input type="checkbox" id="moduleCollectionsToggle"><span><strong>Cobros · Beta</strong><small>Personas, cargos compartidos, recurrencias y recordatorios en Inicio.</small></span></label>
@@ -1698,7 +1708,12 @@ function oneSetModuleEnabled(name,value){
 }
 function initModulesBeta(){
   oneRefreshModuleVisibility();
-  document.getElementById("manageModulesBtn")?.addEventListener("click",()=>{oneRefreshModuleVisibility();document.getElementById("modulesDialog")?.showModal()});
+  const addButton=document.getElementById("manageModulesBtn"),modal=document.getElementById("modulesDialog");
+  addButton?.addEventListener("click",()=>{
+    oneRefreshModuleVisibility();
+    if(!modal?.open){modal?.showModal();addButton.setAttribute("aria-expanded","true")}
+  });
+  modal?.addEventListener("close",()=>{addButton?.setAttribute("aria-expanded","false");addButton?.focus()});
   document.getElementById("moduleDebtsToggle")?.addEventListener("change",e=>oneSetModuleEnabled("debts",e.target.checked));
   document.getElementById("moduleCollectionsToggle")?.addEventListener("change",e=>oneSetModuleEnabled("shared",e.target.checked));
   document.getElementById("closeModulesBtn")?.addEventListener("click",()=>document.getElementById("modulesDialog")?.close());
@@ -2592,7 +2607,7 @@ function syncQuarterSelectors(){
 function navigate(view){
   if(ONE_OPTIONAL_MODULES.has(view)&&!oneModuleEnabled(view))view="dashboard";
   document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id===`view-${view}`));
-  document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===view));
+  document.querySelectorAll("#nav button[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===view));
   if(view==="dashboard")renderDashboard();
   if(view==="plan")renderPlan();
   if(view==="movements")renderMovements();
@@ -3506,7 +3521,7 @@ function bind(){
   if(categoryManager&&categoryManagerMount&&categoryView)categoryManagerMount.appendChild(categoryView);
   document.querySelectorAll("[data-manage-categories]").forEach(btn=>btn.addEventListener("click",()=>{renderCategories();categoryManager?.showModal()}));
   document.getElementById("closeCategoryManager")?.addEventListener("click",()=>categoryManager?.close());
-  document.querySelectorAll("#nav button").forEach(b=>b.addEventListener("click",()=>navigate(b.dataset.view)));
+  document.querySelectorAll("#nav button[data-view]").forEach(b=>b.addEventListener("click",()=>navigate(b.dataset.view)));
   syncQuarterSelectors();
   fillSelect(document.getElementById("mType"),MOVEMENT_TYPES);
   refreshMovementCategorySelect();
