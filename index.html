@@ -2955,6 +2955,67 @@ function setAllPlanMonths(open){
   document.querySelectorAll("#planMonths .plan-month").forEach(section=>setPlanMonthOpen(section,open,true));
 }
 
+
+/* Mes -> mes: solo asignaciones presupuestarias, no dinero realmente registrado. */
+function oneBudgetMonthPeriods(month,raw=data){
+  return (raw.periods||[]).filter(p=>(p.budgetMonth||deriveBudgetMeta(p).budgetMonth)===month)
+    .sort((a,b)=>Number(a.fortnight)-Number(b.fortnight));
+}
+function oneCanCopyBudgetMonth(month,raw=data){
+  const prev=shiftMonthKey(month,-1);
+  const source=oneBudgetMonthPeriods(prev,raw),target=oneBudgetMonthPeriods(month,raw);
+  return !!month&&month>=currentFinancialContext().financialMonth&&source.length===2&&target.length===2&&
+    new Set(source.map(p=>Number(p.fortnight))).size===2&&
+    target.every(p=>source.some(s=>Number(s.fortnight)===Number(p.fortnight)));
+}
+function oneOpenCopyBudgetMonth(month){
+  if(!oneCanCopyBudgetMonth(month))return alert("Necesitás dos quincenas configuradas en ambos meses y un mes de destino actual o futuro.");
+  const from=shiftMonthKey(month,-1),source=oneBudgetMonthPeriods(from),target=oneBudgetMonthPeriods(month),dialog=document.getElementById("copyBudgetDialog");
+  const eligible=(data.categories||[]).filter(c=>["Ingreso","Gasto","Pago deuda"].includes(c.type));
+  const count=source.reduce((n,p)=>n+eligible.filter(c=>Math.abs(num(p.categoryBudgets?.[c.id]))>.005&&
+    !(c.type==="Ingreso"&&p.categoryBudgetSources?.[c.id]==="auto")).length,0);
+  const existing=target.some(p=>eligible.some(c=>Math.abs(num(p.categoryBudgets?.[c.id]))>.005));
+  dialog.dataset.targetMonth=month;
+  document.getElementById("copyBudgetContext").textContent=monthLabel(from)+" → "+monthLabel(month);
+  document.getElementById("copyBudgetPreview").innerHTML=
+    `<div><span>Quincenas</span><strong>2</strong></div><div><span>Importes manuales por copiar</span><strong>${count}</strong></div>
+    <div><span>Presupuesto de destino</span><strong>${existing?"Reemplazará asignaciones":"Sin asignaciones"}</strong></div>`;
+  dialog.showModal();
+}
+function oneApplyCopyBudgetMonth(month){
+  if(!oneCanCopyBudgetMonth(month))return false;
+  const source=oneBudgetMonthPeriods(shiftMonthKey(month,-1));
+  const target=oneBudgetMonthPeriods(month);
+  const cats=(data.categories||[]).filter(c=>["Ingreso","Gasto","Pago deuda"].includes(c.type));
+  const staged=target.map(p=>{
+    const src=source.find(r=>Number(r.fortnight)===Number(p.fortnight));
+    const budgets={...(p.categoryBudgets||{})},currencies={...(p.categoryBudgetCurrencies||{})};
+    const sources={...(p.categoryBudgetSources||{})},dates={...(p.categoryBudgetScheduledDates||{})};
+    for(const c of cats){
+      const cid=c.id;
+      if(c.type==="Ingreso"&&src.categoryBudgetSources?.[cid]==="auto"){
+        delete budgets[cid];delete currencies[cid];sources[cid]="auto";delete dates[cid];
+        continue;
+      }
+      if(Object.prototype.hasOwnProperty.call(src.categoryBudgets||{},cid)){
+        budgets[cid]=num(src.categoryBudgets[cid]);
+        currencies[cid]=normalizeCurrency(src.categoryBudgetCurrencies?.[cid]||"CRC");
+      }else{delete budgets[cid];delete currencies[cid]}
+      if(c.type==="Ingreso")sources[cid]="manual";
+      else delete sources[cid];
+      delete dates[cid];
+    }
+    return {p,budgets,currencies,sources,dates};
+  });
+  for(const row of staged){
+    row.p.categoryBudgets=row.budgets;row.p.categoryBudgetCurrencies=row.currencies;
+    row.p.categoryBudgetSources=row.sources;row.p.categoryBudgetScheduledDates=row.dates;
+  }
+  syncIncomeProjectionsForData(data);
+  save();renderPlan();renderDashboard();
+  return true;
+}
+
 function r8BudgetLine(category,period){
   const key=periodKey(period),cid=category.id,currency=normalizeCurrency(period.categoryBudgetCurrencies?.[cid]||"CRC");
   const amount=num(period.categoryBudgets?.[cid]);
@@ -3080,6 +3141,7 @@ function renderPlan(){
         <h2>${monthLabel(month)}</h2>
         <div class="r8-month-actions">
           <span class="r8-month-flow">Flujo previsto: <strong class="${flow<0?"negative":""}">${flow>=0?"+":""}${money(flow)}</strong></span>
+          ${oneCanCopyBudgetMonth(month)?`<button type="button" class="r8-month-copy" data-copy-budget-month="${month}" title="Copiar la planificación del mes anterior">Copiar mes anterior</button>`:""}
           <button class="r8-month-toggle plan-month-toggle" type="button" data-toggle-plan-month="${month}" aria-expanded="true">Ocultar detalle</button>
         </div>
       </div>
@@ -3100,6 +3162,13 @@ function renderPlan(){
 
 function initR8(){
   const levelControl=document.getElementById("planLevel");
+  const copyDialog=document.getElementById("copyBudgetDialog");
+  document.getElementById("closeCopyBudgetDialog")?.addEventListener("click",()=>copyDialog.close());
+  document.getElementById("cancelCopyBudget")?.addEventListener("click",()=>copyDialog.close());
+  document.getElementById("copyBudgetForm")?.addEventListener("submit",e=>{
+    e.preventDefault();
+    if(oneApplyCopyBudgetMonth(copyDialog?.dataset.targetMonth||""))copyDialog.close();
+  });
   updateMovementFields();
   document.querySelectorAll("[data-r8-plan-level]").forEach(b=>b.addEventListener("click",()=>{
     const next=b.dataset.r8PlanLevel;if(!next||!levelControl)return;
@@ -3131,6 +3200,8 @@ function initR8(){
     renderPlan();
   }));
   document.getElementById("planMonths")?.addEventListener("click",(event)=>{
+    const copy=event.target.closest("[data-copy-budget-month]");
+    if(copy){oneOpenCopyBudgetMonth(copy.dataset.copyBudgetMonth);return}
     const edit=event.target.closest("[data-r8-edit-budget]");
     if(edit){
       const cell=edit.closest(".r8-edit-cell"),controls=cell?.querySelector(".r8-edit-controls");
