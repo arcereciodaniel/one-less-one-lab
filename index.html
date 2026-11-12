@@ -967,6 +967,18 @@ html[data-theme="dark"]{
 #view-dashboard #kpiGrid{grid-template-columns:repeat(3,minmax(0,1fr))}
 @media(max-width:760px){#view-dashboard #kpiGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:480px){#view-dashboard #kpiGrid{grid-template-columns:1fr}}
+/* one + one: presupuesto frente a real junto al estado por categoría */
+.one-dashboard-analytics-grid{display:grid;grid-template-columns:minmax(0,.92fr) minmax(0,1.18fr);align-items:stretch;gap:16px;margin-bottom:16px}
+.one-dashboard-analytics-grid>.v7-card{min-width:0;height:100%;margin:0!important;padding:20px 22px;box-shadow:none}
+.one-dashboard-budget-chart .one-chart-legend{margin:3px 0 12px}
+.one-dashboard-budget-chart canvas{width:100%;height:280px}
+.one-dashboard-category-card table{min-width:620px}
+.one-dashboard-category-card th,.one-dashboard-category-card td{padding:9px 8px}
+.one-dashboard-reconcile-details{margin-top:14px}
+.one-dashboard-reconcile-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 14px}
+.one-dashboard-reconcile-toolbar p{margin:0;font-size:.76rem;color:var(--muted)}
+@media(max-width:1120px){.one-dashboard-analytics-grid{grid-template-columns:1fr}}
+@media(max-width:680px){.one-dashboard-analytics-grid>.v7-card{padding:15px 13px}}
 </style>
 </head>
 <body>
@@ -1011,7 +1023,7 @@ html[data-theme="dark"]{
         <p class="sub">Comprendé tu flujo de dinero y tomá mejores decisiones para lo que viene.</p>
       </div>
       <div class="v7-page-actions">
-        <button class="btn secondary" id="reconcileBtn">Actualizar saldo real</button>
+        
         <button class="btn secondary" id="printBtn">Imprimir / PDF</button>
       </div>
     </div>
@@ -1027,9 +1039,18 @@ html[data-theme="dark"]{
 
     <div class="v7-kpis" id="kpiGrid"></div>
 
-    <section class="v7-card rastro-category-spotlight" aria-labelledby="dashboardCategoryTitle">
+    <div class="one-dashboard-analytics-grid">
+      <section class="v7-card v7-chart-card one-dashboard-budget-chart" aria-labelledby="oneBudgetChartTitle">
+<div class="v7-card-head"><div><h2 id="oneBudgetChartTitle">Presupuesto vs. real</h2><p>Comparación de egresos del periodo seleccionado.</p></div></div>
+          <div class="one-chart-legend" id="expenseChartLegend" aria-label="Leyenda del gráfico de presupuesto frente a real">
+            <span class="one-chart-legend-item"><span class="one-chart-swatch one-chart-budget" aria-hidden="true"></span><strong>Presupuesto</strong></span>
+            <span class="one-chart-legend-item"><span class="one-chart-swatch one-chart-real" aria-hidden="true"></span><strong>Real</strong></span>
+          </div>
+          <canvas id="expenseChart" aria-label="Comparación de egresos: barra izquierda presupuesto, barra derecha gasto real" aria-describedby="expenseChartLegend"></canvas>
+      </section>
+<section class="v7-card rastro-category-spotlight one-dashboard-category-card" aria-labelledby="dashboardCategoryTitle">
       <div class="v7-card-head">
-        <div><h2 id="dashboardCategoryTitle">Estado por categoría</h2><p>Presupuesto, gasto real y disponibilidad por categoría.</p></div>
+        <div><h2 id="dashboardCategoryTitle">Estado por categoría</h2><p>Presupuesto, gasto real y disponibilidad.</p></div>
       </div>
       <div class="rastro-category-spotlight-filters">
         <div class="toolbar">
@@ -1049,6 +1070,7 @@ html[data-theme="dark"]{
       </div>
       <div class="table-wrap" id="dashboardCategories"></div>
     </section>
+    </div>
 
     <div class="v7-main-grid">
       <div class="v7-card v7-chart-card">
@@ -1082,20 +1104,14 @@ html[data-theme="dark"]{
       </div>
     </div>
 
-    <details class="v7-details" id="dashboardAdvancedDetails">
-      <summary>Ver análisis y controles avanzados</summary>
+    <details class="v7-details one-dashboard-reconcile-details" id="dashboardAdvancedDetails">
+      <summary>Conciliación de saldo</summary>
       <div class="v7-details-body">
-
-        <div class="card reconcile" id="reconcileStatus"></div>
-        <div class="v7-card" style="margin-top:14px">
-          <div class="v7-card-head"><div><h2>Presupuesto vs. real</h2><p>Comparación de egresos del periodo seleccionado.</p></div></div>
-          <div class="one-chart-legend" id="expenseChartLegend" aria-label="Leyenda del gráfico de presupuesto frente a real">
-            <span class="one-chart-legend-item"><span class="one-chart-swatch one-chart-budget" aria-hidden="true"></span><strong>Presupuesto</strong></span>
-            <span class="one-chart-legend-item"><span class="one-chart-swatch one-chart-real" aria-hidden="true"></span><strong>Real</strong></span>
-          </div>
-          <canvas id="expenseChart" aria-label="Comparación de egresos: barra izquierda presupuesto, barra derecha gasto real" aria-describedby="expenseChartLegend"></canvas>
+        <div class="one-dashboard-reconcile-toolbar">
+          <p>Actualizá el saldo operativo cuando necesités conciliar tus movimientos.</p>
+          <button class="btn secondary" id="reconcileBtn">Actualizar saldo real</button>
         </div>
-
+        <div class="card reconcile" id="reconcileStatus"></div>
       </div>
     </details>
   </section>
