@@ -955,14 +955,13 @@ html[data-theme="dark"]{
 .one-chart-legend{display:flex;align-items:center;gap:11px 22px;flex-wrap:wrap;margin:0 0 13px;color:var(--muted);font-size:.74rem}
 .one-chart-legend-item{display:inline-flex;gap:7px;align-items:center;min-width:0}
 .one-chart-legend-item strong{color:var(--text);font-size:.74rem;font-weight:650}
-.one-chart-position{font-size:.66rem;color:var(--muted)}
 .one-chart-swatch{display:inline-block;width:12px;height:12px;border-radius:3px;flex:0 0 auto}
 .one-chart-budget{background:var(--one-chart-budget)}
 .one-chart-real{background:var(--one-chart-real)}
 .one-chart-line{width:20px;height:0;border-radius:0;border-top:3px solid var(--one-chart-liquidity)}
 #cashChartLegend{margin-top:-4px;margin-bottom:9px}
 #expenseChartLegend{padding:0 0 9px;border-bottom:1px solid var(--border)}
-@media(max-width:530px){.one-chart-legend{gap:9px 13px}.one-chart-position{font-size:.62rem}}
+@media(max-width:530px){.one-chart-legend{gap:9px 13px}}
 </style>
 </head>
 <body>
@@ -1086,8 +1085,8 @@ html[data-theme="dark"]{
         <div class="v7-card" style="margin-top:14px">
           <div class="v7-card-head"><div><h2>Presupuesto vs. real</h2><p>Comparación de egresos del periodo seleccionado.</p></div></div>
           <div class="one-chart-legend" id="expenseChartLegend" aria-label="Leyenda del gráfico de presupuesto frente a real">
-            <span class="one-chart-legend-item"><span class="one-chart-swatch one-chart-budget" aria-hidden="true"></span><strong>Presupuesto</strong><span class="one-chart-position">barra izquierda</span></span>
-            <span class="one-chart-legend-item"><span class="one-chart-swatch one-chart-real" aria-hidden="true"></span><strong>Real</strong><span class="one-chart-position">barra derecha</span></span>
+            <span class="one-chart-legend-item"><span class="one-chart-swatch one-chart-budget" aria-hidden="true"></span><strong>Presupuesto</strong></span>
+            <span class="one-chart-legend-item"><span class="one-chart-swatch one-chart-real" aria-hidden="true"></span><strong>Real</strong></span>
           </div>
           <canvas id="expenseChart" aria-label="Comparación de egresos: barra izquierda presupuesto, barra derecha gasto real" aria-describedby="expenseChartLegend"></canvas>
         </div>
