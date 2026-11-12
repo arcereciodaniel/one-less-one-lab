@@ -4838,6 +4838,8 @@ renderDashboard=function(){
   const realExpenses=periodMovs.filter(m=>m.type==="Gasto").reduce((s,m)=>s+movementAmountCRC(m),0);
   const debtPaid=periodMovs.filter(m=>m.type==="Pago deuda").reduce((s,m)=>s+movementAmountCRC(m),0);
   const operatingFlow=realIncome-realExpenses-debtPaid;
+  const plannedExpensesOnly=summary.rows.reduce((sum,p)=>sum+
+    budgetCategories("Gasto",p).reduce((part,c)=>part+periodCategoryBudgetCRC(p,c.id,"pay"),0),0);
 
   document.getElementById("dashboardHeroValue").textContent=money(operating);
   const deltaEl=document.getElementById("dashboardHeroDelta");
@@ -4854,9 +4856,9 @@ renderDashboard=function(){
     : `<strong>Tu liquidez operativa está en negativo.</strong><span>Conviene revisar el siguiente pago, el gasto variable y cualquier ingreso pendiente antes de asumir nuevos compromisos.</span>`;
 
   document.getElementById("kpiGrid").innerHTML=[
-    v7Kpi("↑","green","Ingresos del periodo",money(realIncome||summary.plannedIncome),realIncome?"Registrados":"Según presupuesto",realIncome?"good":""),
-    v7Kpi("↓","red","Gastos del periodo",money(realExpenses||summary.realExpense),realExpenses?"Registrados":"Sin movimientos",""),
-    v7Kpi("▭","purple","Pagos de deuda",money(debtPaid),`${periodMovs.filter(m=>m.type==="Pago deuda").length} movimientos`,"")
+    v7Kpi("↑","green","Ingresos reales",money(realIncome),realIncome?"Registrados · plan: "+money(summary.plannedIncome):"Sin ingresos registrados · plan: "+money(summary.plannedIncome),realIncome?"good":""),
+    v7Kpi("↓","red","Gastos reales",money(realExpenses),realExpenses?"Registrados · plan: "+money(plannedExpensesOnly):"Sin gastos registrados · plan: "+money(plannedExpensesOnly),""),
+    v7Kpi("▭","purple","Pagos de deuda reales",money(debtPaid),`${periodMovs.filter(m=>m.type==="Pago deuda").length} pagos registrados`,"")
   ].join("");
 
   const hist=liquidityHistorySeries(6);
