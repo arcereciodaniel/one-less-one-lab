@@ -2,13 +2,23 @@
 
 Laboratorio de **one - one**, software de finanzas personales desarrollado por **rastro.** Esta versión mantiene categorías genéricas y almacenamiento independiente de la versión Daniel.
 
-**Versión:** v8.3.0 LAB — Cobros 2.0 beta, con organización por personas, abonos parciales e indicadores de recuperación.
+**Versión:** v8.4.0 LAB — Movimientos 2.0 y Cobros 2.0 beta.
 
 ## Navegación personalizable
 
 - **Fijos:** Inicio, Presupuesto y Movimientos.
-- **Opcionales:** Deudas y Cobros (beta). Activá u ocultá cada uno desde **Módulos ⚙** en la barra superior.
+- **Opcionales:** Deudas y Cobros (beta). Activá u ocultá cada uno desde el botón **+** del menú, después del último módulo visible.
 - Ocultar un módulo no elimina sus datos. Las preferencias se guardan en el navegador.
+
+## Movimientos 2.0
+
+- Registro rápido de gastos, ingresos y pagos de deudas, con cuenta y método de pago opcionales.
+- **Editar**, **Repetir** y **Programar** desde el historial. La edición y eliminación generan un registro local de cambios.
+- Plantillas recurrentes semanales, cada 14 días, mensuales o anuales. **Nunca generan movimientos reales sin confirmación**; al registrarlas, se calcula la próxima fecha.
+- Distribución de un gasto entre varias categorías: la suma debe coincidir exactamente con el movimiento original y la liquidez se descuenta **una sola vez**.
+- Filtros por período, tipo, categoría, fecha, cuenta, moneda, texto y monto original. El CSV exporta la selección filtrada.
+- Cuentas configurables y método de pago. La actividad neta por cuenta **no equivale a un saldo bancario conciliado**.
+- Advertencias ante posibles duplicados y registro local de creaciones, ediciones y eliminaciones efectuadas desde la versión 8.4.0.
 
 ## Cobros — Beta
 
