@@ -2091,8 +2091,6 @@ function oneRefreshModuleVisibility(){
   if(cobrosInput)cobrosInput.checked=oneModuleEnabled("shared");
   const goalsInput=document.getElementById("moduleGoalsToggle");
   if(goalsInput)goalsInput.checked=oneModuleEnabled("capital");
-  document.getElementById("goalBudgetPreview")?.toggleAttribute("hidden",!oneModuleEnabled("capital"));
-  document.getElementById("goalMovementPreview")?.toggleAttribute("hidden",!oneModuleEnabled("capital"));
   const current=document.querySelector(".view.active")?.id?.replace("view-","");
   if(ONE_OPTIONAL_MODULES.has(current)&&!oneModuleEnabled(current))navigate("dashboard");
 }
@@ -2101,6 +2099,8 @@ function oneSetModuleEnabled(name,value){
   uiState.modules={...(uiState.modules||{}),[name]:!!value};saveUiState();
   oneRefreshModuleVisibility();
   if(document.getElementById("view-dashboard")?.classList.contains("active"))renderDashboard();
+  if(document.getElementById("view-plan")?.classList.contains("active"))renderPlan();
+  if(document.getElementById("view-movements")?.classList.contains("active"))renderMovements();
 }
 function initModulesBeta(){
   oneRefreshModuleVisibility();
