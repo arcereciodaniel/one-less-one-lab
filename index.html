@@ -600,6 +600,18 @@ main{margin-left:220px;padding:44px 38px 70px}
 .v7-mini-bars{display:grid;gap:8px}.v7-mini-bar{display:grid;grid-template-columns:minmax(0,1fr) 56px;gap:8px;align-items:center;font-size:.68rem}.v7-mini-bar-track{height:5px;border-radius:999px;background:var(--surface-hover);overflow:hidden}.v7-mini-bar-track span{display:block;height:100%;background:var(--accent);border-radius:inherit}
 .v7-shortcuts{display:grid}.v7-shortcuts button{display:flex;align-items:center;justify-content:space-between;border:0;border-top:1px solid var(--border);background:transparent;color:var(--text);padding:11px 0;font-size:.75rem;text-align:left}.v7-shortcuts button:first-child{border-top:0}.v7-shortcuts button span{color:var(--muted)}
 
+/* Deudas · próximas cuotas, sin alertas invasivas */
+.one-debt-due-section{margin:0 0 22px}
+.one-debt-due-summary{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:2px 0 13px;color:var(--muted);font-size:.81rem}
+.one-debt-due-summary strong{color:var(--text);font-size:1.05rem;font-variant-numeric:tabular-nums}
+.one-debt-due-list{display:grid}
+.one-debt-due-row{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:12px 0;border-top:1px solid var(--border)}
+.one-debt-due-row .one-due-name{font-weight:650;font-size:.89rem}
+.one-debt-due-row .one-due-meta{font-size:.76rem;color:var(--muted);margin-top:4px}
+.one-debt-due-row .one-due-amount{text-align:right;font-size:.93rem;font-weight:650;font-variant-numeric:tabular-nums;white-space:nowrap}
+.one-debt-due-row .one-due-amount small{display:block;color:var(--muted);font-size:.73rem;font-weight:400;margin-top:3px}
+.one-debt-due-note{font-size:.76rem;color:var(--muted);padding:12px 0 2px}
+@media(max-width:520px){.one-debt-due-row{align-items:flex-start}.one-debt-due-summary{display:block}.one-debt-due-summary strong{display:block;margin-top:5px}}
 /* Deudas */
 .v7-debt-grid{grid-template-columns:minmax(0,1.7fr) minmax(300px,.7fr)}
 .v7-debt-progress{display:grid;gap:14px}
@@ -1599,6 +1611,13 @@ header nav button.one-add-module-button:focus-visible{outline:2px solid var(--ac
 
     <div class="v7-kpis" id="debtKpis"></div>
 
+    <section class="v7-card one-debt-due-section" aria-labelledby="debtDueHeading">
+      <div class="v7-card-head"><div><h2 id="debtDueHeading">Próximos pagos</h2>
+        <p>Cuotas estimadas según los días y montos registrados. Revisá siempre tu estado de cuenta.</p></div></div>
+      <div class="one-debt-due-summary" id="debtDueSummary"></div>
+      <div class="one-debt-due-list" id="debtDueList"></div>
+    </section>
+
     <div class="v7-main-grid v7-debt-grid">
       <div class="v7-card">
         <div class="v7-card-head"><div><h2>Avance de pago</h2><p>Qué parte de cada deuda ya has cubierto.</p></div></div>
@@ -1613,6 +1632,10 @@ header nav button.one-add-module-button:focus-visible{outline:2px solid var(--ac
     </div>
     <div class="v7-debt-list" id="debtList"></div>
 
+    <details class="v7-inline-help">
+      <summary>Cómo interpretar los próximos pagos</summary>
+      <div class="note">Las fechas son mensuales y estimadas a partir del día de pago guardado. La cuota mostrada es el mínimo configurado (limitado al saldo pendiente). Los pagos registrados en Movimientos durante el mes pueden marcar la cuota como cubierta en el sistema; esto no confirma su aplicación por el banco. Si un pago no está registrado, la fecha puede aparecer como pasada. No se crean pagos ni notificaciones automáticas.</div>
+    </details>
     <details class="v7-inline-help">
       <summary>Cómo calcula one - one el saldo restante</summary>
       <div class="note"><strong>Pagado registrado</strong> suma únicamente los movimientos creados con tipo <em>Pago deuda</em> y vinculados a esa deuda. El saldo restante es una estimación basada en saldos iniciales y pagos vinculados. Al corregir el saldo base, revisá los pagos históricos para evitar descontarlos dos veces.</div>
@@ -5373,6 +5396,55 @@ renderMovements=function(){
   m2RenderAccountSummary(rows);m2RenderTemplates();m2RenderAudit();
 };
 
+// La agenda es una vista derivada: nunca altera deudas, movimientos ni cuotas históricas.
+function oneDebtMonthlyDueIso(d,month){
+  const day=debtPayDayNumber(d);
+  if(!day||!/^[0-9]{4}-[0-9]{2}$/.test(month))return "";
+  const [year,number]=month.split("-").map(Number);
+  if(number<1||number>12)return "";
+  const last=new Date(Date.UTC(year,number,0)).getUTCDate();
+  return month+"-"+String(Math.min(day,last)).padStart(2,"0");
+}
+function oneDebtShiftMonth(month,shift=1){
+  const [year,number]=month.split("-").map(Number);
+  return new Date(Date.UTC(year,number-1+shift,1)).toISOString().slice(0,7);
+}
+function oneDebtRegisteredThisMonth(d,month){
+  return (data.movements||[]).filter(m=>m.type==="Pago deuda"&&String(m.date||"").slice(0,7)===month&&(m.debtId?m.debtId===d.id:m.debt===d.name))
+    .reduce((sum,m)=>sum+movementAmountCRC(m),0);
+}
+function oneDebtDueEntry(d,asOf=todayIso()){
+  if(debtStatus(d)!=="active"||debtOutstanding(d)<=.005)return null;
+  const minimum=debtMinimumCRC(d),outstanding=debtOutstanding(d);
+  const month=asOf.slice(0,7),thisDue=oneDebtMonthlyDueIso(d,month);
+  if(!thisDue)return {debt:d,date:"",minimum:Math.min(minimum,outstanding),state:"undated",paid:0};
+  if(minimum<=0)return {debt:d,date:thisDue,minimum:0,state:"no-minimum",paid:0};
+  const paid=oneDebtRegisteredThisMonth(d,month);
+  const covered=paid+.005>=Math.min(minimum,outstanding);
+  const date=covered?oneDebtMonthlyDueIso(d,oneDebtShiftMonth(month)):thisDue;
+  const state=covered?"registered":thisDue<asOf?"past":thisDue===asOf?"today":"upcoming";
+  return {debt:d,date,minimum:Math.min(minimum,outstanding),state,paid};
+}
+function oneDebtUpcomingEntries(asOf=todayIso()){
+  return activeDebts().map(d=>oneDebtDueEntry(d,asOf)).filter(Boolean)
+    .sort((a,b)=>(a.date||"9999").localeCompare(b.date||"9999")||num(a.debt.priority)-num(b.debt.priority));
+}
+function oneDebtRenderDueSchedule(asOf=todayIso()){
+  const summary=document.getElementById("debtDueSummary"),list=document.getElementById("debtDueList");
+  if(!summary||!list)return;
+  const entries=oneDebtUpcomingEntries(asOf),upper=v7IsoDateOffset(30);
+  const relevant=entries.filter(x=>x.date&&x.minimum>0&&x.state!=="registered"&&x.date<=upper);
+  const total=relevant.reduce((sum,x)=>sum+x.minimum,0);
+  const unknown=entries.filter(x=>!x.date||!x.minimum).length;
+  summary.innerHTML=`<span>Cuotas con fecha hasta los próximos 30 días${unknown?` · ${unknown} sin datos completos`:""}</span><strong>${money(total)}</strong>`;
+  const visible=entries.filter(x=>x.state!=="registered"&&x.date&&x.minimum>0).slice(0,5);
+  list.innerHTML=visible.length?visible.map(x=>{
+    const meta=x.state==="past"?"Fecha pasada · revisá si ya pagaste":x.state==="today"?"Programado para hoy":"Fecha estimada · "+dateLabel(x.date);
+    return `<div class="one-debt-due-row"><div><div class="one-due-name">${v7SafeText(x.debt.name)}</div><div class="one-due-meta">${meta}</div></div><div class="one-due-amount">${money(x.minimum)}<small>Cuota / mínimo</small></div></div>`;
+  }).join(""):`<p class="one-debt-due-note">${entries.length?"No hay cuotas pendientes con fecha y mínimo configurados.":"Todavía no tenés deudas activas."}</p>`;
+  if(unknown)list.insertAdjacentHTML("beforeend",`<p class="one-debt-due-note">Para completar el seguimiento, revisá el día de pago y la cuota mínima de tus deudas.</p>`);
+}
+
 renderDebts=function(){
   const filter=document.getElementById("debtStatusFilter")?.value||"active";
   const active=activeDebts(),archived=data.debts.filter(d=>debtStatus(d)==="archived");
@@ -5390,16 +5462,17 @@ renderDebts=function(){
 
   const currentMonth=todayIso().slice(0,7);
   const paidMonth=(data.movements||[]).filter(m=>m.type==="Pago deuda"&&v7MonthKey(m.date)===currentMonth).reduce((s,m)=>s+movementAmountCRC(m),0);
-  const upcoming=active.map(d=>({...d,nextDate:v7NextPayDate(d)})).filter(d=>d.nextDate).sort((a,b)=>a.nextDate.localeCompare(b.nextDate))[0];
+  const upcoming=oneDebtUpcomingEntries().find(x=>x.date&&x.minimum>0&&x.state!=="registered");
   const structured=active.filter(d=>d.type==="Préstamo"||d.type==="Familiar").reduce((sum,d)=>sum+debtOutstanding(d),0);
   const revolving=active.filter(d=>d.type==="Tarjeta").reduce((sum,d)=>sum+debtOutstanding(d),0);
   document.getElementById("debtKpis").innerHTML=[
     v7Kpi("↑","green","Pagado este mes",money(paidMonth),paidMonth?"Registrado en Movimientos":"Sin pagos este mes",paidMonth?"good":""),
-    v7Kpi("◫","purple","Próxima cuota",upcoming?dateLabel(upcoming.nextDate):"—",upcoming?`${v7SafeText(upcoming.name)} · ${money(debtMinimumCRC(upcoming))}`:"Sin fecha configurada",""),
+    v7Kpi("◫","purple","Próxima cuota",upcoming?dateLabel(upcoming.date):"—",upcoming?`${v7SafeText(upcoming.debt.name)} · ${money(upcoming.minimum)}`:"Sin cuotas con fecha pendiente",""),
     v7Kpi("▥","blue","Préstamos y acuerdos",money(structured),"Saldo estimado; pagos según calendario",""),
     v7Kpi("◧","red","Tarjetas",money(revolving),`${money(minimum)} en mínimos de todas las deudas`,"")
   ].join("");
 
+  oneDebtRenderDueSchedule();
   document.getElementById("debtProgress").innerHTML=active.length?active.slice(0,6).map(d=>{
     const base=debtEquivalent(d),paid=debtPayments(d),pct=debtProgressPercent(d)??0;
     return `<div class="v7-debt-progress-row"><div class="name">${v7SafeText(d.name)}</div><div class="v7-debt-track"><span style="width:${pct}%"></span></div><div class="pct">${debtLatestAdjustment(d)?"Saldo conciliado":`${pct.toFixed(0)}% pagado`}</div></div>`
@@ -5413,7 +5486,7 @@ renderDebts=function(){
 
   document.getElementById("debtTotal").textContent=`Activas: ${active.length} · saldo estimado ${money(total)} · archivadas ${archived.length}`;
   document.getElementById("debtList").innerHTML=rows.length?rows.map(d=>{
-    const archivedDebt=debtStatus(d)==="archived",base=debtEquivalent(d),paid=debtPayments(d),out=debtOutstanding(d),pct=debtProgressPercent(d)??0,next=v7NextPayDate(d);
+    const archivedDebt=debtStatus(d)==="archived",base=debtEquivalent(d),paid=debtPayments(d),out=debtOutstanding(d),pct=debtProgressPercent(d)??0,next=oneDebtDueEntry(d);
     const actions=archivedDebt
       ? `<button class="btn secondary small" data-reactivate-debt="${d.id}">Reactivar</button><button class="btn secondary small" data-edit-debt="${d.id}">Editar</button>`
       : `<button class="btn secondary small" data-pay-debt="${d.id}">Registrar pago</button><button class="btn secondary small" data-adjust-debt="${d.id}">Actualizar saldo real</button><button class="btn secondary small" data-edit-debt="${d.id}">Editar</button><button class="btn secondary small" data-archive-debt="${d.id}">Archivar</button>`;
@@ -5421,7 +5494,7 @@ renderDebts=function(){
       <div class="v7-debt-name"><div class="icon">▭</div><div><strong>${v7SafeText(d.name)}</strong><span>${v7SafeText(d.type)}${archivedDebt?" · archivada":""}</span></div></div>
       <div class="v7-debt-cell"><span>Saldo pendiente</span><strong>${money(out)}</strong></div>
       <div class="v7-debt-cell">${debtLatestAdjustment(d)?`<span>Saldo conciliado · ${debtLatestAdjustment(d).date}</span><strong>${money(out)}</strong><span>Pagos históricos: ${money(paid)}</span>`:`<span>${pct.toFixed(0)}% pagado</span><div class="progress"><span style="width:${pct}%"></span></div><span>${money(paid)} de ${money(base)}</span>`}</div>
-      <div class="v7-debt-cell"><span>Próximo pago estimado</span><strong>${next?dateLabel(next):"—"}</strong></div>
+      <div class="v7-debt-cell"><span>Fecha de cuota estimada</span><strong>${next?.date?dateLabel(next.date):"—"}</strong></div>
       <div class="v7-debt-cell"><span>Pago mínimo</span><strong>${money(debtMinimumCRC(d))}</strong></div>
       <div class="v7-debt-actions">${actions}</div>
     </div>`
