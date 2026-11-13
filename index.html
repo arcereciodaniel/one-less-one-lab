@@ -987,6 +987,27 @@ html[data-theme="dark"]{
 #view-dashboard #kpiGrid{grid-template-columns:repeat(3,minmax(0,1fr))}
 @media(max-width:760px){#view-dashboard #kpiGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:480px){#view-dashboard #kpiGrid{grid-template-columns:1fr}}
+
+/* Una lectura adicional dentro del mismo bloque de Inicio, sin tarjetas nuevas. */
+#view-dashboard .v7-hero-card .one-available-note{min-width:0}
+.one-available-kicker{font-size:.78rem;color:var(--muted);font-weight:660;margin-bottom:5px}
+.v7-hero-note .one-available-value{font-size:clamp(1.5rem,2.1vw,2rem);line-height:1.16;letter-spacing:-.035em;font-weight:760;font-variant-numeric:tabular-nums;color:var(--text);margin:0 0 7px;overflow-wrap:anywhere}
+.v7-hero-note .one-available-value.negative{color:var(--danger)}
+.v7-hero-note .one-available-caption{display:block;font-size:.76rem;line-height:1.5;color:var(--muted)}
+.v7-hero-note .one-available-help{display:block;font-size:.72rem;color:var(--muted);margin-top:8px;line-height:1.5}
+.one-available-details{margin-top:12px;max-width:100%}
+.one-available-details>summary{display:inline-flex;align-items:center;font-size:.72rem;color:var(--text);font-weight:650;cursor:pointer;padding:2px 0;list-style:none}
+.one-available-details>summary::-webkit-details-marker{display:none}
+.one-available-details>summary:before{content:"＋";color:var(--muted);margin-right:5px}
+.one-available-details[open]>summary:before{content:"−"}
+.one-available-details>summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:3px}
+.one-available-math{padding:11px 0 0;display:grid;gap:7px}
+.one-available-math>div{display:flex;justify-content:space-between;gap:10px;align-items:baseline;font-size:.73rem;border-top:1px solid var(--border);padding-top:7px}
+.v7-hero-note .one-available-math>div span{font-size:.73rem;line-height:1.4;color:var(--muted)}
+.v7-hero-note .one-available-math>div strong{white-space:nowrap;font-size:.76rem;font-weight:690;color:var(--text);margin:0;font-variant-numeric:tabular-nums}
+.one-available-math p{margin:4px 0 0;font-size:.69rem;color:var(--muted);line-height:1.5}
+@media(max-width:820px){.one-available-math>div{flex-wrap:wrap}}
+
 /* one - one: presupuesto frente a real junto al estado por categoría */
 .one-dashboard-analytics-grid{display:grid;grid-template-columns:minmax(0,.92fr) minmax(0,1.18fr);align-items:stretch;gap:16px;margin-bottom:16px}
 .one-dashboard-analytics-grid>.v7-card{min-width:0;height:100%;margin:0!important;padding:20px 22px;box-shadow:none}
@@ -1264,11 +1285,11 @@ header nav button.one-add-module-button:focus-visible{outline:2px solid var(--ac
 
     <div class="v7-hero-card" id="dashboardHero">
       <div class="v7-hero-main">
-        <div class="v7-kicker">Liquidez disponible</div>
+        <div class="v7-kicker">Saldo operativo hoy</div>
         <div class="v7-hero-value" id="dashboardHeroValue">—</div>
         <div class="v7-hero-delta" id="dashboardHeroDelta">—</div>
       </div>
-      <div class="v7-hero-note" id="dashboardHeroNote"></div>
+      <div class="v7-hero-note one-available-note" id="dashboardHeroNote" aria-label="Dinero disponible estimado"></div>
     </div>
 
     <div class="v7-kpis" id="kpiGrid"></div>
@@ -4829,6 +4850,53 @@ function renderCobrosReminderWidget(){
   }).join(""):`<div class="empty">${pending.length?"Los recordatorios pendientes están pospuestos. Consultalos desde Cobros.":"Todavía no hay cobros pendientes. Podés agregar el primero desde Cobros."}</div>`;
 }
 
+
+/* Dinero disponible estimado: horizonte del mes financiero, sin doble cargo por pagos registrados. */
+function oneEstimatedAvailable(today=todayIso()){
+  const current=periodForDate(today);
+  const month=current?.budgetMonth||deriveBudgetMeta(current||{}).budgetMonth;
+  const periods=(data.periods||[]).filter(p=>{
+    const meta=deriveBudgetMeta(p);
+    return meta.budgetMonth===month&&periodEndDate(p)>=today;
+  }).sort((a,b)=>a.date.localeCompare(b.date));
+  const balance=actualBalanceAt(today);
+  const hasBalance=!!latestReconciliation(today)||
+    (data.periods||[]).some(p=>p.date<=today&&p.opening!==null&&p.opening!==undefined&&p.opening!=="")||
+    (data.movements||[]).some(m=>m.date<=today&&["Ingreso","Gasto","Pago deuda"].includes(m.type))||
+    (data.reserveMovements||[]).some(t=>t.date<=today);
+  const hasPlan=periods.some(p=>budgetCategories(["Gasto","Pago deuda"],p)
+    .some(c=>num(p.categoryBudgets?.[c.id])>0));
+  const pending=periods.reduce((sum,p)=>sum+remainingBudgetForCurrentPeriod(p,today),0);
+  const horizon=periods.length?periods.reduce((d,p)=>periodEndDate(p)>d?periodEndDate(p):d,""):"";
+  return {month,horizon,balance,pending,available:balance-pending,hasBalance,hasPlan,ready:!!(hasBalance&&hasPlan&&periods.length)};
+}
+function oneRenderEstimatedAvailable(today=todayIso()){
+  const slot=document.getElementById("dashboardHeroNote");if(!slot)return;
+  const info=oneEstimatedAvailable(today);
+  if(!info.ready){
+    const hint=!info.hasBalance?
+      "Registrá un saldo inicial o actualizá tu saldo real desde Conciliación.":
+      "Asigná gastos o cuotas en el presupuesto del mes financiero actual.";
+    slot.innerHTML=`<div class="one-available-kicker">Disponible estimado</div>
+      <strong class="one-available-value">—</strong>
+      <span class="one-available-caption">Necesitamos el saldo operativo y un presupuesto vigente para calcularlo.</span>
+      <span class="one-available-help">${hint}</span>`;
+    return;
+  }
+  const negative=info.available<0;
+  slot.innerHTML=`<div class="one-available-kicker">Disponible estimado</div>
+    <strong class="one-available-value ${negative?"negative":""}">${money(info.available)}</strong>
+    <span class="one-available-caption">Después de cubrir los egresos previstos hasta ${dateLabel(info.horizon)}.</span>
+    <details class="one-available-details">
+      <summary>Ver cálculo</summary>
+      <div class="one-available-math">
+        <div><span>Saldo operativo hoy</span><strong>${money(info.balance)}</strong></div>
+        <div><span>Gastos y cuotas aún presupuestados</span><strong>− ${money(info.pending)}</strong></div>
+        <p>No incluye ingresos futuros ni gastos o cuotas sin presupuestar. No equivale a un saldo bancario confirmado.</p>
+      </div>
+    </details>`;
+}
+
 const renderDashboardLegacy=renderDashboard;
 renderDashboard=function(){
   const {level,value}=hierarchicalSelection("dashboard");
@@ -4854,9 +4922,7 @@ renderDashboard=function(){
     deltaEl.textContent="Tu punto de partida para las próximas decisiones";
     deltaEl.className="v7-hero-delta";
   }
-  document.getElementById("dashboardHeroNote").innerHTML=operating>=0
-    ? `<strong>Tenés una posición operativa ${operatingFlow>=0?"estable":"que conviene vigilar"}.</strong><span>${operatingFlow>=0?`El periodo seleccionado deja un flujo real positivo de ${money(operatingFlow)}.`:`El periodo seleccionado está consumiendo ${money(Math.abs(operatingFlow))} de liquidez neta.`}</span>`
-    : `<strong>Tu liquidez operativa está en negativo.</strong><span>Conviene revisar el siguiente pago, el gasto variable y cualquier ingreso pendiente antes de asumir nuevos compromisos.</span>`;
+  oneRenderEstimatedAvailable(todayIso());
 
   document.getElementById("kpiGrid").innerHTML=[
     v7Kpi("↑","green","Ingresos reales",money(realIncome),realIncome?"Registrados · plan: "+money(summary.plannedIncome):"Sin ingresos registrados · plan: "+money(summary.plannedIncome),realIncome?"good":""),
