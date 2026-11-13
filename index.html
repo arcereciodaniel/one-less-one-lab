@@ -1880,6 +1880,16 @@ header nav button.one-add-module-button:focus-visible{outline:2px solid var(--ac
   </div>
 </dialog>
 
+<dialog id="debtBalanceDialog"><div class="dialog-body">
+<button class="dialog-close" type="button" id="closeDebtBalanceDialog" aria-label="Cerrar">×</button>
+<h2>Actualizar saldo real</h2><p class="muted">Usá el saldo pendiente de tu estado de cuenta. No se modifican pagos ni movimientos anteriores; los nuevos pagos sí reducirán el saldo conciliado.</p>
+<form id="debtBalanceForm" class="form-grid"><input type="hidden" id="debtBalanceId">
+<div class="field wide"><label>Deuda</label><input id="debtBalanceName" readonly></div>
+<div class="field"><label>Saldo pendiente confirmado</label><input id="debtBalanceAmount" type="number" min="0" step=".01" required></div>
+<div class="field"><label>Moneda</label><select id="debtBalanceCurrency"><option value="CRC">CRC ₡</option><option value="USD">USD $</option></select></div>
+<div class="field wide"><label>Nota (opcional)</label><input id="debtBalanceNote" maxlength="240" placeholder="Ej. Estado de cuenta bancario"></div>
+<div class="dialog-actions wide"><button type="button" class="btn secondary" id="cancelDebtBalance">Cancelar</button><button type="submit" class="btn">Guardar saldo real</button></div>
+</form></div></dialog>
 <dialog id="reconcileDialog">
   <div class="dialog-body">
 <button class="dialog-close" type="button" aria-label="Cerrar">×</button>
@@ -2826,10 +2836,12 @@ function debtPayments(d){
   return data.movements.filter(m=>m.type==="Pago deuda"&&(m.debtId?m.debtId===d.id:m.debt===d.name)).reduce((s,m)=>s+movementAmountCRC(m),0);
 }
 function debtEquivalent(d){return currentToCRC(d.usd,"USD","pay")+num(d.crc)}
-function debtOutstanding(d){return Math.max(0,debtEquivalent(d)-debtPayments(d))}
+function debtLatestAdjustment(d){const a=d?.balanceAdjustments;return Array.isArray(a)&&a.length?a[a.length-1]:null}
+function debtOutstanding(d){const a=debtLatestAdjustment(d);return Math.max(0,a?currentToCRC(num(a.amount),normalizeCurrency(a.currency||"CRC"),"pay")-(debtPayments(d)-num(a.paidAtAdjustment)):debtEquivalent(d)-debtPayments(d))}
+function debtProgressPercent(d){const base=debtEquivalent(d);return debtLatestAdjustment(d)?null:base?Math.max(0,Math.min(100,debtPayments(d)/base*100)):0}
 function debtLimitCRC(d){return currentToCRC(d.limit,d.limitCurrency||"USD","pay")}
 function debtMinimumCRC(d){return currentToCRC(d.minimum,d.minimumCurrency||"CRC","pay")}
-function debtUtil(d){const limit=debtLimitCRC(d);return limit?debtEquivalent(d)/limit:0}
+function debtUtil(d){const limit=debtLimitCRC(d);return limit?debtOutstanding(d)/limit:0}
 function debtStatus(d){return d?.status==="archived"?"archived":"active"}
 function activeDebts(){return data.debts.filter(d=>debtStatus(d)==="active")}
 function activeDebtTotal(){return activeDebts().reduce((s,d)=>s+debtOutstanding(d),0)}
@@ -4802,7 +4814,7 @@ function bind(){
   document.getElementById("debtForm").addEventListener("submit",e=>{
     e.preventDefault();const did=document.getElementById("dId").value;
     const status=document.getElementById("dStatus").value;
-    const obj={id:did||id(),type:document.getElementById("dType").value,name:document.getElementById("dName").value.trim(),status,usd:num(document.getElementById("dUsd").value),crc:num(document.getElementById("dCrc").value),fx:currentRates().sell,limit:num(document.getElementById("dLimit").value),limitCurrency:normalizeCurrency(document.getElementById("dLimitCurrency").value),minimum:num(document.getElementById("dMinimum").value),minimumCurrency:normalizeCurrency(document.getElementById("dMinimumCurrency").value),payDay:document.getElementById("dPayDay").value.trim(),rate:document.getElementById("dRate").value.trim(),priority:num(document.getElementById("dPriority").value),goal:document.getElementById("dGoal").value.trim(),notes:document.getElementById("dNotes").value.trim()};
+    const obj={...(data.debts.find(d=>d.id===did)||{}),id:did||id(),type:document.getElementById("dType").value,name:document.getElementById("dName").value.trim(),status,usd:num(document.getElementById("dUsd").value),crc:num(document.getElementById("dCrc").value),fx:currentRates().sell,limit:num(document.getElementById("dLimit").value),limitCurrency:normalizeCurrency(document.getElementById("dLimitCurrency").value),minimum:num(document.getElementById("dMinimum").value),minimumCurrency:normalizeCurrency(document.getElementById("dMinimumCurrency").value),payDay:document.getElementById("dPayDay").value.trim(),rate:document.getElementById("dRate").value.trim(),priority:num(document.getElementById("dPriority").value),goal:document.getElementById("dGoal").value.trim(),notes:document.getElementById("dNotes").value.trim()};
     const i=data.debts.findIndex(d=>d.id===did),old=i>=0?data.debts[i]:null,oldName=old?.name||"";
     if(status==="archived"){obj.closedAt=old?.closedAt||todayIso();obj.closedReason=old?.closedReason||"Pagada / finalizada"}else{obj.closedAt="";obj.closedReason=""}
     i>=0?data.debts[i]=obj:data.debts.push(obj);
@@ -5389,8 +5401,8 @@ renderDebts=function(){
   ].join("");
 
   document.getElementById("debtProgress").innerHTML=active.length?active.slice(0,6).map(d=>{
-    const base=debtEquivalent(d),paid=debtPayments(d),pct=base?Math.max(0,Math.min(100,paid/base*100)):0;
-    return `<div class="v7-debt-progress-row"><div class="name">${v7SafeText(d.name)}</div><div class="v7-debt-track"><span style="width:${pct}%"></span></div><div class="pct">${pct.toFixed(0)}% pagado</div></div>`
+    const base=debtEquivalent(d),paid=debtPayments(d),pct=debtProgressPercent(d)??0;
+    return `<div class="v7-debt-progress-row"><div class="name">${v7SafeText(d.name)}</div><div class="v7-debt-track"><span style="width:${pct}%"></span></div><div class="pct">${debtLatestAdjustment(d)?"Saldo conciliado":`${pct.toFixed(0)}% pagado`}</div></div>`
   }).join(""):`<div class="empty">No hay deuda activa para graficar.</div>`;
 
   const rated=active.map(d=>({d,rate:parseFloat(String(d.rate||"").replace(",", "."))||0})).sort((a,b)=>b.rate-a.rate||num(a.d.priority)-num(b.d.priority));
@@ -5401,14 +5413,14 @@ renderDebts=function(){
 
   document.getElementById("debtTotal").textContent=`Activas: ${active.length} · saldo estimado ${money(total)} · archivadas ${archived.length}`;
   document.getElementById("debtList").innerHTML=rows.length?rows.map(d=>{
-    const archivedDebt=debtStatus(d)==="archived",base=debtEquivalent(d),paid=debtPayments(d),out=debtOutstanding(d),pct=base?Math.max(0,Math.min(100,paid/base*100)):0,next=v7NextPayDate(d);
+    const archivedDebt=debtStatus(d)==="archived",base=debtEquivalent(d),paid=debtPayments(d),out=debtOutstanding(d),pct=debtProgressPercent(d)??0,next=v7NextPayDate(d);
     const actions=archivedDebt
       ? `<button class="btn secondary small" data-reactivate-debt="${d.id}">Reactivar</button><button class="btn secondary small" data-edit-debt="${d.id}">Editar</button>`
-      : `<button class="btn secondary small" data-pay-debt="${d.id}">Registrar pago</button><button class="btn secondary small" data-edit-debt="${d.id}">Editar</button><button class="btn secondary small" data-archive-debt="${d.id}">Archivar</button>`;
+      : `<button class="btn secondary small" data-pay-debt="${d.id}">Registrar pago</button><button class="btn secondary small" data-adjust-debt="${d.id}">Actualizar saldo real</button><button class="btn secondary small" data-edit-debt="${d.id}">Editar</button><button class="btn secondary small" data-archive-debt="${d.id}">Archivar</button>`;
     return `<div class="v7-debt-card ${archivedDebt?"archived":""}">
       <div class="v7-debt-name"><div class="icon">▭</div><div><strong>${v7SafeText(d.name)}</strong><span>${v7SafeText(d.type)}${archivedDebt?" · archivada":""}</span></div></div>
       <div class="v7-debt-cell"><span>Saldo pendiente</span><strong>${money(out)}</strong></div>
-      <div class="v7-debt-cell"><span>${pct.toFixed(0)}% pagado</span><div class="progress"><span style="width:${pct}%"></span></div><span>${money(paid)} de ${money(base)}</span></div>
+      <div class="v7-debt-cell">${debtLatestAdjustment(d)?`<span>Saldo conciliado · ${debtLatestAdjustment(d).date}</span><strong>${money(out)}</strong><span>Pagos históricos: ${money(paid)}</span>`:`<span>${pct.toFixed(0)}% pagado</span><div class="progress"><span style="width:${pct}%"></span></div><span>${money(paid)} de ${money(base)}</span>`}</div>
       <div class="v7-debt-cell"><span>Próximo pago estimado</span><strong>${next?dateLabel(next):"—"}</strong></div>
       <div class="v7-debt-cell"><span>Pago mínimo</span><strong>${money(debtMinimumCRC(d))}</strong></div>
       <div class="v7-debt-actions">${actions}</div>
@@ -5557,7 +5569,27 @@ function initV7(){
 
 }
 
-bind();bindReportStudio();initV7();initR8();initMovements2();initUiPreferences();initLiquidityChartInteraction();initModulesBeta();initDataIntegrityNotice();renderDashboard();updateCurrencyHeader();setTimeout(()=>{if(needsDailyFx())openFxDialog(true)},80);
+function initDebtBalanceReconciliation(){
+ const dialog=document.getElementById("debtBalanceDialog"),close=()=>dialog.close();
+ document.getElementById("closeDebtBalanceDialog").addEventListener("click",close);
+ document.getElementById("cancelDebtBalance").addEventListener("click",close);
+ document.addEventListener("click",e=>{const b=e.target.closest("[data-adjust-debt]");if(!b)return;
+ const d=data.debts.find(x=>x.id===b.dataset.adjustDebt);if(!d||debtStatus(d)!=="active")return;
+ document.getElementById("debtBalanceId").value=d.id;document.getElementById("debtBalanceName").value=d.name;
+ document.getElementById("debtBalanceAmount").value=debtOutstanding(d).toFixed(2);
+ document.getElementById("debtBalanceCurrency").value="CRC";document.getElementById("debtBalanceNote").value="";dialog.showModal();});
+ document.getElementById("debtBalanceForm").addEventListener("submit",e=>{e.preventDefault();
+ const d=data.debts.find(x=>x.id===document.getElementById("debtBalanceId").value);
+ const amount=Number(document.getElementById("debtBalanceAmount").value);
+ if(!d||debtStatus(d)!=="active"||!Number.isFinite(amount)||amount<0){alert("Ingresá un saldo válido.");return}
+ const currency=normalizeCurrency(document.getElementById("debtBalanceCurrency").value);
+ if(!confirm(`¿Guardar este saldo real para “${d.name}”? El historial de pagos se mantendrá intacto.`))return;
+ if(!Array.isArray(d.balanceAdjustments))d.balanceAdjustments=[];
+ d.balanceAdjustments.push({id:id(),date:todayIso(),createdAt:new Date().toISOString(),amount,currency,paidAtAdjustment:debtPayments(d),note:document.getElementById("debtBalanceNote").value.trim()});
+ save();close();renderDebts();renderDashboard();renderCapital();renderPlan();
+ });
+}
+bind();initDebtBalanceReconciliation();bindReportStudio();initV7();initR8();initMovements2();initUiPreferences();initLiquidityChartInteraction();initModulesBeta();initDataIntegrityNotice();renderDashboard();updateCurrencyHeader();setTimeout(()=>{if(needsDailyFx())openFxDialog(true)},80);
 </script>
 </body>
 </html>
