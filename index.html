@@ -1321,6 +1321,7 @@ header nav button.one-add-module-button:focus-visible{outline:2px solid var(--ac
       <button data-view="movements"><span class="nav-icon" aria-hidden="true">≡</span><span>Movimientos</span></button>
       <button data-view="debts" data-optional-module="debts"><span class="nav-icon" aria-hidden="true">▭</span><span>Deudas</span></button>
       <button data-view="shared" data-optional-module="shared"><span class="nav-icon" aria-hidden="true">◷</span><span>Cobros <span class="one-beta-tag">BETA</span></span></button>
+      <button data-view="capital" data-optional-module="capital"><span class="nav-icon" aria-hidden="true">◎</span><span>Metas <span class="one-beta-tag">BETA</span></span></button>
       <button type="button" id="manageModulesBtn" class="one-add-module-button" title="Agregar o quitar herramientas" aria-label="Agregar o quitar herramientas" aria-haspopup="dialog" aria-controls="modulesDialog" aria-expanded="false">+</button>
     </nav>
     <div class="header-actions">
@@ -1513,6 +1514,7 @@ header nav button.one-add-module-button:focus-visible{outline:2px solid var(--ac
     </details>
     </details>
     <div id="planQuarterSummary" class="plan-quarter-summary"></div>
+    <section id="goalBudgetPreview" class="one-goal-context" hidden aria-label="Orientación de ahorro para metas"></section>
     <div id="planMonths" class="plan-months"></div>
     <div class="v7-legacy-hidden" aria-hidden="true">
       <strong id="planClosingTitle">Cierre del periodo</strong>
@@ -1527,6 +1529,7 @@ header nav button.one-add-module-button:focus-visible{outline:2px solid var(--ac
       <div class="v7-page-actions"><button class="btn" id="toggleMovementComposer" type="button">＋ Agregar movimiento</button></div>
     </div>
 
+    <section id="goalMovementPreview" class="one-goal-context" hidden aria-label="Transferencias internas de metas"></section>
     <div class="one-move-period-control" aria-label="Período de movimientos">
       <div class="one-move-view-switch" role="group" aria-label="Vista del período">
         <button type="button" data-one-move-level="quarter" aria-pressed="false">Trimestre</button>
@@ -1693,8 +1696,18 @@ header nav button.one-add-module-button:focus-visible{outline:2px solid var(--ac
   </section>
 
   <section class="view" id="view-capital">
-    <h1>Capital y metas</h1>
-    <p class="sub">Dinero que forma parte de tu patrimonio, pero no debe confundirse con el efectivo disponible para el presupuesto diario.</p>
+    <div class="v7-page-head one-goal-header"><div><div class="v7-eyebrow">METAS · BETA 1.0</div><h1>Tus metas financieras</h1><p class="sub">Ahorrá con propósito, a tu ritmo.</p></div>
+      <div class="v7-page-actions"><button class="btn" id="createGoalBtn" type="button">+ Nueva meta</button></div>
+    </div>
+    <div class="one-goal-summary" id="goalSummary"></div>
+    <div class="one-goal-toolbar"><h2>Objetivos de ahorro</h2><label>Mostrar <select id="goalStatusFilter" aria-label="Filtrar metas"><option value="active">Activas</option><option value="archived">Archivadas</option><option value="all">Todas</option></select></label></div>
+    <div id="goalCardGrid" class="one-goal-grid"></div>
+    <p class="one-goal-disclaimer">Los aportes son transferencias entre tus propios fondos, no gastos. La sugerencia mensual es orientativa: no mueve dinero automáticamente.</p>
+    <details class="one-goal-advanced" id="capitalLegacyDetails">
+      <summary>Capital protegido e historial completo de fondos</summary>
+      <div class="one-goal-advanced-body">
+        <p class="one-goal-disclaimer">Administrá fondos protegidos, rendimientos, ajustes y operaciones históricas desde esta sección.</p>
+
     <div class="toolbar">
       <button class="btn" id="addReserveBtn">Agregar fondo</button>
       <div><label>Mostrar</label><select id="reserveStatusFilter"><option value="active">Fondos activos</option><option value="archived">Archivados</option><option value="all">Todos</option></select></div>
@@ -1717,6 +1730,8 @@ header nav button.one-add-module-button:focus-visible{outline:2px solid var(--ac
       </form>
       <div class="table-wrap" style="margin-top:14px"><table id="reserveTxnTable"></table></div>
     </div>
+      </div>
+    </details>
   </section>
 
   <section class="view" id="view-categories">
@@ -1776,6 +1791,7 @@ header nav button.one-add-module-button:focus-visible{outline:2px solid var(--ac
   <div class="one-module-fixed"><strong>Siempre visibles:</strong> Inicio · Presupuesto · Movimientos</div>
   <label class="one-module-item"><input type="checkbox" id="moduleDebtsToggle"><span><strong>Deudas</strong><small>Préstamos, tarjetas y pagos pendientes.</small></span></label>
   <label class="one-module-item"><input type="checkbox" id="moduleCollectionsToggle"><span><strong>Cobros · Beta 2.1</strong><small>Personas, abonos parciales, grupos, recurrencias y recordatorios en Inicio.</small></span></label>
+  <label class="one-module-item"><input type="checkbox" id="moduleGoalsToggle"><span><strong>Metas · Beta 1.0</strong><small>Ahorro por objetivos, aportes, retiros y capital protegido.</small></span></label>
   <div class="one-module-footer"><button type="button" class="btn" id="closeModulesBtn">Listo</button></div>
 </dialog>
 <dialog id="categoryManagerDialog" class="rastro-category-manager">
@@ -1878,6 +1894,7 @@ header nav button.one-add-module-button:focus-visible{outline:2px solid var(--ac
       <div class="field"><label>Nombre</label><input id="fName" required></div>
       <div class="field"><label>Tipo</label><select id="fType"><option value="protected">Capital protegido</option><option value="goal">Meta / reserva</option></select></div>
       <div class="field"><label>Meta (opcional)</label><div class="money-input"><input id="fTarget" type="number" min="0" step="0.01" value="0"><select id="fTargetCurrency"><option value="CRC">CRC ₡</option><option value="USD">USD $</option></select></div></div>
+      <div class="field"><label>Fecha objetivo (opcional)</label><input id="fTargetDate" type="date"></div>
       <div class="field"><label>Saldo inicial</label><div class="money-input"><input id="fOpeningAmount" type="number" min="0" step="0.01" value="0"><select id="fOpeningCurrency"><option value="CRC">CRC ₡</option><option value="USD">USD $</option></select></div></div>
       <div class="field"><label>Fecha inicial</label><input id="fOpeningDate" type="date" required></div>
       <div class="field"><label>Ubicación</label><input id="fLocation" placeholder="Ej. MultiMoney, cuenta bancaria"></div>
@@ -2053,11 +2070,12 @@ function saveUiState(){
   try{localStorage.setItem(UI_STORAGE_KEY,JSON.stringify(uiState))}catch{}
 }
 const ONE_DEFAULT_SHOW_COBROS=false;
-const ONE_OPTIONAL_MODULES=new Set(["debts","shared"]);
+const ONE_OPTIONAL_MODULES=new Set(["debts","shared","capital"]);
 function oneModuleEnabled(name){
   if(!ONE_OPTIONAL_MODULES.has(name))return true;
   if(typeof uiState.modules?.[name]==="boolean")return uiState.modules[name];
   if(name==="debts")return !!((data.debts||[]).length||(data.movements||[]).some(m=>m.type==="Pago deuda"));
+  if(name==="capital")return !!((data.reserves||[]).length||(data.reserveMovements||[]).length);
   return ONE_DEFAULT_SHOW_COBROS||!!((data.sharedCharges||[]).length||(data.sharedChargeGroups||[]).length||(data.receivableRecurring||[]).length);
 }
 function oneRefreshModuleVisibility(){
@@ -2071,6 +2089,10 @@ function oneRefreshModuleVisibility(){
   const debtInput=document.getElementById("moduleDebtsToggle"),cobrosInput=document.getElementById("moduleCollectionsToggle");
   if(debtInput)debtInput.checked=oneModuleEnabled("debts");
   if(cobrosInput)cobrosInput.checked=oneModuleEnabled("shared");
+  const goalsInput=document.getElementById("moduleGoalsToggle");
+  if(goalsInput)goalsInput.checked=oneModuleEnabled("capital");
+  document.getElementById("goalBudgetPreview")?.toggleAttribute("hidden",!oneModuleEnabled("capital"));
+  document.getElementById("goalMovementPreview")?.toggleAttribute("hidden",!oneModuleEnabled("capital"));
   const current=document.querySelector(".view.active")?.id?.replace("view-","");
   if(ONE_OPTIONAL_MODULES.has(current)&&!oneModuleEnabled(current))navigate("dashboard");
 }
@@ -2090,6 +2112,7 @@ function initModulesBeta(){
   modal?.addEventListener("close",()=>{addButton?.setAttribute("aria-expanded","false");addButton?.focus()});
   document.getElementById("moduleDebtsToggle")?.addEventListener("change",e=>oneSetModuleEnabled("debts",e.target.checked));
   document.getElementById("moduleCollectionsToggle")?.addEventListener("change",e=>oneSetModuleEnabled("shared",e.target.checked));
+  document.getElementById("moduleGoalsToggle")?.addEventListener("change",e=>oneSetModuleEnabled("capital",e.target.checked));
   document.getElementById("closeModulesBtn")?.addEventListener("click",()=>document.getElementById("modulesDialog")?.close());
   document.getElementById("openCollectionsFromHome")?.addEventListener("click",()=>navigate("shared"));
 }
@@ -3462,6 +3485,7 @@ function renderPlan(){
     setPlanMonthOpen(section,firstV8Open?true:planMonthOpenPreference(section.dataset.planMonth),false);
   });
   document.getElementById("planSummary").textContent=`Cierre ${money(finalClosing)}, variación vs. plan original ${money(finalClosing-staticClosing)}.`;
+  oneRenderGoalBudgetPreview(level,value);
   document.getElementById("planClosing").innerHTML=`<div class="month-kpi"><div class="summary-label">Saldo inicial</div><div class="summary-value">${money(firstOpening)}</div></div>
     <div class="month-kpi"><div class="summary-label">Ingresos</div><div class="summary-value">${money(income)}</div></div>
     <div class="month-kpi"><div class="summary-label">Egresos</div><div class="summary-value">${money(expenses)}</div></div>
@@ -3597,6 +3621,7 @@ function openReserve(r=null){
   document.getElementById("fType").value=r?.type||"goal";
   document.getElementById("fTarget").value=num(r?.target);
   document.getElementById("fTargetCurrency").value=normalizeCurrency(r?.targetCurrency||displayCurrency());
+  document.getElementById("fTargetDate").value=r?.targetDate||"";
   document.getElementById("fOpeningAmount").value=num(r?.openingAmount);
   document.getElementById("fOpeningCurrency").value=normalizeCurrency(r?.openingCurrency||displayCurrency());
   document.getElementById("fOpeningDate").value=r?.openingDate||todayIso();
@@ -4033,7 +4058,58 @@ function printSharedStatement(groupId){
   const rows=receivableDisplayRows(group.id,month),current=groupReceivableRows(group.id,month),currentTotal=current.reduce((s,c)=>s+receivableAmountCRC(c),0),carry=rows.filter(c=>isReceivableCarryover(c,month)).reduce((s,c)=>s+receivableAmountCRC(c),0),pending=rows.reduce((s,c)=>s+cobroRemainingCRC(c),0);
   const win=window.open("","_blank","width=900,height=700");if(!win)return alert("El navegador bloqueó la ventana de impresión.");
   const safe=s=>String(s??"").replace(/[&<>\"]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]));
-  win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${safe(group.name)} · ${safe(month)}</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#111;margin:36px}h1{margin:0;font-size:24px}.muted{color:#666;margin:6px 0 24px}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border-bottom:1px solid #ddd;padding:9px;text-align:left;font-size:13px}th{background:#f3f4f6}.num{text-align:right}.total{margin-top:20px;display:flex;justify-content:flex-end;gap:28px;flex-wrap:wrap;font-size:15px}.brand{font-weight:800;letter-spacing:.03em;margin-bottom:24px}.carry{font-size:11px;color:#7a5b00;font-weight:700}@media print{body{margin:18mm}}</style></head><body><div class="brand">RASTRO</div><h1>${safe(group.name)}</h1><div class="muted">${group.person?`Desglose para ${safe(group.person)} · `:""}${safe(monthLabel(month))}</div><table><thead><tr><th>Fecha</th><th>Mes origen</th><th>Persona</th><th>Tipo</th><th>Concepto</th><th>Estado</th><th class="num">Monto</th></tr></thead><tbody>${rows.map(c=>{const origin=c.chargeMonth||monthKey(c.date),isCarry=isReceivableCarryover(c,month);return `<tr><td>${safe(dateLabel(c.date))}</td><td>${safe(monthLabel(origin))}${isCarry?`<br><span class="carry">Arrastre pendiente</span>`:""}</td><td>${safe(c.person)}</td><td>${safe(c.kind)}${c.sourceRecurringId?" · Mensual":""}</td><td>${safe(c.description)}</td><td>${cobroPaymentState(c)}</td><td class="num">${safe(money(receivableAmountCRC(c)))}${safe(c.currency&&normalizeCurrency(c.currency)!==displayCurrency()?` (original ${originalMoney(c.amount,c.currency)})`:``)}</td></tr>`}).join("")||`<tr><td colspan="7">Sin cobros</td></tr>`}</tbody></table><div class="total"><div><strong>Cargos del mes:</strong> ${safe(money(currentTotal))}</div><div><strong>Arrastre anterior:</strong> ${safe(money(carry))}</div><div><strong>Pendiente total:</strong> ${safe(money(pending))}</div></div><script>window.onload=()=>setTimeout(()=>window.print(),150)<\/script></body></html>`);win.document.close();
+  win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${safe(group.name)} · ${safe(month)}</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#111;margin:36px}h1{margin:0;font-size:24px}.muted{color:#666;margin:6px 0 24px}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border-bottom:1px solid #ddd;padding:9px;text-align:left;font-size:13px}th{background:#f3f4f6}.num{text-align:right}.total{margin-top:20px;display:flex;justify-content:flex-end;gap:28px;flex-wrap:wrap;font-size:15px}.brand{font-weight:800;letter-spacing:.03em;margin-bottom:24px}.carry{font-size:11px;color:#7a5b00;font-weight:700}@media print{body{margin:18mm}}
+/* Metas Beta 1.0 · identical structure in light/dark, theme tokens only. */
+.one-goal-header{display:flex;align-items:end;justify-content:space-between;gap:12px}
+.one-goal-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0 0 19px}
+.one-goal-total{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 20px}
+.one-goal-total span,.one-goal-eyebrow{display:block;color:var(--muted);font-size:.68rem;font-weight:700;letter-spacing:.075em}
+.one-goal-total strong{display:block;color:var(--text);font-size:1.48rem;letter-spacing:-.035em;margin-top:6px;font-variant-numeric:tabular-nums}
+.one-goal-total small{display:block;color:var(--muted);font-size:.74rem;margin-top:4px}
+.one-goal-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 12px}
+.one-goal-toolbar h2{margin:0;font-size:1rem}
+.one-goal-toolbar label{font-size:.74rem;color:var(--muted)}
+.one-goal-toolbar select{margin-left:6px;min-height:32px}
+.one-goal-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.one-goal-card{min-width:0;border:1px solid var(--border);border-radius:12px;padding:21px;background:linear-gradient(145deg,color-mix(in srgb,var(--success) 10%,var(--surface)),var(--surface) 67%)}
+.one-goal-card-top{display:flex;align-items:start;justify-content:space-between;gap:8px}
+.one-goal-card h3{font-size:1.1rem;letter-spacing:-.02em;margin:3px 0 0;overflow-wrap:anywhere}
+.one-goal-state{font-size:.67rem;color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:4px 7px}
+.one-goal-amount{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin-top:22px}
+.one-goal-amount strong{font-size:1.52rem;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.one-goal-amount span{font-size:.77rem;color:var(--muted)}
+.one-goal-bar{height:8px;border-radius:50px;background:var(--surface-hover);overflow:hidden;margin:13px 0 9px}
+.one-goal-bar span{height:100%;display:block;background:var(--success);border-radius:inherit}
+.one-goal-stats{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:.73rem;color:var(--muted)}
+.one-goal-hint{font-size:.79rem;color:var(--success);margin:16px 0 13px;min-height:20px}
+.one-goal-actions{display:flex;gap:8px;flex-wrap:wrap}
+.one-goal-actions .btn{padding:8px 13px}
+.one-goal-card-details{margin-top:14px;border-top:1px solid var(--border);padding-top:10px}
+.one-goal-card-details summary{color:var(--muted);cursor:pointer;font-size:.76rem}
+.one-goal-history{margin-top:12px;display:grid;gap:6px}
+.one-goal-history-row{display:flex;justify-content:space-between;gap:8px;font-size:.72rem;padding:7px 0;border-bottom:1px solid var(--border)}
+.one-goal-history-row span{color:var(--muted)}
+.one-goal-history-row strong{font-weight:650}
+.one-goal-card-more{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.one-goal-empty{grid-column:1/-1;padding:30px 20px;border:1px dashed var(--border);border-radius:10px;color:var(--muted);font-size:.85rem;text-align:center}
+.one-goal-disclaimer{font-size:.76rem;color:var(--muted);line-height:1.5;margin:15px 0 18px}
+.one-goal-advanced{margin-top:18px;border:1px solid var(--border);background:var(--surface);border-radius:10px;padding:14px 17px}
+.one-goal-advanced>summary{cursor:pointer;font-size:.85rem;font-weight:650}
+.one-goal-advanced-body{padding-top:16px}
+.one-goal-context{border:1px solid var(--border);border-radius:10px;background:var(--surface);padding:15px 17px;margin:0 0 16px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.one-goal-context[hidden]{display:none!important}
+.one-goal-context strong{font-weight:680}
+.one-goal-context p{color:var(--muted);font-size:.72rem;margin:4px 0 0;max-width:470px}
+.one-goal-context-metrics{display:flex;gap:23px;flex-wrap:wrap}
+.one-goal-context-metrics>span{font-size:.67rem;color:var(--muted)}
+.one-goal-context-metrics strong{font-size:.9rem;color:var(--text);display:block;margin-top:3px;font-variant-numeric:tabular-nums}
+.one-goal-context-link{background:transparent;border:0;color:var(--success);font-size:.73rem;font-weight:650;cursor:pointer}
+.one-goal-context-rows{width:100%;display:grid;gap:7px}
+.one-goal-context-rows>div{display:flex;justify-content:space-between;gap:12px;font-size:.73rem}
+.one-goal-context-rows span{color:var(--muted)}
+@media(max-width:760px){.one-goal-grid{grid-template-columns:1fr}.one-goal-header{display:block}.one-goal-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.one-goal-amount strong{font-size:1.3rem}}
+@media(max-width:420px){.one-goal-summary{grid-template-columns:1fr}.one-goal-card{padding:17px}.one-goal-toolbar{flex-wrap:wrap}}
+</style></head><body><div class="brand">RASTRO</div><h1>${safe(group.name)}</h1><div class="muted">${group.person?`Desglose para ${safe(group.person)} · `:""}${safe(monthLabel(month))}</div><table><thead><tr><th>Fecha</th><th>Mes origen</th><th>Persona</th><th>Tipo</th><th>Concepto</th><th>Estado</th><th class="num">Monto</th></tr></thead><tbody>${rows.map(c=>{const origin=c.chargeMonth||monthKey(c.date),isCarry=isReceivableCarryover(c,month);return `<tr><td>${safe(dateLabel(c.date))}</td><td>${safe(monthLabel(origin))}${isCarry?`<br><span class="carry">Arrastre pendiente</span>`:""}</td><td>${safe(c.person)}</td><td>${safe(c.kind)}${c.sourceRecurringId?" · Mensual":""}</td><td>${safe(c.description)}</td><td>${cobroPaymentState(c)}</td><td class="num">${safe(money(receivableAmountCRC(c)))}${safe(c.currency&&normalizeCurrency(c.currency)!==displayCurrency()?` (original ${originalMoney(c.amount,c.currency)})`:``)}</td></tr>`}).join("")||`<tr><td colspan="7">Sin cobros</td></tr>`}</tbody></table><div class="total"><div><strong>Cargos del mes:</strong> ${safe(money(currentTotal))}</div><div><strong>Arrastre anterior:</strong> ${safe(money(carry))}</div><div><strong>Pendiente total:</strong> ${safe(money(pending))}</div></div><script>window.onload=()=>setTimeout(()=>window.print(),150)<\/script></body></html>`);win.document.close();
 }
 function cancelRecurringFromMonth(charge){
   const month=charge.chargeMonth||monthKey(charge.date),template=(data.receivableRecurring||[]).find(t=>t.id===charge.sourceRecurringId);if(!template)return;
@@ -4043,7 +4119,147 @@ function cancelRecurringFromMonth(charge){
   save();renderSharedCharges();
 }
 
+
+/* Metas Beta 1.0: vistas derivadas de reserves / reserveMovements, sin otro libro contable. */
+function oneGoalMonthsLeft(r,asOf=todayIso()){
+  if(!r?.targetDate||!restoreValidDate(r.targetDate)||r.targetDate<=asOf)return 0;
+  const end=Date.parse(r.targetDate+"T00:00:00Z"),start=Date.parse(asOf+"T00:00:00Z");
+  return Math.max(1,Math.ceil((end-start)/(86400000*30.436875)));
+}
+function oneGoalMonthlySuggestion(r,asOf=todayIso()){
+  if(r?.type!=="goal"||reserveStatus(r)!=="active")return 0;
+  const months=oneGoalMonthsLeft(r,asOf),remaining=Math.max(0,reserveTargetCRC(r)-reserveBalanceAt(r,asOf));
+  return months&&reserveTargetCRC(r)>0?remaining/months:0;
+}
+function oneGoalTxnEligibility(r,candidate=null,editingId=""){
+  if(!r)return {ok:false,error:"No se encontró el fondo."};
+  if(!["goal","protected"].includes(r.type))return {ok:false,error:"El tipo de fondo no es válido."};
+  if(candidate&&reserveStatus(r)==="archived")return {ok:false,error:"Reactivá el fondo antes de registrar un movimiento."};
+  if(candidate&&(!restoreValidDate(candidate.date)||!Number.isFinite(Number(candidate.amount))||Number(candidate.amount)<=0))
+    return {ok:false,error:"Ingresá una fecha válida y un monto mayor que cero."};
+  if(candidate&&r.openingDate&&candidate.date<r.openingDate)
+    return {ok:false,error:"La operación no puede ser anterior a la fecha de inicio del fondo."};
+  const original=editingId||r.id;
+  const transactions=[...(data.reserveMovements||[]).filter(t=>t.reserveId===original)];
+  if(candidate)transactions.push(candidate);
+  const opening=r.openingDate&&restoreValidDate(r.openingDate)?r.openingDate:"0000-01-01";
+  let balance=0;
+  const events=[
+    {date:opening,delta:currentToCRC(r.openingAmount,r.openingCurrency||"CRC","receive"),positive:true},
+    ...transactions.map(t=>({date:t.date,delta:reserveTxnDelta(t),positive:reserveTxnDelta(t)>=0}))
+  ].sort((a,b)=>String(a.date).localeCompare(String(b.date))||Number(b.positive)-Number(a.positive));
+  for(const event of events){
+    if(!restoreValidDate(event.date)&&event.date!=="0000-01-01")
+      return {ok:false,error:"Hay operaciones anteriores con fechas inválidas."};
+    balance+=event.delta;
+    if(balance<-.005)return {ok:false,error:"Esta operación dejaría el fondo con saldo negativo. Revisá el saldo disponible y los movimientos posteriores."};
+  }
+  return {ok:true};
+}
+function oneGoalSelectedTransactions(level,value){
+  return (data.reserveMovements||[]).filter(t=>{
+    const p=periodForDate(t.date);
+    return p&&(level==="quarter"?budgetQuarter(p)===value:
+      level==="month"?p.budgetMonth===value:periodKey(p)===value);
+  }).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+}
+function oneRenderGoalCards(){
+  const summary=document.getElementById("goalSummary"),grid=document.getElementById("goalCardGrid");
+  if(!summary||!grid)return;
+  const today=todayIso(),goals=(data.reserves||[]).filter(r=>r.type==="goal");
+  const active=goals.filter(r=>reserveStatus(r)==="active"),saved=goals.reduce((sum,r)=>sum+reserveBalanceAt(r,today),0);
+  summary.innerHTML='<div class="one-goal-total"><span>AHORRADO EN METAS</span><strong>'+money(saved)+'</strong><small>Incluye metas archivadas con saldo</small></div>'+
+    '<div class="one-goal-total"><span>METAS ACTIVAS</span><strong>'+active.length+'</strong><small>Objetivos de ahorro en marcha</small></div>';
+  const filter=document.getElementById("goalStatusFilter")?.value||"active";
+  const visible=goals.filter(r=>filter==="all"||reserveStatus(r)===filter);
+  grid.innerHTML=visible.length?visible.map(r=>{
+    const balance=reserveBalanceAt(r,today),target=reserveTargetCRC(r),remaining=Math.max(0,target-balance);
+    const pct=target>0?Math.min(100,Math.max(0,balance/target*100)):0;
+    const archived=reserveStatus(r)==="archived",monthly=oneGoalMonthlySuggestion(r,today);
+    const dateInfo=r.targetDate?(r.targetDate<today?"Fecha objetivo pasada · "+dateLabel(r.targetDate):
+      "Objetivo: "+dateLabel(r.targetDate)):"Sin fecha límite";
+    const hint=target<=0?"Definí un monto objetivo para ver tu avance.":
+      remaining<=.005?"¡Monto objetivo alcanzado!":
+      archived?"La meta está archivada. Conservamos su historial.":
+      r.targetDate&&r.targetDate<=today?"Fecha cumplida: revisá el plazo de tu meta.":
+      monthly>0?"Aporte orientativo: "+money(monthly)+" al mes":
+      "Agregá una fecha objetivo para calcular un aporte mensual.";
+    const history=(data.reserveMovements||[]).filter(t=>t.reserveId===r.id)
+      .sort((a,b)=>String(b.date).localeCompare(String(a.date))||String(b.createdAt).localeCompare(String(a.createdAt)))
+      .slice(0,5);
+    const status=archived?'<span class="one-goal-state">Archivada</span>':"";
+    const ops=history.map(t=>'<div class="one-goal-history-row"><span>'+dateLabel(t.date)+' · '+safe(t.type)+'</span><strong>'+originalMoney(t.amount,t.currency||"CRC")+'</strong></div>').join("");
+    return '<article class="one-goal-card">'+
+      '<div class="one-goal-card-top"><div><span class="one-goal-eyebrow">META</span><h3>'+safe(r.name)+'</h3></div>'+status+'</div>'+
+      '<div class="one-goal-amount"><strong>'+money(balance)+'</strong><span>'+ (target>0?'de '+money(target):'Ahorrado')+'</span></div>'+
+      (target>0?'<div class="one-goal-bar" role="progressbar" aria-label="Progreso de '+safe(r.name)+'" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+Math.round(pct)+'"><span style="width:'+pct.toFixed(1)+'%"></span></div>':'')+
+      '<div class="one-goal-stats"><span>'+(target>0?Math.round(pct)+'% completado · Faltan '+money(remaining):'Sin monto objetivo')+'</span><span>'+safe(dateInfo)+'</span></div>'+
+      '<p class="one-goal-hint">'+safe(hint)+'</p>'+
+      '<div class="one-goal-actions">'+(archived?'':
+        '<button class="btn small" type="button" data-goal-txn="'+safe(r.id)+'" data-goal-type="Aporte">+ Aportar</button>')+
+        '<button class="btn secondary small" type="button" data-edit-reserve="'+safe(r.id)+'">Editar</button></div>'+
+      '<details class="one-goal-card-details"><summary>Detalle e historial</summary><div class="one-goal-history">'+
+      (history.length?ops:'<p class="muted">Todavía no hay aportes ni retiros registrados.</p>')+
+      '<div class="one-goal-card-more">'+
+      (archived?'<button type="button" class="btn secondary small" data-reactivate-reserve="'+safe(r.id)+'">Reactivar</button>':
+        '<button type="button" class="btn secondary small" data-goal-txn="'+safe(r.id)+'" data-goal-type="Retiro a operación">Retirar</button>'+
+        '<button type="button" class="btn secondary small" data-goal-txn="'+safe(r.id)+'" data-goal-type="Uso objetivo">Usar objetivo</button>'+
+        '<button type="button" class="btn secondary small" data-archive-reserve="'+safe(r.id)+'">Archivar</button>')+
+      '</div></div></details></article>';
+  }).join(""):'<div class="one-goal-empty">No hay metas en esta vista. Podés crear tu primera meta sin salir de One Less One.</div>';
+}
+function oneGoalOpenTransaction(reserveId,type="Aporte"){
+  const r=(data.reserves||[]).find(x=>x.id===reserveId);
+  if(!r||reserveStatus(r)!=="active")return;
+  navigate("capital");
+  const details=document.getElementById("capitalLegacyDetails");
+  if(details)details.open=true;
+  const date=document.getElementById("rtDate"),amount=document.getElementById("rtAmount");
+  if(date)date.value=todayIso();
+  refreshReserveSelect(reserveId);
+  const typeEl=document.getElementById("rtType"),currency=document.getElementById("rtCurrency");
+  if(typeEl)typeEl.value=type;
+  if(currency)currency.value=normalizeCurrency(r.openingCurrency||displayCurrency());
+  document.getElementById("reserveTxnForm")?.scrollIntoView({behavior:"smooth",block:"center"});
+  amount?.focus({preventScroll:true});
+}
+function oneRenderGoalBudgetPreview(level,value){
+  const slot=document.getElementById("goalBudgetPreview");if(!slot)return;
+  const active=(data.reserves||[]).filter(r=>r.type==="goal"&&reserveStatus(r)==="active");
+  if(!oneModuleEnabled("capital")||!active.length){slot.hidden=true;return;}
+  slot.hidden=false;
+  const monthly=active.reduce((sum,r)=>sum+oneGoalMonthlySuggestion(r),0);
+  const transfers=oneGoalSelectedTransactions(level,value).filter(t=>t.type==="Aporte"&&active.some(r=>r.id===t.reserveId));
+  const actual=transfers.reduce((sum,t)=>sum+reserveTxnHistoricalCRC(t,"pay"),0);
+  slot.innerHTML='<div><strong>Ahorro para metas</strong><p>Orientación, no un gasto ni una obligación del presupuesto.</p></div>'+
+    '<div class="one-goal-context-metrics"><span>Sugerido al mes · hoy<strong>'+money(monthly)+'</strong></span>'+
+    '<span>Aportado en este período<strong>'+money(actual)+'</strong></span></div>'+
+    '<button type="button" class="one-goal-context-link" data-open-goals>Ver metas</button>';
+}
+function oneRenderGoalMovementPreview(level,value){
+  const slot=document.getElementById("goalMovementPreview");if(!slot)return;
+  if(!oneModuleEnabled("capital")||!(data.reserves||[]).length){slot.hidden=true;return;}
+  const transactions=oneGoalSelectedTransactions(level,value)
+    .filter(t=>(data.reserves||[]).some(r=>r.id===t.reserveId)).slice(0,4);
+  if(!transactions.length){slot.hidden=true;return;}
+  slot.hidden=false;
+  slot.innerHTML='<div><strong>Actividad de tus fondos</strong><p>Estas transferencias ya están reflejadas en tu saldo operativo y no se suman otra vez como ingresos o gastos.</p></div>'+
+    '<div class="one-goal-context-rows">'+transactions.map(t=>{
+      const r=data.reserves.find(x=>x.id===t.reserveId);
+      return '<div><span>'+dateLabel(t.date)+' · '+safe(r?.name||"Fondo")+' · '+safe(t.type)+'</span>'+
+        '<strong>'+originalMoney(t.amount,t.currency||"CRC")+'</strong></div>';
+    }).join("")+'</div><button type="button" class="one-goal-context-link" data-open-goals>Ver metas</button>';
+}
+function initGoalsBeta(){
+  document.addEventListener("click",e=>{
+    const tx=e.target.closest("[data-goal-txn]");
+    if(tx){oneGoalOpenTransaction(tx.dataset.goalTxn,tx.dataset.goalType||"Aporte");return;}
+    if(e.target.closest("[data-open-goals]"))navigate("capital");
+  });
+}
+
 function renderCapital(){
+  oneRenderGoalCards();
   const today=todayIso(), totals=reserveTotals(today), operating=actualBalanceAt(today), debtTotal=activeDebtTotal();
   const liquid=operating+totals.total, net=liquid-debtTotal;
   const cards=[["Saldo operativo",operating,operating>=0?"good":"bad"],["Capital protegido",totals.protectedTotal,""],["Metas reservadas",totals.goalTotal,""],["Patrimonio líquido",liquid,"good"],["Deuda estimada",debtTotal,"warn"],["Posición líquida neta",net,net>=0?"good":"bad"]];
@@ -5014,17 +5230,27 @@ function bind(){
   });
 
   document.getElementById("addReserveBtn").addEventListener("click",()=>openReserve());
+  document.getElementById("createGoalBtn")?.addEventListener("click",()=>openReserve());
+  document.getElementById("goalStatusFilter")?.addEventListener("change",renderCapital);
   document.getElementById("cancelReserveBtn").addEventListener("click",()=>document.getElementById("reserveDialog").close());
   document.getElementById("reserveForm").addEventListener("submit",e=>{
     e.preventDefault();const rid=document.getElementById("fId").value;
     const oldReserve=data.reserves.find(r=>r.id===rid);
-    const obj={id:rid||id(),name:document.getElementById("fName").value.trim(),type:document.getElementById("fType").value,target:num(document.getElementById("fTarget").value),targetCurrency:normalizeCurrency(document.getElementById("fTargetCurrency").value),openingAmount:num(document.getElementById("fOpeningAmount").value),openingCurrency:normalizeCurrency(document.getElementById("fOpeningCurrency").value),openingDate:document.getElementById("fOpeningDate").value,location:document.getElementById("fLocation").value.trim(),rate:num(document.getElementById("fRate").value),notes:document.getElementById("fNotes").value.trim(),status:oldReserve?.status||"active",closedAt:oldReserve?.closedAt||"",closedReason:oldReserve?.closedReason||""};
+    const obj={id:rid||id(),name:document.getElementById("fName").value.trim(),type:document.getElementById("fType").value,target:num(document.getElementById("fTarget").value),targetCurrency:normalizeCurrency(document.getElementById("fTargetCurrency").value),targetDate:document.getElementById("fType").value==="goal"?document.getElementById("fTargetDate").value:(oldReserve?.targetDate||""),openingAmount:num(document.getElementById("fOpeningAmount").value),openingCurrency:normalizeCurrency(document.getElementById("fOpeningCurrency").value),openingDate:document.getElementById("fOpeningDate").value,location:document.getElementById("fLocation").value.trim(),rate:num(document.getElementById("fRate").value),notes:document.getElementById("fNotes").value.trim(),status:oldReserve?.status||"active",closedAt:oldReserve?.closedAt||"",closedReason:oldReserve?.closedReason||""};
+    if(obj.targetDate&&!restoreValidDate(obj.targetDate))return alert("Ingresá una fecha objetivo válida.");
+    if(obj.targetDate&&obj.openingDate&&obj.targetDate<obj.openingDate)return alert("La fecha objetivo no puede ser anterior al inicio del fondo.");
+    const eligibility=oneGoalTxnEligibility(obj,null,rid);
+    if(!eligibility.ok)return alert(eligibility.error);
     const i=data.reserves.findIndex(r=>r.id===rid);i>=0?data.reserves[i]={...data.reserves[i],...obj}:data.reserves.push(obj);
     save();document.getElementById("reserveDialog").close();refreshReserveSelect();renderCapital();renderDashboard();renderPlan();
   });
   document.getElementById("reserveTxnForm").addEventListener("submit",e=>{
     e.preventDefault();const reserveId=document.getElementById("rtReserve").value;if(!reserveId)return alert("Selecciona un fondo.");
-    data.reserveMovements.push({id:id(),date:document.getElementById("rtDate").value,reserveId,type:document.getElementById("rtType").value,amount:num(document.getElementById("rtAmount").value),currency:normalizeCurrency(document.getElementById("rtCurrency").value),...currentFxSnapshot(),description:document.getElementById("rtDescription").value.trim(),createdAt:new Date().toISOString()});
+    const fund=data.reserves.find(r=>r.id===reserveId);
+    const candidate={id:id(),date:document.getElementById("rtDate").value,reserveId,type:document.getElementById("rtType").value,amount:num(document.getElementById("rtAmount").value),currency:normalizeCurrency(document.getElementById("rtCurrency").value),...currentFxSnapshot(),description:document.getElementById("rtDescription").value.trim(),createdAt:new Date().toISOString()};
+    const permission=oneGoalTxnEligibility(fund,candidate);
+    if(!permission.ok)return alert(permission.error);
+    data.reserveMovements.push(candidate);
     save();e.target.reset();document.getElementById("rtDate").value=todayIso();document.getElementById("rtCurrency").value=displayCurrency();refreshReserveSelect(reserveId);renderCapital();renderDashboard();renderPlan();
   });
   document.getElementById("addDebtBtn").addEventListener("click",()=>openDebt());
@@ -5651,6 +5877,7 @@ renderMovements=function(){
     <div class="v7-donut-placeholder" style="--v7-pct:${topPct}%"><div class="v7-donut-center"><strong>${money(expense)}</strong><span>Gastos</span></div></div>
     <div class="v7-mini-bars">${ranked.length?ranked.map(([name,val])=>`<div class="v7-mini-bar"><div><div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:4px"><span>${v7SafeText(name)}</span><span>${tot?Math.round(val/tot*100):0}%</span></div><div class="v7-mini-bar-track"><span style="width:${tot?Math.min(100,val/tot*100):0}%"></span></div></div><strong style="font-size:.66rem;text-align:right">${money(val)}</strong></div>`).join(""):`<div class="muted" style="font-size:.72rem">Todavía no hay gastos reales en este periodo.</div>`}</div>`;
   m2RenderAccountSummary(rows);m2RenderTemplates();m2RenderAudit();
+  oneRenderGoalMovementPreview(level,value);
 };
 
 // La agenda es una vista derivada: nunca altera deudas, movimientos ni cuotas históricas.
@@ -5922,7 +6149,7 @@ function initDebtBalanceReconciliation(){
  save();close();renderDebts();renderDashboard();renderCapital();renderPlan();
  });
 }
-bind();initDebtBalanceReconciliation();bindReportStudio();initV7();initR8();initMovements2();initUiPreferences();initLiquidityChartInteraction();initModulesBeta();initDataIntegrityNotice();navigate(uiState.activeView||"dashboard");updateCurrencyHeader();setTimeout(()=>{if(oneShouldPromptFxOnLaunch())openFxDialog(true)},80);
+bind();initDebtBalanceReconciliation();bindReportStudio();initV7();initR8();initMovements2();initGoalsBeta();initUiPreferences();initLiquidityChartInteraction();initModulesBeta();initDataIntegrityNotice();navigate(uiState.activeView||"dashboard");updateCurrencyHeader();setTimeout(()=>{if(oneShouldPromptFxOnLaunch())openFxDialog(true)},80);
 </script>
 </body>
 </html>
