@@ -2534,6 +2534,9 @@ function saveFxRate(date,buy,sell){
   save();updateCurrencyHeader();return true;
 }
 function needsDailyFx(){const r=currentRates();return data.settings.fxDate!==todayIso()||!(r.buy>0&&r.sell>0)}
+// Una tasa guardada continúa disponible al refrescar aunque la fecha sea anterior.
+// La fecha sigue visible en el encabezado para actualizarla manualmente.
+function needsInitialFx(){return !(num(data.settings.fxBuy)>0&&num(data.settings.fxSell)>0)}
 function renderActiveView(){
   const active=document.querySelector(".view.active")?.id?.replace("view-","")||"dashboard";navigate(active);updateCurrencyHeader();
 }
@@ -2955,6 +2958,9 @@ function syncQuarterSelectors(){
 }
 function navigate(view){
   if(ONE_OPTIONAL_MODULES.has(view)&&!oneModuleEnabled(view))view="dashboard";
+  if(!["dashboard","plan","movements","debts","shared","capital"].includes(view))view="dashboard";
+  uiState.activeView=view;
+  saveUiState();
   document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id===`view-${view}`));
   document.querySelectorAll("#nav button[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===view));
   if(view==="dashboard")renderDashboard();
@@ -3324,12 +3330,16 @@ function initR8(){
   });
   document.getElementById("planMonths")?.addEventListener("keydown",(event)=>{
     if(!event.target.matches(".r8-edit-controls input"))return;
-    if(event.key==="Enter"){event.preventDefault();event.target.blur();}
+    if(event.key==="Enter"){
+      event.preventDefault();
+      if(event.target.value!==event.target.defaultValue)
+        event.target.dispatchEvent(new Event("change",{bubbles:true}));
+      else renderPlan();
+    }
     if(event.key==="Escape"){
-      const cell=event.target.closest(".r8-edit-cell");
-      cell?.closest(".r8-budget-row")?.querySelectorAll("[data-r8-edit-budget]").forEach(b=>b.hidden=false);
-      const controls=cell?.querySelector(".r8-edit-controls");if(controls)controls.hidden=true;
-      event.target.blur();
+      event.preventDefault();
+      event.target.value=event.target.defaultValue;
+      renderPlan();
     }
   });
 }
@@ -4839,9 +4849,9 @@ function bind(){
   document.getElementById("exportBtn").addEventListener("click",()=>download(`respaldo-finanzas-${todayIso()}.json`,JSON.stringify(data,null,2),"application/json"));
   document.getElementById("importBtn").addEventListener("click",()=>document.getElementById("importFile").click());
   document.getElementById("importFile").addEventListener("change",async e=>{
-    try{const imported=JSON.parse(await e.target.files[0].text());if(!imported.periods||!imported.movements||!imported.debts)throw Error();data=migrateData(imported);save();syncQuarterSelectors();refreshDebtSelect();refreshReserveSelect();refreshSharedGroupSelects();refreshMovementCategorySelect();navigate("dashboard");updateCurrencyHeader();alert("Respaldo restaurado correctamente.");if(needsDailyFx())setTimeout(()=>openFxDialog(true),120)}catch{alert("El archivo no es un respaldo válido.")}e.target.value=""
+    try{const imported=JSON.parse(await e.target.files[0].text());if(!imported.periods||!imported.movements||!imported.debts)throw Error();data=migrateData(imported);save();syncQuarterSelectors();refreshDebtSelect();refreshReserveSelect();refreshSharedGroupSelects();refreshMovementCategorySelect();navigate("dashboard");updateCurrencyHeader();alert("Respaldo restaurado correctamente.");if(needsInitialFx())setTimeout(()=>openFxDialog(true),120)}catch{alert("El archivo no es un respaldo válido.")}e.target.value=""
   });
-  document.getElementById("resetBtn").addEventListener("click",()=>{if(confirm("Esto eliminará todos los cambios locales. ¿Continuar?")){data=migrateData(clone(initialData));save();syncQuarterSelectors();refreshDebtSelect();refreshReserveSelect();refreshSharedGroupSelects();refreshMovementCategorySelect();navigate("dashboard");updateCurrencyHeader();if(needsDailyFx())setTimeout(()=>openFxDialog(true),120)}});
+  document.getElementById("resetBtn").addEventListener("click",()=>{if(confirm("Esto eliminará todos los cambios locales. ¿Continuar?")){data=migrateData(clone(initialData));save();syncQuarterSelectors();refreshDebtSelect();refreshReserveSelect();refreshSharedGroupSelects();refreshMovementCategorySelect();navigate("dashboard");updateCurrencyHeader();if(needsInitialFx())setTimeout(()=>openFxDialog(true),120)}});
 
   document.getElementById("exportMovementsCsv").addEventListener("click",()=>{
     const level=document.getElementById("movementLevel").value,value=document.getElementById("movementPeriod").value;
@@ -5589,7 +5599,7 @@ function initDebtBalanceReconciliation(){
  save();close();renderDebts();renderDashboard();renderCapital();renderPlan();
  });
 }
-bind();initDebtBalanceReconciliation();bindReportStudio();initV7();initR8();initMovements2();initUiPreferences();initLiquidityChartInteraction();initModulesBeta();initDataIntegrityNotice();renderDashboard();updateCurrencyHeader();setTimeout(()=>{if(needsDailyFx())openFxDialog(true)},80);
+bind();initDebtBalanceReconciliation();bindReportStudio();initV7();initR8();initMovements2();initUiPreferences();initLiquidityChartInteraction();initModulesBeta();initDataIntegrityNotice();navigate(uiState.activeView||"dashboard");updateCurrencyHeader();setTimeout(()=>{if(needsInitialFx())openFxDialog(true)},80);
 </script>
 </body>
 </html>
