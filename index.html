@@ -661,7 +661,7 @@ html[data-theme="dark"] .v7-card,
 html[data-theme="dark"] .v7-hero-card,
 html[data-theme="dark"] .v7-kpi,
 html[data-theme="dark"] .v7-debt-card{box-shadow:none}
-html[data-theme="dark"] .v7-insight-card{background:linear-gradient(145deg,color-mix(in srgb,var(--success) 10%,var(--surface)),var(--surface) 72%)}
+/* Las tarjetas insight comparten la misma fórmula visual en ambos temas. */
 
 /* Responsive */
 @media(max-width:1180px){
@@ -765,12 +765,23 @@ footer,html[data-sidebar="collapsed"] footer{
 .btn:not(.danger){background:var(--text);border-color:var(--text);color:var(--app-bg);font-weight:650}
 .btn.secondary{background:transparent;color:var(--text);border-color:var(--border)}
 .btn.secondary:hover{background:var(--surface-hover)}
-.v7-mini-badge,.v7-status-pill{background:var(--surface-2);color:var(--muted)}
-.v7-kpi-icon.green,.v7-kpi-icon.red,.v7-kpi-icon.blue,.v7-kpi-icon.purple{
-  background:var(--surface-2);color:var(--muted)
+/* Paridad visual Light / Dark: mismas tarjetas, tintes y jerarquía visual.
+   Solo cambian --surface, --success y los demás tokens del tema. */
+.v7-mini-badge{background:var(--surface-2);color:var(--muted)}
+.v7-status-pill{
+  background:color-mix(in srgb,var(--success) 13%,var(--surface));
+  color:var(--success)
 }
-.v7-insight-card{background:var(--surface)}
-.v7-insight-icon{background:var(--surface-2);color:var(--text)}
+.v7-insight-card{
+  background:linear-gradient(145deg,
+    color-mix(in srgb,var(--success) 18%,var(--surface)) 0%,
+    var(--surface) 76%)
+}
+.v7-insight-icon{
+  background:color-mix(in srgb,var(--success) 15%,var(--surface));
+  color:var(--success)
+}
+/* Los KPI conservan sus colores de categoría definidos en .v7-kpi-icon. */
 .v7-debt-name .icon{background:var(--surface-2);color:var(--text)}
 .v7-transaction-icon{background:var(--surface-2);color:var(--text)}
 .v7-hero-card,.v7-card,.v7-debt-card,.v7-kpi{box-shadow:none}
