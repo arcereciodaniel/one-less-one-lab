@@ -4135,6 +4135,8 @@ function oneGoalTxnEligibility(r,candidate=null,editingId=""){
   if(!r)return {ok:false,error:"No se encontró el fondo."};
   if(!["goal","protected"].includes(r.type))return {ok:false,error:"El tipo de fondo no es válido."};
   if(candidate&&reserveStatus(r)==="archived")return {ok:false,error:"Reactivá el fondo antes de registrar un movimiento."};
+  if(candidate&&!["Aporte","Retiro a operación","Uso objetivo","Rendimiento","Ajuste"].includes(candidate.type))
+    return {ok:false,error:"Tipo de operación desconocido."};
   if(candidate&&(!restoreValidDate(candidate.date)||!Number.isFinite(Number(candidate.amount))||Number(candidate.amount)<=0))
     return {ok:false,error:"Ingresá una fecha válida y un monto mayor que cero."};
   if(candidate&&r.openingDate&&candidate.date<r.openingDate)
@@ -4176,8 +4178,8 @@ function oneRenderGoalCards(){
     const balance=reserveBalanceAt(r,today),target=reserveTargetCRC(r),remaining=Math.max(0,target-balance);
     const pct=target>0?Math.min(100,Math.max(0,balance/target*100)):0;
     const archived=reserveStatus(r)==="archived",monthly=oneGoalMonthlySuggestion(r,today);
-    const dateInfo=r.targetDate?(r.targetDate<today?"Fecha objetivo pasada · "+dateLabel(r.targetDate):
-      "Objetivo: "+dateLabel(r.targetDate)):"Sin fecha límite";
+    const dateInfo=r.targetDate?(restoreValidDate(r.targetDate)?(r.targetDate<today?"Fecha objetivo pasada · "+dateLabel(r.targetDate):
+      "Objetivo: "+dateLabel(r.targetDate)):"Revisá la fecha objetivo"):"Sin fecha límite";
     const hint=target<=0?"Definí un monto objetivo para ver tu avance.":
       remaining<=.005?"¡Monto objetivo alcanzado!":
       archived?"La meta está archivada. Conservamos su historial.":
