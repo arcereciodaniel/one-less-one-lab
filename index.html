@@ -1290,6 +1290,10 @@ header nav button.one-add-module-button:focus-visible{outline:2px solid var(--ac
 @media(max-width:950px){.one-move-feed .v7-transaction-row{grid-template-columns:38px minmax(0,1fr) auto minmax(116px,max-content)}.one-move-feed .v7-category-chip{display:none}}
 @media(max-width:650px){.one-move-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.one-move-kpis>.v7-kpi:last-child{grid-column:1/-1}.one-move-insights{grid-template-columns:1fr}.one-move-feed{padding:15px 13px}.one-move-feed .v7-transaction-row{grid-template-columns:32px minmax(0,1fr) auto;gap:8px}.one-move-feed .m2-feed-actions{grid-column:2/-1;justify-content:flex-end}.one-move-composer{padding:19px 16px}.one-move-period>div{min-width:0}.one-move-scheduled small{display:block;margin:4px 0 0}}
 @media(max-width:420px){.one-move-kpis{grid-template-columns:1fr}.one-move-kpis>.v7-kpi:last-child{grid-column:auto}.one-move-filter-grid{grid-template-columns:1fr}.one-move-form{grid-template-columns:1fr}.one-move-form .field{grid-column:1/-1}.one-move-form .m2-more .form-grid{grid-template-columns:1fr}.one-move-dialog .m2-quick-types button{font-size:.68rem}}
+.one-restore-preview{padding:12px;margin:12px 0;border:1px solid var(--border);border-radius:10px}
+.one-restore-preview p{overflow-wrap:anywhere;font-size:.85rem}
+.one-restore-counts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.one-restore-counts>div{padding:8px;border-radius:6px;background:var(--surface-hover);display:flex;justify-content:space-between;gap:12px;font-size:.79rem}
 </style>
 </head>
 <body>
@@ -1321,7 +1325,7 @@ header nav button.one-add-module-button:focus-visible{outline:2px solid var(--ac
       <button id="fxBtn" class="fx-button" type="button" title="Actualizar tipo de cambio">TC: pendiente</button>
       <button id="exportBtn" title="Guardar un respaldo JSON">Respaldar</button>
       <button id="importBtn" title="Restaurar un respaldo JSON">Restaurar</button>
-      <input type="file" id="importFile" accept=".json" hidden>
+      <input type="file" id="importFile" accept=".json,application/json" hidden>
     </div>
   </div>
 </header>
@@ -1987,6 +1991,17 @@ header nav button.one-add-module-button:focus-visible{outline:2px solid var(--ac
   </div>
 </dialog>
 
+<dialog id="restorePreviewDialog" aria-labelledby="restorePreviewTitle">
+<div class="dialog-body">
+<button type="button" class="dialog-close" id="restorePreviewClose" aria-label="Cerrar">×</button>
+<h2 id="restorePreviewTitle">Revisar respaldo</h2>
+<p class="muted">Revisá el contenido antes de reemplazar los datos financieros de este navegador.</p>
+<div id="restorePreviewDetails" class="one-restore-preview"></div>
+<p class="muted">Antes de restaurar se descargará un respaldo de tus datos actuales y se conservará una copia preventiva en este navegador.</p>
+<div class="dialog-actions">
+<button class="btn secondary" type="button" id="restorePreviewCancel">Cancelar</button>
+<button class="btn" type="button" id="restorePreviewConfirm">Restaurar estos datos</button>
+</div></div></dialog>
 <dialog id="fxDialog">
   <div class="dialog-body">
 <button class="dialog-close" type="button" aria-label="Cerrar">×</button>
@@ -2466,6 +2481,48 @@ function migrateData(raw){
   raw.categorySchemaVersion=1;
   raw.version=6.2;
   return raw;
+}
+const RESTORE_SAFETY_KEY=STORAGE_KEY+"_pre_restore_v1";
+const RESTORE_MAX_BYTES=25*1024*1024;
+function restoreIsRecord(v){return v!==null&&typeof v==="object"&&!Array.isArray(v)}
+function restoreValidate(raw){
+ if(!restoreIsRecord(raw))throw Error("El archivo no es un respaldo JSON válido.");
+ for(const field of ["periods","movements","debts"]){
+  if(!Array.isArray(raw[field])||!raw[field].every(restoreIsRecord))throw Error("La lista "+field+" falta o está dañada.");
+ }
+ for(const field of ["reconciliations","reserves","reserveMovements","sharedCharges","sharedChargeGroups","receivableRecurring","categories","movementTemplates","movementAudit"]){
+  if(raw[field]!==undefined&&(!Array.isArray(raw[field])||!raw[field].every(restoreIsRecord)))
+   throw Error("La lista "+field+" no tiene el formato esperado.");
+ }
+ if(raw.settings!==undefined&&!restoreIsRecord(raw.settings))throw Error("La configuración no tiene el formato esperado.");
+ if(raw.periods.length===0)throw Error("El archivo no contiene períodos financieros.");
+ const dateOk=v=>typeof v==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(v);
+ if(raw.periods.some(p=>!dateOk(p.date))||raw.movements.some(m=>!dateOk(m.date)))
+  throw Error("El archivo contiene períodos o movimientos sin fecha válida.");
+ return raw;
+}
+function restoreDetailsHtml(raw,file){
+ const safeFile=String(file||"respaldo.json").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+ const groups=[["Períodos",raw.periods.length],["Movimientos",raw.movements.length],["Deudas",raw.debts.length],["Categorías",raw.categories?.length||0],["Cobros",raw.sharedCharges?.length||0],["Conciliaciones",raw.reconciliations?.length||0]];
+ return '<p><strong>Archivo:</strong> '+safeFile+'</p><div class="one-restore-counts">'+groups.map(([n,v])=>'<div><span>'+n+'</span><strong>'+v+'</strong></div>').join("")+'</div>';
+}
+function restorePrepare(raw){
+ const valid=restoreValidate(raw),migrated=migrateData(clone(valid));
+ for(const field of ["periods","movements","debts"]){
+  if(migrated[field].length!==valid[field].length)throw Error("La conversión no conservó todos los registros de "+field+".");
+ }
+ migrated.version=6.2;migrated.currencySchemaVersion=1;migrated.categorySchemaVersion=1;migrated.incomeSchemaVersion=1;
+ return migrated;
+}
+function restoreSafely(raw){
+ const prepared=restorePrepare(raw);
+ const current=localStorage.getItem(STORAGE_KEY);
+ if(current!==null){
+  localStorage.setItem(RESTORE_SAFETY_KEY,current);
+  download("respaldo-previo-restauracion-"+todayIso()+".json",current,"application/json");
+ }
+ localStorage.setItem(STORAGE_KEY,JSON.stringify(prepared));
+ return true;
 }
 function load(){
   try{
@@ -4883,10 +4940,42 @@ function bind(){
     data.periods.push(...rows);syncIncomeProjectionsForData(data);save();syncQuarterSelectors();document.getElementById("planLevel").value="quarter";syncHierarchicalFilter("plan",false);document.getElementById("planQuarter").value=q;renderPlan()
   });
 
-  document.getElementById("exportBtn").addEventListener("click",()=>download(`respaldo-finanzas-${todayIso()}.json`,JSON.stringify(data,null,2),"application/json"));
+  document.getElementById("exportBtn").addEventListener("click",()=>{
+    if(storageReadError)return alert("No se puede crear un respaldo porque no se pudo leer el historial local original.");
+    download("respaldo-finanzas-"+todayIso()+".json",JSON.stringify(data,null,2),"application/json");
+  });
+  const restoreDialog=document.getElementById("restorePreviewDialog");
+  let pendingRestore=null;
   document.getElementById("importBtn").addEventListener("click",()=>document.getElementById("importFile").click());
+  document.getElementById("restorePreviewCancel").addEventListener("click",()=>restoreDialog.close());
+  document.getElementById("restorePreviewClose").addEventListener("click",()=>restoreDialog.close());
+  restoreDialog.addEventListener("close",()=>{pendingRestore=null});
   document.getElementById("importFile").addEventListener("change",async e=>{
-    try{const imported=JSON.parse(await e.target.files[0].text());if(!imported.periods||!imported.movements||!imported.debts)throw Error();data=migrateData(imported);save();syncQuarterSelectors();refreshDebtSelect();refreshReserveSelect();refreshSharedGroupSelects();refreshMovementCategorySelect();navigate("dashboard");updateCurrencyHeader();alert("Respaldo restaurado correctamente.");if(needsInitialFx())setTimeout(()=>openFxDialog(true),120)}catch{alert("El archivo no es un respaldo válido.")}e.target.value=""
+    const file=e.target.files?.[0];e.target.value="";
+    if(!file)return;
+    try{
+      if(file.size>RESTORE_MAX_BYTES)throw Error("El archivo supera 25 MB.");
+      const parsed=restoreValidate(JSON.parse(await file.text()));
+      restorePrepare(parsed);
+      pendingRestore=parsed;
+      document.getElementById("restorePreviewDetails").innerHTML=restoreDetailsHtml(parsed,file.name);
+      restoreDialog.showModal();
+    }catch(error){
+      pendingRestore=null;
+      alert("No se restauró ningún dato. "+(error?.message||"Archivo no válido."));
+    }
+  });
+  document.getElementById("restorePreviewConfirm").addEventListener("click",()=>{
+    if(!pendingRestore)return;
+    const btn=document.getElementById("restorePreviewConfirm");btn.disabled=true;
+    try{
+      restoreSafely(pendingRestore);
+      restoreDialog.close();
+      alert("Datos restaurados. One Less One se recargará.");
+      location.reload();
+    }catch(error){
+      alert("La restauración no pudo completarse: "+(error?.message||"No se pudo guardar."));
+    }finally{btn.disabled=false}
   });
   document.getElementById("resetBtn").addEventListener("click",()=>{if(confirm("Esto eliminará todos los cambios locales. ¿Continuar?")){data=migrateData(clone(initialData));save();syncQuarterSelectors();refreshDebtSelect();refreshReserveSelect();refreshSharedGroupSelects();refreshMovementCategorySelect();navigate("dashboard");updateCurrencyHeader();if(needsInitialFx())setTimeout(()=>openFxDialog(true),120)}});
 
