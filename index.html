@@ -3213,7 +3213,10 @@ function initR8(){
     if(edit){
       const cell=edit.closest(".r8-budget-row")?.querySelector(".r8-edit-cell"),controls=cell?.querySelector(".r8-edit-controls");
       if(!controls)return;
-      edit.hidden=true;controls.hidden=false;
+      const valueButton=cell.querySelector(".r8-value-button");
+      if(valueButton)valueButton.hidden=true;
+      if(edit!==valueButton)edit.hidden=true;
+      controls.hidden=false;
       const input=controls.querySelector("input");input?.focus();input?.select();
       return;
     }
@@ -3237,7 +3240,7 @@ function initR8(){
     if(event.key==="Enter"){event.preventDefault();event.target.blur();}
     if(event.key==="Escape"){
       const cell=event.target.closest(".r8-edit-cell");
-      cell?.querySelector(".r8-value-button")?.removeAttribute("hidden");
+      cell?.closest(".r8-budget-row")?.querySelectorAll("[data-r8-edit-budget]").forEach(b=>b.hidden=false);
       const controls=cell?.querySelector(".r8-edit-controls");if(controls)controls.hidden=true;
       event.target.blur();
     }
