@@ -2386,6 +2386,7 @@ function migrateData(raw){
   syncIncomeProjectionsForData(raw,{adoptExisting:incomingIncomeSchema<1});
   raw.incomeSchemaVersion=1;
   raw.movements.forEach(m=>{
+    if(m.receivableChargeId&&m.receivablePaymentId&&m.cashFlowKind==="cobro_reembolso")return;
     let cat=m.categoryId?raw.categories.find(c=>c.id===m.categoryId):null;
     if(!cat)cat=findCat(m.category,m.type)||findCat(m.category,"Gasto");
     if(cat){m.categoryId=cat.id;m.category=cat.name}
@@ -2615,11 +2616,11 @@ function periodEndDate(p){
   return `${p.budgetMonth}-27`;
 }
 function movementAmountCRC(m){
-  const intent=m.type==="Ingreso"?"receive":(m.type==="Gasto"||m.type==="Pago deuda")?"pay":"neutral";
+  const intent=m.type==="Ingreso"||oneIsCobroReimbursement(m)?"receive":(m.type==="Gasto"||m.type==="Pago deuda")?"pay":"neutral";
   return recordToCRC(m,intent);
 }
 function signedMovement(m){
-  if(m.type==="Ingreso")return movementAmountCRC(m);
+  if(m.type==="Ingreso"||oneIsCobroReimbursement(m))return movementAmountCRC(m);
   if(m.type==="Gasto"||m.type==="Pago deuda")return -movementAmountCRC(m);
   return 0;
 }
@@ -3838,7 +3839,7 @@ function liquidityHistorySeries(maxMonths=6){
   const today=todayIso();
   const signals=[
     ...(data.movements||[]).filter(m=>m.date&&m.date<=today&&
-      (m.type==="Ingreso"||m.type==="Gasto"||m.type==="Pago deuda")).map(m=>m.date),
+      (m.type==="Ingreso"||m.type==="Gasto"||m.type==="Pago deuda"||oneIsCobroReimbursement(m))).map(m=>m.date),
     ...(data.reconciliations||[]).filter(r=>r.date&&r.date<=today).map(r=>r.date),
     ...(data.reserveMovements||[]).filter(t=>t.date&&t.date<=today).map(t=>t.date),
     ...(data.periods||[]).filter(p=>p.opening!==null&&p.opening!==undefined&&p.opening!=="")
@@ -4519,6 +4520,8 @@ function bind(){
 
   document.getElementById("movementForm").addEventListener("submit",e=>{
     e.preventDefault();
+    const priorLinked=data.movements.find(m=>m.id===document.getElementById("mEditId").value);
+    if(oneIsLinkedCobroMovement(priorLinked))return alert("Este movimiento está vinculado a Cobros. Modificá el abono desde esa herramienta.");
     const editId=document.getElementById("mEditId").value;
     const existing=editId?data.movements.find(m=>m.id===editId):null;
     if(editId&&!existing)return alert("El movimiento que intentás editar ya no existe.");
@@ -4588,6 +4591,7 @@ function bind(){
     const del=e.target.closest("[data-delete-movement]");
     if(del){
       const movement=data.movements.find(m=>m.id===del.dataset.deleteMovement);
+      if(oneIsLinkedCobroMovement(movement))return alert("Este movimiento está vinculado a un cobro. Editá o revertí el abono desde Cobros.");
       if(movement&&confirm("¿Eliminar este movimiento? Se actualizarán tus saldos, presupuesto e indicadores.")){
         m2Audit("delete",movement,movement);
         data.movements=data.movements.filter(m=>m.id!==movement.id);
@@ -4891,7 +4895,7 @@ function v7DateGroupLabel(date){
   return dateLabel(date)
 }
 function v7MovementIcon(m){
-  if(m.type==="Ingreso")return "↗";
+  if(m.type==="Ingreso"||oneIsCobroReimbursement(m))return "↗";
   if(m.type==="Pago deuda")return "▭";
   if(m.type==="Movimiento patrimonial")return "◇";
   return "↘"
@@ -5034,7 +5038,7 @@ function oneEstimatedAvailable(today=todayIso()){
   const balance=actualBalanceAt(today);
   const hasBalance=!!latestReconciliation(today)||
     (data.periods||[]).some(p=>p.date<=today&&p.opening!==null&&p.opening!==undefined&&p.opening!=="")||
-    (data.movements||[]).some(m=>m.date<=today&&["Ingreso","Gasto","Pago deuda"].includes(m.type))||
+    (data.movements||[]).some(m=>m.date<=today&&(["Ingreso","Gasto","Pago deuda"].includes(m.type)||oneIsCobroReimbursement(m)))||
     (data.reserveMovements||[]).some(t=>t.date<=today);
   const hasPlan=periods.some(p=>budgetCategories(["Gasto","Pago deuda"],p)
     .some(c=>num(p.categoryBudgets?.[c.id])>0));
@@ -5216,7 +5220,7 @@ renderDashboard=function(){
 
   const recent=[...(data.movements||[])].sort((a,b)=>String(b.date).localeCompare(String(a.date))||num(b.seq)-num(a.seq)).slice(0,4);
   document.getElementById("dashboardActivity").innerHTML=recent.length?recent.map(m=>{
-    const amt=movementAmountCRC(m),positive=m.type==="Ingreso";
+    const amt=movementAmountCRC(m),positive=m.type==="Ingreso"||oneIsCobroReimbursement(m);
     return `<div class="v7-list-row"><div class="v7-list-icon">${v7MovementIcon(m)}</div><div class="v7-list-main"><strong>${v7SafeText(m.description||movementCategoryName(m)||m.type)}</strong><span>${v7SafeText(movementCategoryName(m))} · ${dateLabel(m.date)}</span></div><div class="v7-list-amount ${positive?"positive":""}">${positive?"+":"−"} ${money(amt)}</div></div>`
   }).join(""):`<div class="empty">Todavía no hay actividad registrada.</div>`;
 
@@ -5278,11 +5282,12 @@ renderMovements=function(){
   const income=rows.filter(m=>m.type==="Ingreso").reduce((s,m)=>s+movementAmountCRC(m),0);
   const expense=rows.filter(m=>m.type==="Gasto").reduce((s,m)=>s+movementAmountCRC(m),0);
   const debt=rows.filter(m=>m.type==="Pago deuda").reduce((s,m)=>s+movementAmountCRC(m),0);
-  const outflows=expense+debt,net=income-outflows;
+  const reimbursements=rows.filter(oneIsCobroReimbursement).reduce((sum,m)=>sum+movementAmountCRC(m),0);
+  const outflows=expense+debt,net=income+reimbursements-outflows;
   document.getElementById("movementSummary").innerHTML=[
     v7Kpi("↑","green","Ingresos",money(income),`${rows.filter(m=>m.type==="Ingreso").length} movimientos`,"good"),
     v7Kpi("↓","red","Salidas",money(outflows),`${rows.filter(m=>m.type==="Gasto"||m.type==="Pago deuda").length} movimientos · incluye deudas`,""),
-    v7Kpi("↗","blue","Neto",v7SignedMoney(net),`${rows.length} movimientos`,net>=0?"good":"bad")
+    v7Kpi("↗","blue","Neto",v7SignedMoney(net),reimbursements?`Incluye ${money(reimbursements)} en reembolsos`:`${rows.length} movimientos`,net>=0?"good":"bad")
   ].join("");
 
   const groups=[];
@@ -5294,16 +5299,18 @@ renderMovements=function(){
   document.getElementById("movementFeed").innerHTML=groups.length?groups.map(g=>`<div class="v7-feed-group">
     <div class="v7-feed-date"><strong>${v7DateGroupLabel(g.date)}</strong><span>${dateLabel(g.date)}</span></div>
     ${g.rows.map(m=>{
-      const amt=movementAmountCRC(m),positive=m.type==="Ingreso",label=m.description||movementCategoryName(m)||m.type;
+      const amt=movementAmountCRC(m),positive=m.type==="Ingreso"||oneIsCobroReimbursement(m),label=m.description||movementCategoryName(m)||m.type;
       return `<div class="v7-transaction-row m2-row">
         <div class="v7-transaction-icon">${v7MovementIcon(m)}</div>
         <div class="v7-transaction-main"><strong>${v7SafeText(label)}</strong><span>${v7SafeText(m.account||m.type)}${m.paymentMethod?` · ${v7SafeText(m.paymentMethod)}`:""}${movementDebtName(m)?` · ${v7SafeText(movementDebtName(m))}`:""}</span></div>
         <div class="v7-category-chip">${v7SafeText(movementDisplayCategory(m)||m.type)}</div>
         <div class="v7-transaction-amount ${positive?"income":""}">${positive?"+":"−"} ${money(amt)}</div>
         <div class="m2-feed-actions">
-          <button type="button" data-m2-edit="${safe(m.id)}" title="Editar movimiento">Editar</button>
+          ${oneIsLinkedCobroMovement(m)?
+          `<button type="button" data-open-linked-cobro="${safe(m.receivableChargeId)}" title="Este movimiento se modifica desde Cobros">Ver en Cobros</button>`:
+          `<button type="button" data-m2-edit="${safe(m.id)}" title="Editar movimiento">Editar</button>
           <button type="button" data-m2-repeat="${safe(m.id)}" title="Duplicar como nuevo movimiento">Repetir</button>
-          <details class="one-move-row-more"><summary title="Más acciones" aria-label="Más acciones">···</summary><div class="one-move-row-menu"><button type="button" data-m2-schedule="${safe(m.id)}">Programar</button><button type="button" data-delete-movement="${safe(m.id)}">Eliminar</button></div></details>
+          <details class="one-move-row-more"><summary title="Más acciones" aria-label="Más acciones">···</summary><div class="one-move-row-menu"><button type="button" data-m2-schedule="${safe(m.id)}">Programar</button><button type="button" data-delete-movement="${safe(m.id)}">Eliminar</button></div></details>`}
          </div>
       </div>`
     }).join("")}
@@ -5451,12 +5458,19 @@ function initMovements2(){
     renderMovements();
   });
   document.addEventListener("click",e=>{
+    const linked=e.target.closest("[data-open-linked-cobro]");
+    if(linked){
+      const c=(data.sharedCharges||[]).find(row=>row.id===linked.dataset.openLinkedCobro);
+      if(!c)return alert("El cobro original ya no está disponible.");
+      if(!oneModuleEnabled("shared"))oneSetModuleEnabled("shared",true);
+      navigate("shared");openCobroPaymentHistory(c);return;
+    }
     const edit=e.target.closest("[data-m2-edit]");
-    if(edit){const m=data.movements.find(x=>x.id===edit.dataset.m2Edit);if(m)m2OpenComposer(m);return}
+    if(edit){const m=data.movements.find(x=>x.id===edit.dataset.m2Edit);if(oneIsLinkedCobroMovement(m))return alert("Este movimiento se modifica desde Cobros.");if(m)m2OpenComposer(m);return}
     const repeat=e.target.closest("[data-m2-repeat]");
-    if(repeat){const m=data.movements.find(x=>x.id===repeat.dataset.m2Repeat);if(m)m2OpenComposer(m,{repeat:true});return}
+    if(repeat){const m=data.movements.find(x=>x.id===repeat.dataset.m2Repeat);if(oneIsLinkedCobroMovement(m))return alert("Los abonos vinculados se administran desde Cobros.");if(m)m2OpenComposer(m,{repeat:true});return}
     const schedule=e.target.closest("[data-m2-schedule]");
-    if(schedule){const m=data.movements.find(x=>x.id===schedule.dataset.m2Schedule);if(m)m2OpenTemplate(m);return}
+    if(schedule){const m=data.movements.find(x=>x.id===schedule.dataset.m2Schedule);if(oneIsLinkedCobroMovement(m))return alert("Los abonos vinculados se administran desde Cobros.");if(m)m2OpenTemplate(m);return}
     const post=e.target.closest("[data-m2-post-template]");
     if(post){const t=data.movementTemplates.find(x=>x.id===post.dataset.m2PostTemplate);if(t)m2PrepareScheduled(t);return}
     const editTemplate=e.target.closest("[data-m2-edit-template]");
