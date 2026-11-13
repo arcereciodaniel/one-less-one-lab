@@ -1065,6 +1065,23 @@ html[data-theme="dark"]{
 .one-liquidity-tooltip-caption{font-size:.67rem;color:var(--muted);margin-top:3px}
 .one-liquidity-help{font-size:.7rem;color:var(--muted);margin:7px 0 0}
 
+
+/* Cobros + Movimientos, opt-in y sin pantallas adicionales */
+.one-cobro-sync{grid-column:1/-1;min-width:0}
+.one-cobro-sync .check-row{display:flex;gap:10px;align-items:flex-start;margin:0}
+.one-cobro-sync .check-row>input{flex:none;margin-top:4px}
+.one-cobro-sync .check-row span{min-width:0;display:flex;flex-direction:column;gap:3px}
+.one-cobro-sync .check-row strong{font-size:.83rem;color:var(--text);font-weight:680}
+.one-cobro-sync .check-row small{font-size:.73rem;color:var(--muted);line-height:1.45}
+.one-cobro-sync-options{margin:10px 0 0 26px;padding:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;display:grid;gap:9px}
+.one-cobro-sync-options[hidden],.one-cobro-sync-category[hidden]{display:none!important}
+.one-cobro-sync-options label{display:block;font-size:.73rem;color:var(--muted);margin:0 0 4px}
+.one-cobro-sync-options select{width:100%;max-width:100%;min-height:34px}
+.one-cobro-sync-options p{margin:0;color:var(--muted);font-size:.72rem;line-height:1.5}
+.one-cobro-linked-tag{font-size:.68rem;display:inline-block;margin:3px 0;color:var(--muted)}
+.one-payment-line .one-cobro-payment-actions{display:flex;gap:6px;align-items:center}
+.m2-linked-info{font-size:.7rem;color:var(--muted)}
+
 /* Optional app modules · beta */
 #nav button[hidden],#dashboardDebtCommitmentsCard[hidden],#dashboardCollectionsCard[hidden]{display:none!important}
 #view-shared.active{display:block!important}
@@ -1768,13 +1785,23 @@ header nav button.one-add-module-button:focus-visible{outline:2px solid var(--ac
 
 <dialog id="cobroPaymentDialog">
  <div class="dialog-body"><button type="button" class="dialog-close" aria-label="Cerrar">×</button><h2>Registrar abono</h2><p class="muted" id="cpContext"></p>
- <form id="cpForm" class="form-grid"><input id="cpChargeId" type="hidden">
+ <form id="cpForm" class="form-grid"><input id="cpChargeId" type="hidden"><input id="cpPaymentId" type="hidden">
   <div class="field"><label>Fecha recibida</label><input id="cpDate" type="date" required></div>
   <div class="field"><label>Monto recibido</label><div class="money-input"><input id="cpAmount" type="number" min="0.01" step="0.01" required><input id="cpCurrency" readonly aria-label="Moneda del cobro"></div></div>
   <div class="field wide"><label>Nota opcional</label><input id="cpNote" placeholder="SINPE, transferencia, efectivo…"></div>
-  <p class="one-payment-notice wide">El abono reduce el saldo pendiente en Cobros. Para actualizar tu liquidez, registrá también el ingreso en Movimientos; no se crean movimientos automáticamente.</p>
-  <div class="dialog-actions wide"><button type="button" class="btn secondary" id="cpCancel">Cancelar</button><button type="submit" class="btn">Guardar abono</button></div>
- </form></div>
+  <div class="one-cobro-sync wide">
+    <label class="check-row"><input id="cpSyncMovement" type="checkbox"><span><strong>Registrar también en Movimientos</strong><small>Activá esta opción solo si todavía no registraste el dinero. El movimiento quedará vinculado al abono.</small></span></label>
+    <div id="cpMovementOptions" class="one-cobro-sync-options" hidden>
+      <div><label for="cpMovementKind">Cómo clasificar este dinero</label><select id="cpMovementKind">
+        <option value="reimbursement">Reembolso / devolución (no es ingreso habitual)</option>
+        <option value="income">Ingreso (cuenta como ingreso real)</option>
+      </select></div>
+      <div id="cpMovementIncomeWrap" class="one-cobro-sync-category" hidden><label for="cpMovementIncomeCategory">Categoría de ingreso</label><select id="cpMovementIncomeCategory"></select></div>
+      <p id="cpMovementHint">Un reembolso aumenta la liquidez, sin sumarse a tus ingresos habituales.</p>
+    </div>
+  </div>
+  <div class="dialog-actions wide"><button type="button" class="btn secondary" id="cpCancel">Cancelar</button><button type="submit" class="btn" id="cpSubmitBtn">Guardar abono</button></div>
+</form></div>
 </dialog>
 <dialog id="cobroHistoryDialog"><div class="dialog-body"><button type="button" class="dialog-close" aria-label="Cerrar">×</button><h2>Historial de abonos</h2><p class="muted" id="cpHistoryContext"></p><div id="cpHistoryList"></div><div class="dialog-actions"><button type="button" class="btn secondary" id="cpHistoryClose">Cerrar</button></div></div></dialog>
 <dialog id="assignSharedGroupDialog">
