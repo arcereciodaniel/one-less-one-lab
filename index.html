@@ -1079,7 +1079,9 @@ html[data-theme="dark"]{
 .one-cobro-sync-options select{width:100%;max-width:100%;min-height:34px}
 .one-cobro-sync-options p{margin:0;color:var(--muted);font-size:.72rem;line-height:1.5}
 .one-cobro-linked-tag{font-size:.68rem;display:inline-block;margin:3px 0;color:var(--muted)}
-.one-payment-line .one-cobro-payment-actions{display:flex;gap:6px;align-items:center}
+.one-payment-line .one-cobro-payment-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.one-payment-line>span{min-width:0;overflow-wrap:anywhere}
+@media(max-width:520px){.one-payment-line{flex-wrap:wrap}.one-payment-line .one-cobro-payment-actions{width:100%;justify-content:flex-start}.one-cobro-sync-options{margin-left:0}}
 .m2-linked-info{font-size:.7rem;color:var(--muted)}
 
 /* Optional app modules · beta */
@@ -5331,7 +5333,7 @@ renderMovements=function(){
       const amt=movementAmountCRC(m),positive=m.type==="Ingreso"||oneIsCobroReimbursement(m),label=m.description||movementCategoryName(m)||m.type;
       return `<div class="v7-transaction-row m2-row">
         <div class="v7-transaction-icon">${v7MovementIcon(m)}</div>
-        <div class="v7-transaction-main"><strong>${v7SafeText(label)}</strong><span>${v7SafeText(m.account||m.type)}${m.paymentMethod?` · ${v7SafeText(m.paymentMethod)}`:""}${movementDebtName(m)?` · ${v7SafeText(movementDebtName(m))}`:""}</span></div>
+        <div class="v7-transaction-main"><strong>${v7SafeText(label)}</strong><span>${v7SafeText(oneIsCobroReimbursement(m)?"Reembolso · Cobros":oneIsLinkedCobroMovement(m)?"Ingreso · Cobros":m.account||m.type)}${m.paymentMethod?` · ${v7SafeText(m.paymentMethod)}`:""}${movementDebtName(m)?` · ${v7SafeText(movementDebtName(m))}`:""}</span></div>
         <div class="v7-category-chip">${v7SafeText(movementDisplayCategory(m)||m.type)}</div>
         <div class="v7-transaction-amount ${positive?"income":""}">${positive?"+":"−"} ${money(amt)}</div>
         <div class="m2-feed-actions">
