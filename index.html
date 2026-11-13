@@ -1008,6 +1008,25 @@ html[data-theme="dark"]{
 .one-available-math p{margin:4px 0 0;font-size:.69rem;color:var(--muted);line-height:1.5}
 @media(max-width:820px){.one-available-math>div{flex-wrap:wrap}}
 
+/* Cierre financiero sencillo en Inicio */
+#dashboardMonthlyClose[hidden]{display:none!important}
+.one-month-close{padding:16px 19px;margin:0 0 16px;box-shadow:none}
+.one-month-close-header{display:flex;align-items:center;justify-content:space-between;gap:10px 16px;flex-wrap:wrap;margin-bottom:12px}
+.one-month-close-eyebrow{font-size:.64rem;color:var(--muted);font-weight:700;letter-spacing:.06em}
+.one-month-close-header h2{font-size:.97rem;letter-spacing:-.01em;font-weight:725;margin:3px 0 0;color:var(--text);text-transform:capitalize}
+.one-month-close-scope{font-size:.7rem;color:var(--muted)}
+.one-month-close-content{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:16px 24px;align-items:start}
+.one-month-close-totals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.one-month-close-totals>div{display:flex;flex-direction:column;gap:5px;min-width:0}
+.one-month-close-totals span{font-size:.72rem;font-weight:600;color:var(--muted)}
+.one-month-close-totals span small{display:block;font-size:.63rem;font-weight:400;margin-top:1px}
+.one-month-close-totals strong{font-size:clamp(.95rem,1.45vw,1.22rem);font-weight:760;color:var(--text);letter-spacing:-.035em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.one-month-close-findings{display:grid;gap:7px;padding-left:16px;border-left:1px solid var(--border);min-width:0}
+.one-month-close-findings p{margin:0;font-size:.75rem;line-height:1.5;color:var(--muted)}
+.one-month-close-findings strong{color:var(--text);font-weight:660}
+@media(max-width:790px){.one-month-close-content{grid-template-columns:1fr;gap:12px}.one-month-close-findings{border-left:0;border-top:1px solid var(--border);padding:11px 0 0}}
+@media(max-width:490px){.one-month-close{padding:14px}.one-month-close-totals{gap:10px}}
+
 /* one - one: presupuesto frente a real junto al estado por categoría */
 .one-dashboard-analytics-grid{display:grid;grid-template-columns:minmax(0,.92fr) minmax(0,1.18fr);align-items:stretch;gap:16px;margin-bottom:16px}
 .one-dashboard-analytics-grid>.v7-card{min-width:0;height:100%;margin:0!important;padding:20px 22px;box-shadow:none}
@@ -1293,6 +1312,20 @@ header nav button.one-add-module-button:focus-visible{outline:2px solid var(--ac
     </div>
 
     <div class="v7-kpis" id="kpiGrid"></div>
+
+    <section class="v7-card one-month-close" id="dashboardMonthlyClose" aria-labelledby="dashboardMonthlyCloseTitle" hidden>
+      <div class="one-month-close-header">
+        <div><div class="one-month-close-eyebrow">TU MES EN UN VISTAZO</div><h2 id="dashboardMonthlyCloseTitle">Cierre mensual</h2></div>
+        <span id="dashboardMonthlyCloseScope" class="one-month-close-scope"></span>
+      </div>
+      <div class="one-month-close-content">
+        <div class="one-month-close-totals">
+          <div><span>Ingresos reales</span><strong id="dashboardMonthlyCloseIncome">—</strong></div>
+          <div><span>Salidas reales <small>incluye pagos de deuda</small></span><strong id="dashboardMonthlyCloseOutflows">—</strong></div>
+        </div>
+        <div class="one-month-close-findings" id="dashboardMonthlyCloseFindings"></div>
+      </div>
+    </section>
 
     <div class="one-dashboard-analytics-grid">
       <section class="v7-card v7-chart-card one-dashboard-budget-chart" aria-labelledby="oneBudgetChartTitle">
@@ -4897,6 +4930,63 @@ function oneRenderEstimatedAvailable(today=todayIso()){
     </details>`;
 }
 
+/* Resumen de meses financieros completos, derivado del historial sin mutarlo. */
+function oneMonthlyCloseData(month,asOf=todayIso()){
+  const periods=(data.periods||[]).filter(p=>(p.budgetMonth||deriveBudgetMeta(p).budgetMonth)===month);
+  if(periods.length!==2||new Set(periods.map(p=>Number(p.fortnight))).size!==2||
+     !periods.some(p=>Number(p.fortnight)===1)||!periods.some(p=>Number(p.fortnight)===2)||
+     periods.some(p=>periodEndDate(p)>=asOf))return null;
+  const movements=selectedMovements("month",month).filter(m=>m.date<=asOf&&
+    ["Ingreso","Gasto","Pago deuda"].includes(m.type));
+  const sumType=type=>movements.filter(m=>m.type===type).reduce((sum,m)=>sum+movementAmountCRC(m),0);
+  const income=sumType("Ingreso"),expenses=sumType("Gasto"),debtPayments=sumType("Pago deuda");
+  const expenseMovements=movements.filter(m=>m.type==="Gasto");
+  const categories=(data.categories||[]).filter(c=>c.type==="Gasto").map(c=>{
+    const budget=periods.reduce((sum,p)=>sum+periodCategoryBudgetCRC(p,c.id,"pay"),0);
+    const spent=expenseMovements.reduce((sum,m)=>sum+movementCategoryAmountCRC(m,c),0);
+    return {name:c.name,budget,spent};
+  });
+  const planned=categories.filter(c=>c.budget>.005);
+  const within=planned.filter(c=>c.spent<=c.budget+.005).length;
+  const over=planned.filter(c=>c.spent>c.budget+.005).length;
+  const unplanned=categories.filter(c=>c.budget<=.005&&c.spent>.005).length;
+  const top=categories.filter(c=>c.spent>.005).sort((a,b)=>b.spent-a.spent)[0]||null;
+  return {month,income,expenses,debtPayments,outflows:expenses+debtPayments,
+    movements:movements.length,planned:planned.length,within,over,unplanned,top};
+}
+function oneMonthlyCloseSelection(asOf=todayIso()){
+  const selected=hierarchicalSelection("dashboard");
+  if(selected.level==="month")return {month:selected.value,scope:"Mes financiero cerrado"};
+  if(selected.level==="fortnight")return {month:periodByKey(selected.value)?.budgetMonth||"",scope:"Resumen del mes completo"};
+  const months=[...new Set((data.periods||[])
+    .map(p=>p.budgetMonth||deriveBudgetMeta(p).budgetMonth)
+    .filter(m=>m&&budgetQuarterFromMonth(m)===selected.value))].sort().reverse();
+  const month=months.find(m=>oneMonthlyCloseData(m,asOf)!==null)||"";
+  return {month,scope:"Último mes cerrado del trimestre"};
+}
+function oneRenderMonthlyClose(asOf=todayIso()){
+  const card=document.getElementById("dashboardMonthlyClose");if(!card)return;
+  const selected=oneMonthlyCloseSelection(asOf);
+  const summary=selected.month?oneMonthlyCloseData(selected.month,asOf):null;
+  if(!summary){card.hidden=true;return}
+  document.getElementById("dashboardMonthlyCloseTitle").textContent="Cierre mensual · "+monthLabel(summary.month);
+  document.getElementById("dashboardMonthlyCloseScope").textContent=selected.scope;
+  document.getElementById("dashboardMonthlyCloseIncome").textContent=money(summary.income);
+  document.getElementById("dashboardMonthlyCloseOutflows").textContent=money(summary.outflows);
+  const findings=[];
+  if(!summary.movements)findings.push("Aún no hay movimientos registrados para este mes.");
+  else{
+    if(summary.over>0)findings.push(`<strong>${summary.over} ${summary.over===1?"categoría superó":"categorías superaron"}</strong> el presupuesto asignado.`);
+    else if(summary.unplanned>0)findings.push(`<strong>${summary.unplanned} ${summary.unplanned===1?"categoría tuvo":"categorías tuvieron"}</strong> gastos sin presupuesto.`);
+    else if(summary.planned>0)findings.push(`<strong>${summary.within} de ${summary.planned} categorías</strong> se mantuvieron dentro del presupuesto.`);
+    if(summary.top)findings.push(`<strong>${safe(summary.top.name)}</strong> fue la categoría de mayor gasto (${money(summary.top.spent)}).`);
+    if(!findings.length)findings.push("No se registraron gastos por categoría en este mes.");
+  }
+  document.getElementById("dashboardMonthlyCloseFindings").innerHTML=
+    findings.slice(0,2).map(message=>`<p>${message}</p>`).join("");
+  card.hidden=false;
+}
+
 const renderDashboardLegacy=renderDashboard;
 renderDashboard=function(){
   const {level,value}=hierarchicalSelection("dashboard");
@@ -4929,6 +5019,7 @@ renderDashboard=function(){
     v7Kpi("↓","red","Gastos reales",money(realExpenses),realExpenses?"Registrados · plan: "+money(plannedExpensesOnly):"Sin gastos registrados · plan: "+money(plannedExpensesOnly),""),
     v7Kpi("▭","purple","Pagos de deuda reales",money(debtPaid),`${periodMovs.filter(m=>m.type==="Pago deuda").length} pagos registrados`,"")
   ].join("");
+  oneRenderMonthlyClose(todayIso());
 
   const hist=liquidityHistorySeries(6);
   const liquidityColor=getComputedStyle(document.documentElement).getPropertyValue("--one-chart-liquidity").trim()||"#c8cfcd";
