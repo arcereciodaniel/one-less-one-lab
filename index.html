@@ -1895,8 +1895,9 @@ header nav button.one-add-module-button:focus-visible{outline:2px solid var(--ac
       <div class="field"><label>Tipo</label><select id="fType"><option value="protected">Capital protegido</option><option value="goal">Meta / reserva</option></select></div>
       <div class="field"><label>Meta (opcional)</label><div class="money-input"><input id="fTarget" type="number" min="0" step="0.01" value="0"><select id="fTargetCurrency"><option value="CRC">CRC ₡</option><option value="USD">USD $</option></select></div></div>
       <div class="field"><label>Fecha objetivo (opcional)</label><input id="fTargetDate" type="date"></div>
-      <div class="field"><label>Saldo inicial</label><div class="money-input"><input id="fOpeningAmount" type="number" min="0" step="0.01" value="0"><select id="fOpeningCurrency"><option value="CRC">CRC ₡</option><option value="USD">USD $</option></select></div></div>
+      <div class="field"><label>Saldo inicial ya separado</label><div class="money-input"><input id="fOpeningAmount" type="number" min="0" step="0.01" value="0"><select id="fOpeningCurrency"><option value="CRC">CRC ₡</option><option value="USD">USD $</option></select></div></div>
       <div class="field"><label>Fecha inicial</label><input id="fOpeningDate" type="date" required></div>
+      <p class="one-goal-form-note wide">El saldo inicial debe ser dinero que ya estaba reservado fuera de tu saldo operativo. Para apartar dinero de tu saldo actual, iniciá en cero y registrá un <strong>Aporte</strong>: así no se cuenta dos veces.</p>
       <div class="field"><label>Ubicación</label><input id="fLocation" placeholder="Ej. MultiMoney, cuenta bancaria"></div>
       <div class="field"><label>Tasa anual % (opcional)</label><input id="fRate" type="number" min="0" step=".01" value="0"></div>
       <div class="field wide"><label>Notas</label><textarea id="fNotes"></textarea></div>
@@ -4092,6 +4093,7 @@ function printSharedStatement(groupId){
 .one-goal-history-row strong{font-weight:650}
 .one-goal-card-more{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 .one-goal-empty{grid-column:1/-1;padding:30px 20px;border:1px dashed var(--border);border-radius:10px;color:var(--muted);font-size:.85rem;text-align:center}
+.one-goal-form-note{font-size:.73rem;color:var(--muted);line-height:1.45;margin:0}
 .one-goal-disclaimer{font-size:.76rem;color:var(--muted);line-height:1.5;margin:15px 0 18px}
 .one-goal-advanced{margin-top:18px;border:1px solid var(--border);background:var(--surface);border-radius:10px;padding:14px 17px}
 .one-goal-advanced>summary{cursor:pointer;font-size:.85rem;font-weight:650}
@@ -4218,6 +4220,8 @@ function oneGoalOpenTransaction(reserveId,type="Aporte"){
   if(details)details.open=true;
   const date=document.getElementById("rtDate"),amount=document.getElementById("rtAmount");
   if(date)date.value=todayIso();
+  if(amount)amount.value="";
+  const description=document.getElementById("rtDescription");if(description)description.value="";
   refreshReserveSelect(reserveId);
   const typeEl=document.getElementById("rtType"),currency=document.getElementById("rtCurrency");
   if(typeEl)typeEl.value=type;
