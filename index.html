@@ -3004,14 +3004,14 @@ function debtPayments(d){
   return debtLinkedPayments(d).reduce((s,m)=>s+movementAmountCRC(m),0);
 }
 function debtPaymentsSinceAdjustment(d,a){
-  const linked=debtLinkedPayments(d);
-  // Anclar los pagos por orden de creación, no por el total histórico: editar
-  // o eliminar un pago anterior no debe alterar un saldo ya conciliado.
+  // Un pago anterior a la fecha del saldo real ya está absorbido por la
+  // conciliación, incluso si fue registrado tardíamente en Movimientos.
+  const linked=debtLinkedPayments(d).filter(m=>String(m.date||"")>=String(a.date||""));
+  // También ignorar las modificaciones de pagos ya existentes al conciliar.
   if(a.afterSeq!==undefined&&a.afterSeq!==null&&Number.isFinite(Number(a.afterSeq))){
     return linked.filter(m=>num(m.seq)>num(a.afterSeq)).reduce((sum,m)=>sum+movementAmountCRC(m),0);
   }
-  // Compatibilidad con conciliaciones anteriores que guardaron createdAt
-  // y paidAtAdjustment, pero aún no tenían afterSeq.
+  // Compatibilidad con conciliaciones previas sin afterSeq.
   if(a.createdAt){
     return linked.filter(m=>String(m.createdAt||"")>String(a.createdAt))
       .reduce((sum,m)=>sum+movementAmountCRC(m),0);
