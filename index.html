@@ -2483,23 +2483,77 @@ function migrateData(raw){
   return raw;
 }
 const RESTORE_SAFETY_KEY=STORAGE_KEY+"_pre_restore_v1";
+const RESET_SAFETY_KEY=STORAGE_KEY+"_pre_reset_v1";
 const RESTORE_MAX_BYTES=25*1024*1024;
 function restoreIsRecord(v){return v!==null&&typeof v==="object"&&!Array.isArray(v)}
+function restoreValidDate(value){
+  if(typeof value!=="string"||!/^\\d{4}-\\d{2}-\\d{2}$/.test(value))return false;
+  const time=new Date(value+"T00:00:00Z");
+  return !Number.isNaN(time.getTime())&&time.toISOString().slice(0,10)===value;
+}
+function restoreValidMoney(value){
+  return value!==""&&value!==null&&value!==undefined&&Number.isFinite(Number(value));
+}
 function restoreValidate(raw){
- if(!restoreIsRecord(raw))throw Error("El archivo no es un respaldo JSON válido.");
- for(const field of ["periods","movements","debts"]){
-  if(!Array.isArray(raw[field])||!raw[field].every(restoreIsRecord))throw Error("La lista "+field+" falta o está dañada.");
- }
- for(const field of ["reconciliations","reserves","reserveMovements","sharedCharges","sharedChargeGroups","receivableRecurring","categories","movementTemplates","movementAudit"]){
-  if(raw[field]!==undefined&&(!Array.isArray(raw[field])||!raw[field].every(restoreIsRecord)))
-   throw Error("La lista "+field+" no tiene el formato esperado.");
- }
- if(raw.settings!==undefined&&!restoreIsRecord(raw.settings))throw Error("La configuración no tiene el formato esperado.");
- if(raw.periods.length===0)throw Error("El archivo no contiene períodos financieros.");
- const dateOk=v=>typeof v==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(v);
- if(raw.periods.some(p=>!dateOk(p.date))||raw.movements.some(m=>!dateOk(m.date)))
-  throw Error("El archivo contiene períodos o movimientos sin fecha válida.");
- return raw;
+  if(!restoreIsRecord(raw))throw Error("El archivo no contiene un respaldo válido de One Less One.");
+  for(const key of ["periods","movements","debts"]){
+    if(!Array.isArray(raw[key])||!raw[key].every(restoreIsRecord))
+      throw Error("La lista "+key+" no existe o tiene elementos inválidos.");
+  }
+  if(!raw.periods.length)throw Error("El respaldo no contiene períodos financieros.");
+  const optional=["reconciliations","reserves","reserveMovements","sharedCharges","sharedChargeGroups",
+    "receivableRecurring","categories","movementTemplates","movementAudit"];
+  for(const key of optional){
+    if(raw[key]!==undefined&&(!Array.isArray(raw[key])||!raw[key].every(restoreIsRecord)))
+      throw Error("La lista "+key+" no tiene el formato esperado.");
+  }
+  if(raw.settings!==undefined&&!restoreIsRecord(raw.settings))
+    throw Error("La configuración financiera no es válida.");
+  if(raw.settings?.fxHistory!==undefined&&!Array.isArray(raw.settings.fxHistory))
+    throw Error("El historial de tipos de cambio es inválido.");
+  const seen=new Set();
+  for(const p of raw.periods){
+    const hasKey=typeof p.key==="string"&&p.key.trim().length>0;
+    const hasMonth=typeof p.budgetMonth==="string"&&/^\\d{4}-\\d{2}$/.test(p.budgetMonth)&&
+      [1,2].includes(Number(p.fortnight));
+    const hasLegacy=/^\\d{4}-T[1-4]$/.test(String(p.quarter||""))&&Number(p.n)>0;
+    if(!restoreValidDate(p.date)||!(hasKey||hasMonth||hasLegacy))
+      throw Error("Hay períodos financieros incompletos o con fechas incorrectas.");
+    if(hasKey){if(seen.has(p.key))throw Error("Existen períodos duplicados.");seen.add(p.key);}
+    for(const field of ["budgets","categoryBudgets","budgetCurrencies","categoryBudgetCurrencies"]){
+      if(p[field]!==undefined&&!restoreIsRecord(p[field]))
+        throw Error("Un período tiene presupuestos o monedas con estructura incorrecta.");
+    }
+    if(p.opening!==undefined&&p.opening!==null&&!restoreValidMoney(p.opening))
+      throw Error("Un período tiene un saldo inicial inválido.");
+  }
+  for(const m of raw.movements){
+    if(!restoreValidDate(m.date)||typeof m.type!=="string"||!m.type.trim()||
+      !restoreValidMoney(m.amount)||Number(m.amount)<0)
+      throw Error("Hay movimientos sin fecha, tipo o monto válidos.");
+    if(m.currency!==undefined&&!["CRC","USD"].includes(String(m.currency).toUpperCase()))
+      throw Error("Un movimiento tiene una moneda inválida.");
+  }
+  for(const d of raw.debts){
+    if(typeof d.name!=="string"||!d.name.trim())
+      throw Error("Hay deudas sin nombre identificable.");
+    for(const field of ["usd","crc","minimum","limit"]){
+      if(d[field]!==undefined&&!restoreValidMoney(d[field]))
+        throw Error("Una deuda contiene montos inválidos.");
+    }
+    if(d.balanceAdjustments!==undefined&&(!Array.isArray(d.balanceAdjustments)||
+      d.balanceAdjustments.some(a=>!restoreIsRecord(a)||!restoreValidDate(a.date)||!restoreValidMoney(a.amount))))
+      throw Error("Una deuda contiene conciliaciones incompletas.");
+  }
+  for(const r of raw.reconciliations||[]){
+    if(!restoreValidDate(r.date)||!restoreValidMoney(r.amount))
+      throw Error("Hay conciliaciones de saldo sin fecha o monto válidos.");
+  }
+  for(const cat of raw.categories||[]){
+    if(typeof cat.name!=="string"||!cat.name.trim()||typeof cat.type!=="string"||!cat.type.trim())
+      throw Error("Hay categorías incompletas.");
+  }
+  return raw;
 }
 function restoreDetailsHtml(raw,file){
  const safeFile=String(file||"respaldo.json").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -2508,21 +2562,31 @@ function restoreDetailsHtml(raw,file){
 }
 function restorePrepare(raw){
  const valid=restoreValidate(raw),migrated=migrateData(clone(valid));
- for(const field of ["periods","movements","debts"]){
-  if(migrated[field].length!==valid[field].length)throw Error("La conversión no conservó todos los registros de "+field+".");
+ for(const field of ["periods","movements","debts","reconciliations","reserves","reserveMovements","sharedCharges","sharedChargeGroups","receivableRecurring"]){
+  if(Array.isArray(valid[field])&&migrated[field].length!==valid[field].length)
+    throw Error("La conversión no conservó todos los registros de "+field+".");
  }
  migrated.version=6.2;migrated.currencySchemaVersion=1;migrated.categorySchemaVersion=1;migrated.incomeSchemaVersion=1;
  return migrated;
 }
+function oneBackupBeforeReplace(snapshotKey,prefix){
+  const previous=localStorage.getItem(STORAGE_KEY);
+  if(previous!==null){
+    // Si falla la copia local, no cambiar la información financiera original.
+    localStorage.setItem(snapshotKey,previous);
+    download(prefix+"-"+todayIso()+".json",previous,"application/json");
+  }
+  return previous;
+}
 function restoreSafely(raw){
- const prepared=restorePrepare(raw);
- const current=localStorage.getItem(STORAGE_KEY);
- if(current!==null){
-  localStorage.setItem(RESTORE_SAFETY_KEY,current);
-  download("respaldo-previo-restauracion-"+todayIso()+".json",current,"application/json");
- }
- localStorage.setItem(STORAGE_KEY,JSON.stringify(prepared));
- return true;
+  const prepared=restorePrepare(raw),serialized=JSON.stringify(prepared);
+  const previous=oneBackupBeforeReplace(RESTORE_SAFETY_KEY,"respaldo-previo-restauracion");
+  localStorage.setItem(STORAGE_KEY,serialized);
+  if(localStorage.getItem(STORAGE_KEY)!==serialized){
+    try{if(previous!==null)localStorage.setItem(STORAGE_KEY,previous);else localStorage.removeItem(STORAGE_KEY)}catch(e){}
+    throw Error("No se pudo verificar la restauración. Revisá la copia de seguridad.");
+  }
+  return true;
 }
 function load(){
   try{
@@ -2596,7 +2660,11 @@ function renderFxHistory(){
 }
 function updateCurrencyHeader(){
   const c=displayCurrency();document.querySelectorAll("[data-display-currency]").forEach(b=>b.classList.toggle("active",b.dataset.displayCurrency===c));
-  const r=currentRates(),btn=document.getElementById("fxBtn");if(btn)btn.textContent=data.settings.fxDate?`TC ${data.settings.fxDate.slice(5)} · C ₡${r.buy.toFixed(2)} / V ₡${r.sell.toFixed(2)}`:"TC: actualizar";
+  const r=currentRates(),btn=document.getElementById("fxBtn");if(btn){
+    const confirmed=!!data.settings.fxDate&&num(data.settings.fxBuy)>0&&num(data.settings.fxSell)>0;
+    btn.textContent=confirmed?`TC ${data.settings.fxDate.slice(5)} · C ₡${r.buy.toFixed(2)} / V ₡${r.sell.toFixed(2)}`:`TC aprox. ₡${r.ref.toFixed(2)} · sin confirmar`;
+    btn.title=confirmed?"Actualizar tipo de cambio":"Tipo de cambio provisional para cálculos en USD. Registrá la compra y venta reales.";
+  }
 }
 function openFxDialog(forceToday=true){
   const dialog=document.getElementById("fxDialog"),r=currentRates();
@@ -2929,12 +2997,30 @@ function selectedSummary(level,value){
   const actual=actualRows.length?actualRows.at(-1).actualBalance:(opening+realIncome-realExpense);
   return {rows,movements,opening,plannedIncome,realIncome,plannedExpense,realExpense,projected,actual};
 }
+function debtLinkedPayments(d){
+  return data.movements.filter(m=>m.type==="Pago deuda"&&(m.debtId?m.debtId===d.id:m.debt===d.name));
+}
 function debtPayments(d){
-  return data.movements.filter(m=>m.type==="Pago deuda"&&(m.debtId?m.debtId===d.id:m.debt===d.name)).reduce((s,m)=>s+movementAmountCRC(m),0);
+  return debtLinkedPayments(d).reduce((s,m)=>s+movementAmountCRC(m),0);
+}
+function debtPaymentsSinceAdjustment(d,a){
+  const linked=debtLinkedPayments(d);
+  // Anclar los pagos por orden de creación, no por el total histórico: editar
+  // o eliminar un pago anterior no debe alterar un saldo ya conciliado.
+  if(a.afterSeq!==undefined&&a.afterSeq!==null&&Number.isFinite(Number(a.afterSeq))){
+    return linked.filter(m=>num(m.seq)>num(a.afterSeq)).reduce((sum,m)=>sum+movementAmountCRC(m),0);
+  }
+  // Compatibilidad con conciliaciones anteriores que guardaron createdAt
+  // y paidAtAdjustment, pero aún no tenían afterSeq.
+  if(a.createdAt){
+    return linked.filter(m=>String(m.createdAt||"")>String(a.createdAt))
+      .reduce((sum,m)=>sum+movementAmountCRC(m),0);
+  }
+  return Math.max(0,debtPayments(d)-num(a.paidAtAdjustment));
 }
 function debtEquivalent(d){return currentToCRC(d.usd,"USD","pay")+num(d.crc)}
 function debtLatestAdjustment(d){const a=d?.balanceAdjustments;return Array.isArray(a)&&a.length?a[a.length-1]:null}
-function debtOutstanding(d){const a=debtLatestAdjustment(d);return Math.max(0,a?currentToCRC(num(a.amount),normalizeCurrency(a.currency||"CRC"),"pay")-(debtPayments(d)-num(a.paidAtAdjustment)):debtEquivalent(d)-debtPayments(d))}
+function debtOutstanding(d){const a=debtLatestAdjustment(d);return Math.max(0,a?currentToCRC(num(a.amount),normalizeCurrency(a.currency||"CRC"),"pay")-debtPaymentsSinceAdjustment(d,a):debtEquivalent(d)-debtPayments(d))}
 function debtProgressPercent(d){const base=debtEquivalent(d);return debtLatestAdjustment(d)?null:base?Math.max(0,Math.min(100,debtPayments(d)/base*100)):0}
 function debtLimitCRC(d){return currentToCRC(d.limit,d.limitCurrency||"USD","pay")}
 function debtMinimumCRC(d){return currentToCRC(d.minimum,d.minimumCurrency||"CRC","pay")}
@@ -2964,10 +3050,12 @@ function nextDebtDueIso(d,fromIso=todayIso()){
   const y=due.getFullYear(),m=String(due.getMonth()+1).padStart(2,"0"),dd=String(due.getDate()).padStart(2,"0");return `${y}-${m}-${dd}`;
 }
 function debtCommitmentsNextDays(days=30){
-  const start=new Date(`${todayIso()}T12:00:00`),end=new Date(start);end.setDate(end.getDate()+days);
-  let total=0,count=0,unknown=0;
-  activeDebts().forEach(d=>{const min=debtMinimumCRC(d);if(!min)return;const iso=nextDebtDueIso(d);if(!iso){unknown++;return}const due=new Date(`${iso}T12:00:00`);if(due<=end){total+=min;count++}});
-  return {total,count,unknown,days};
+  // Un mismo calendario para la vista de Deudas y el cálculo de Inicio.
+  const asOf=todayIso(),end=addDaysIso(asOf,Math.max(0,days));
+  const entries=oneDebtUpcomingEntries(asOf);
+  const due=entries.filter(x=>x.date&&x.minimum>0&&x.date<=end);
+  return {total:due.reduce((sum,x)=>sum+x.minimum,0),count:due.length,
+    unknown:entries.filter(x=>!x.date||!(x.minimum>0)).length,days};
 }
 
 function fillSelect(el,values,current){
@@ -4977,7 +5065,21 @@ function bind(){
       alert("La restauración no pudo completarse: "+(error?.message||"No se pudo guardar."));
     }finally{btn.disabled=false}
   });
-  document.getElementById("resetBtn").addEventListener("click",()=>{if(confirm("Esto eliminará todos los cambios locales. ¿Continuar?")){data=migrateData(clone(initialData));save();syncQuarterSelectors();refreshDebtSelect();refreshReserveSelect();refreshSharedGroupSelects();refreshMovementCategorySelect();navigate("dashboard");updateCurrencyHeader();if(needsInitialFx())setTimeout(()=>openFxDialog(true),120)}});
+  document.getElementById("resetBtn").addEventListener("click",()=>{
+    if(storageReadError)return alert("El historial guardado no pudo leerse. Para protegerlo, no se permite restablecer desde esta pantalla.");
+    if(!confirm("¿Restablecer los datos financieros de este navegador? Se descargará un respaldo y se guardará una copia preventiva antes de continuar."))return;
+    try{
+      const fresh=migrateData(clone(initialData));
+      fresh.version=6.2;fresh.currencySchemaVersion=1;fresh.categorySchemaVersion=1;fresh.incomeSchemaVersion=1;
+      oneBackupBeforeReplace(RESET_SAFETY_KEY,"respaldo-previo-restablecimiento");
+      localStorage.setItem(STORAGE_KEY,JSON.stringify(fresh));
+      data=fresh;
+      syncQuarterSelectors();refreshDebtSelect();refreshReserveSelect();refreshSharedGroupSelects();refreshMovementCategorySelect();
+      navigate("dashboard");updateCurrencyHeader();
+      if(needsInitialFx())setTimeout(()=>openFxDialog(true),120);
+      alert("Datos locales restablecidos. Conservá el respaldo descargado.");
+    }catch(error){alert("No se restablecieron los datos: "+(error?.message||"no se pudo guardar la copia preventiva."))}
+  });
 
   document.getElementById("exportMovementsCsv").addEventListener("click",()=>{
     const level=document.getElementById("movementLevel").value,value=document.getElementById("movementPeriod").value;
@@ -5325,12 +5427,23 @@ function oneMonthlyCloseCard(asOf=todayIso()){
 }
 
 const renderDashboardLegacy=renderDashboard;
+function oneCanCompareHistoricalBalance(asOf){
+  // Un saldo inicial futuro no prueba cuál era el saldo antes de abrir el historial.
+  const first=[...(data.periods||[])].filter(p=>p.date).sort((a,b)=>a.date.localeCompare(b.date))[0];
+  if(!first||asOf<first.date)return false;
+  if(first.opening!==null&&first.opening!==undefined&&first.opening!=="")return true;
+  return (data.movements||[]).some(m=>m.date>=first.date&&m.date<=asOf)||
+    (data.reconciliations||[]).some(r=>r.date>=first.date&&r.date<=asOf)||
+    (data.reserveMovements||[]).some(t=>t.date>=first.date&&t.date<=asOf);
+}
+
 renderDashboard=function(){
   const {level,value}=hierarchicalSelection("dashboard");
   const summary=selectedSummary(level,value);
   const operating=actualBalanceAt(todayIso());
-  const previous=actualBalanceAt(v7IsoDateOffset(-30));
-  const delta=operating-previous;
+  const comparisonDate=v7IsoDateOffset(-30);
+  const previous=oneCanCompareHistoricalBalance(comparisonDate)?actualBalanceAt(comparisonDate):null;
+  const delta=previous===null?0:operating-previous;
   const periodMovs=selectedMovements(level,value);
   const realIncome=periodMovs.filter(m=>m.type==="Ingreso").reduce((s,m)=>s+movementAmountCRC(m),0);
   const realExpenses=periodMovs.filter(m=>m.type==="Gasto").reduce((s,m)=>s+movementAmountCRC(m),0);
@@ -5341,13 +5454,18 @@ renderDashboard=function(){
 
   document.getElementById("dashboardHeroValue").textContent=money(operating);
   const deltaEl=document.getElementById("dashboardHeroDelta");
-  if(previous!==0){
+  if(previous===null){
+    deltaEl.textContent="Sin historial suficiente para comparar hace 30 días";
+    deltaEl.className="v7-hero-delta";
+  }else if(previous>0){
     const pct=Math.abs(delta/previous)*100;
     deltaEl.textContent=`${delta>=0?"↑":"↓"} ${pct.toFixed(0)}% respecto a hace 30 días`;
     deltaEl.className=`v7-hero-delta ${delta>=0?"good":"bad"}`;
   }else{
-    deltaEl.textContent="Tu punto de partida para las próximas decisiones";
-    deltaEl.className="v7-hero-delta";
+    // Con una base cero o negativa, el cambio porcentual no representa
+    // apropiadamente la mejora o caída del saldo disponible.
+    deltaEl.textContent=`Hace 30 días: ${money(previous)} · ${delta>=0?"↑":"↓"} ${money(Math.abs(delta))} de cambio`;
+    deltaEl.className=`v7-hero-delta ${delta>=0?"good":"bad"}`;
   }
   oneRenderEstimatedAvailable(todayIso());
 
@@ -5522,21 +5640,24 @@ function oneDebtShiftMonth(month,shift=1){
   const [year,number]=month.split("-").map(Number);
   return new Date(Date.UTC(year,number-1+shift,1)).toISOString().slice(0,7);
 }
-function oneDebtRegisteredThisMonth(d,month){
-  return (data.movements||[]).filter(m=>m.type==="Pago deuda"&&String(m.date||"").slice(0,7)===month&&(m.debtId?m.debtId===d.id:m.debt===d.name))
+function oneDebtRegisteredThisMonth(d,month,asOf=todayIso()){
+  return (data.movements||[]).filter(m=>m.type==="Pago deuda"&&m.date<=asOf&&String(m.date||"").slice(0,7)===month&&(m.debtId?m.debtId===d.id:m.debt===d.name))
     .reduce((sum,m)=>sum+movementAmountCRC(m),0);
 }
 function oneDebtDueEntry(d,asOf=todayIso()){
-  if(debtStatus(d)!=="active"||debtOutstanding(d)<=.005)return null;
-  const minimum=debtMinimumCRC(d),outstanding=debtOutstanding(d);
+  const outstanding=debtOutstanding(d);
+  if(debtStatus(d)!=="active"||outstanding<=.005)return null;
+  const minimum=Math.min(Math.max(0,debtMinimumCRC(d)),outstanding);
   const month=asOf.slice(0,7),thisDue=oneDebtMonthlyDueIso(d,month);
-  if(!thisDue)return {debt:d,date:"",minimum:Math.min(minimum,outstanding),state:"undated",paid:0};
-  if(minimum<=0)return {debt:d,date:thisDue,minimum:0,state:"no-minimum",paid:0};
-  const paid=oneDebtRegisteredThisMonth(d,month);
-  const covered=paid+.005>=Math.min(minimum,outstanding);
-  const date=covered?oneDebtMonthlyDueIso(d,oneDebtShiftMonth(month)):thisDue;
-  const state=covered?"registered":thisDue<asOf?"past":thisDue===asOf?"today":"upcoming";
-  return {debt:d,date,minimum:Math.min(minimum,outstanding),state,paid};
+  if(!thisDue)return {debt:d,date:"",minimum,state:"undated",paid:0,coveredThisMonth:false};
+  if(minimum<=0)return {debt:d,date:thisDue,minimum:0,state:"no-minimum",paid:0,coveredThisMonth:false};
+  const paid=oneDebtRegisteredThisMonth(d,month,asOf);
+  const coveredThisMonth=paid+.005>=minimum;
+  const date=coveredThisMonth?oneDebtMonthlyDueIso(d,oneDebtShiftMonth(month)):thisDue;
+  // La cuota de este mes puede estar cubierta, pero la próxima sigue siendo
+  // un compromiso real dentro de una ventana móvil de 30 días.
+  const state=date<asOf?"past":date===asOf?"today":"upcoming";
+  return {debt:d,date,minimum,state,paid,coveredThisMonth};
 }
 function oneDebtUpcomingEntries(asOf=todayIso()){
   return activeDebts().map(d=>oneDebtDueEntry(d,asOf)).filter(Boolean)
@@ -5545,14 +5666,14 @@ function oneDebtUpcomingEntries(asOf=todayIso()){
 function oneDebtRenderDueSchedule(asOf=todayIso()){
   const summary=document.getElementById("debtDueSummary"),list=document.getElementById("debtDueList");
   if(!summary||!list)return;
-  const entries=oneDebtUpcomingEntries(asOf),upper=v7IsoDateOffset(30);
-  const relevant=entries.filter(x=>x.date&&x.minimum>0&&x.state!=="registered"&&x.date<=upper);
+  const entries=oneDebtUpcomingEntries(asOf),upper=addDaysIso(asOf,30);
+  const relevant=entries.filter(x=>x.date&&x.minimum>0&&x.date<=upper);
   const total=relevant.reduce((sum,x)=>sum+x.minimum,0);
   const unknown=entries.filter(x=>!x.date||!x.minimum).length;
-  summary.innerHTML=`<span>Cuotas con fecha hasta los próximos 30 días${unknown?` · ${unknown} sin datos completos`:""}</span><strong>${money(total)}</strong>`;
-  const visible=entries.filter(x=>x.state!=="registered"&&x.date&&x.minimum>0).slice(0,5);
+  summary.innerHTML=`<span>Cuotas vencidas y de los próximos 30 días${unknown?` · ${unknown} sin datos completos`:""}</span><strong>${money(total)}</strong>`;
+  const visible=entries.filter(x=>x.date&&x.minimum>0).slice(0,5);
   list.innerHTML=visible.length?visible.map(x=>{
-    const meta=x.state==="past"?"Fecha pasada · revisá si ya pagaste":x.state==="today"?"Programado para hoy":"Fecha estimada · "+dateLabel(x.date);
+    const meta=x.state==="past"?"Fecha pasada · revisá si ya pagaste":x.state==="today"?"Programado para hoy":x.coveredThisMonth?"Mes actual cubierto según Movimientos · "+dateLabel(x.date):"Fecha estimada · "+dateLabel(x.date);
     return `<div class="one-debt-due-row"><div><div class="one-due-name">${v7SafeText(x.debt.name)}</div><div class="one-due-meta">${meta}</div></div><div class="one-due-amount">${money(x.minimum)}<small>Cuota / mínimo</small></div></div>`;
   }).join(""):`<p class="one-debt-due-note">${entries.length?"No hay cuotas pendientes con fecha y mínimo configurados.":"Todavía no tenés deudas activas."}</p>`;
   if(unknown)list.insertAdjacentHTML("beforeend",`<p class="one-debt-due-note">Para completar el seguimiento, revisá el día de pago y la cuota mínima de tus deudas.</p>`);
@@ -5575,7 +5696,7 @@ renderDebts=function(){
 
   const currentMonth=todayIso().slice(0,7);
   const paidMonth=(data.movements||[]).filter(m=>m.type==="Pago deuda"&&v7MonthKey(m.date)===currentMonth).reduce((s,m)=>s+movementAmountCRC(m),0);
-  const upcoming=oneDebtUpcomingEntries().find(x=>x.date&&x.minimum>0&&x.state!=="registered");
+  const upcoming=oneDebtUpcomingEntries().find(x=>x.date&&x.minimum>0);
   const structured=active.filter(d=>d.type==="Préstamo"||d.type==="Familiar").reduce((sum,d)=>sum+debtOutstanding(d),0);
   const revolving=active.filter(d=>d.type==="Tarjeta").reduce((sum,d)=>sum+debtOutstanding(d),0);
   document.getElementById("debtKpis").innerHTML=[
@@ -5771,7 +5892,7 @@ function initDebtBalanceReconciliation(){
  const currency=normalizeCurrency(document.getElementById("debtBalanceCurrency").value);
  if(!confirm(`¿Guardar este saldo real para “${d.name}”? El historial de pagos se mantendrá intacto.`))return;
  if(!Array.isArray(d.balanceAdjustments))d.balanceAdjustments=[];
- d.balanceAdjustments.push({id:id(),date:todayIso(),createdAt:new Date().toISOString(),amount,currency,paidAtAdjustment:debtPayments(d),note:document.getElementById("debtBalanceNote").value.trim()});
+ d.balanceAdjustments.push({id:id(),date:todayIso(),createdAt:new Date().toISOString(),amount,currency,paidAtAdjustment:debtPayments(d),afterSeq:num(data.movementSeq),note:document.getElementById("debtBalanceNote").value.trim()});
  save();close();renderDebts();renderDashboard();renderCapital();renderPlan();
  });
 }
