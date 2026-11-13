@@ -1391,7 +1391,7 @@ header nav button.one-add-module-button:focus-visible{outline:2px solid var(--ac
         <div class="one-budget-copy-head"><h2 id="copyBudgetTitle">Copiar presupuesto anterior</h2><button type="button" id="closeCopyBudgetDialog" aria-label="Cerrar">×</button></div>
         <p id="copyBudgetContext" class="one-budget-copy-context"></p>
         <div id="copyBudgetPreview" class="one-budget-copy-preview"></div>
-        <p class="one-budget-copy-note">Se copiarán los importes planificados de ambas quincenas. Los ingresos automáticos se calcularán para el mes de destino. <strong>No se duplican movimientos ni se modifican saldos reales.</strong></p>
+        <p class="one-budget-copy-note">Se copiarán los importes planificados de ambas quincenas. Las proyecciones automáticas del mes de destino se conservan. <strong>No se duplican movimientos ni se modifican saldos reales.</strong></p>
         <div class="one-budget-copy-actions"><button class="btn secondary" type="button" id="cancelCopyBudget">Cancelar</button><button class="btn" type="submit" id="confirmCopyBudget">Copiar presupuesto</button></div>
       </form>
     </dialog>
@@ -2993,10 +2993,10 @@ function oneApplyCopyBudgetMonth(month){
     const sources={...(p.categoryBudgetSources||{})},dates={...(p.categoryBudgetScheduledDates||{})};
     for(const c of cats){
       const cid=c.id;
-      if(c.type==="Ingreso"&&src.categoryBudgetSources?.[cid]==="auto"){
-        delete budgets[cid];delete currencies[cid];sources[cid]="auto";delete dates[cid];
-        continue;
-      }
+      // Los ingresos automáticos (o ausentes) mantienen su configuración del mes destino.
+      // Un período del mes actual podría haber cerrado y no se recalcula automáticamente.
+      if(c.type==="Ingreso"&&(src.categoryBudgetSources?.[cid]==="auto"||
+        !Object.prototype.hasOwnProperty.call(src.categoryBudgets||{},cid)))continue;
       if(Object.prototype.hasOwnProperty.call(src.categoryBudgets||{},cid)){
         budgets[cid]=num(src.categoryBudgets[cid]);
         currencies[cid]=normalizeCurrency(src.categoryBudgetCurrencies?.[cid]||"CRC");
