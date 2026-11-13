@@ -3554,23 +3554,144 @@ function cobroReminderStart(c){
  const early=addDaysIso(due,-days);
  return c.snoozedUntil&&c.snoozedUntil>early?c.snoozedUntil:early;
 }
-function openCobroPayment(c){
- if(!c||cobroRemainingOriginal(c)<.005)return;
- document.getElementById("cpChargeId").value=c.id;
- document.getElementById("cpDate").value=todayIso();
- document.getElementById("cpAmount").value=cobroRemainingOriginal(c).toFixed(2);
- document.getElementById("cpAmount").max=cobroRemainingOriginal(c).toFixed(2);
- document.getElementById("cpCurrency").value=normalizeCurrency(c.currency);
- document.getElementById("cpNote").value="";
- document.getElementById("cpContext").textContent=cobroPerson(c)+" · "+c.description+" · pendiente "+originalMoney(cobroRemainingOriginal(c),c.currency);
- document.getElementById("cobroPaymentDialog").showModal();
+/* Cobros: libro de abonos vinculado con ingresos / reembolsos del flujo real. */
+function oneIsLinkedCobroMovement(m){return !!(m?.receivableChargeId&&m?.receivablePaymentId)}
+function oneIsCobroReimbursement(m){return oneIsLinkedCobroMovement(m)&&m.cashFlowKind==="cobro_reembolso"}
+function oneCobroMovement(c,p){
+  return (data.movements||[]).find(m=>m.receivableChargeId===c.id&&m.receivablePaymentId===p.id)||null;
+}
+function oneCobroMovementOptions(selected=""){
+  const el=document.getElementById("cpMovementIncomeCategory");if(!el)return;
+  const active=categoriesOfType("Ingreso"),previous=categoryById(selected);
+  const options=previous&&!active.some(c=>c.id===previous.id)?[...active,previous]:active;
+  el.innerHTML=options.map(c=>`<option value="${safe(c.id)}">${safe(c.name)}${categoryIsActive(c)?"":" (archivada)"}</option>`).join("");
+  const preferred=options.find(c=>c.id===selected)||options.find(c=>/otros ingresos/i.test(c.name))||options[0];
+  el.value=preferred?.id||"";
+}
+function oneRefreshCobroMovementOptions(){
+  const checked=!!document.getElementById("cpSyncMovement")?.checked;
+  const options=document.getElementById("cpMovementOptions");
+  const income=document.getElementById("cpMovementKind")?.value==="income";
+  const wrap=document.getElementById("cpMovementIncomeWrap"),category=document.getElementById("cpMovementIncomeCategory");
+  if(options)options.hidden=!checked;
+  if(wrap)wrap.hidden=!checked||!income;
+  if(category)category.required=checked&&income;
+  const hint=document.getElementById("cpMovementHint");
+  if(hint)hint.textContent=income?"Se contabilizará como ingreso real. Elegí la categoría correspondiente.":"Un reembolso aumenta la liquidez, sin sumarse a los ingresos habituales.";
+}
+function oneDeleteCobroLinkedMovement(c,p){
+  const linked=(data.movements||[]).filter(m=>m.receivableChargeId===c.id&&m.receivablePaymentId===p.id);
+  if(!linked.length)return;
+  linked.forEach(m=>m2Audit("delete",m,m));
+  const ids=new Set(linked.map(m=>m.id));
+  data.movements=data.movements.filter(m=>!ids.has(m.id));
+}
+function oneDeleteCobroLinkedMovements(c){
+  for(const m of [...(data.movements||[])].filter(m=>m.receivableChargeId===c.id)){
+    m2Audit("delete",m,m);
+  }
+  data.movements=data.movements.filter(m=>m.receivableChargeId!==c.id);
+}
+function oneUpsertCobroLinkedMovement(c,p,kind="reimbursement",categoryId=""){
+  const old=oneCobroMovement(c,p);
+  const period=periodForDate(p.date);
+  if(!period||p.date>periodEndDate(period))return false;
+  const income=kind==="income",cat=income?categoryById(categoryId):null;
+  if(income&&(!cat||cat.type!=="Ingreso"))return false;
+  const meta={receivableChargeId:c.id,receivablePaymentId:p.id,
+    cashFlowKind:income?"cobro_ingreso":"cobro_reembolso"};
+  const obj={...old,id:old?.id||id(),seq:old?.seq||data.movementSeq+1,
+    createdAt:old?.createdAt||new Date().toISOString(),
+    ...meta,date:p.date,type:income?"Ingreso":"Movimiento patrimonial",
+    categoryId:income?cat.id:"",category:income?cat.name:"Reembolso / devolución",
+    splits:[],debtId:"",debt:"",account:old?.account||"",paymentMethod:old?.paymentMethod||"",
+    description:`Cobro · ${cobroPerson(c)} · ${c.description||c.kind||"Abono"}`,
+    amount:p.amount,currency:normalizeCurrency(c.currency),
+    ...((old&&normalizeCurrency(old.currency)===normalizeCurrency(c.currency))?
+      {fxBuy:old.fxBuy,fxSell:old.fxSell,fxRef:old.fxRef,fxDate:old.fxDate}:currentFxSnapshot()),
+    period:periodKey(period),quarter:budgetQuarter(period)};
+  if(old){
+    m2Audit("edit",obj,old);
+    const i=data.movements.findIndex(m=>m.id===old.id);data.movements[i]=obj;
+  }else{
+    data.movementSeq++;obj.seq=data.movementSeq;
+    data.movements.push(obj);m2Audit("create",obj);
+  }
+  return true;
+}
+function oneCommitCobroPayment(c,{paymentId="",amount,date,note="",linked=false,kind="reimbursement",categoryId=""}={}){
+  if(!c)return {ok:false,error:"No se encontró el cobro."};
+  const old=(c.payments||[]).find(p=>p.id===paymentId)||null;
+  if(paymentId&&!old)return {ok:false,error:"Este abono ya no existe."};
+  const value=Math.round(Number(amount)*100)/100;
+  if(!date||!/^\d{4}-\d{2}-\d{2}$/.test(date)||!Number.isFinite(value)||value<=0)
+    return {ok:false,error:"Ingresá una fecha y un importe mayor que cero."};
+  const other=(c.payments||[]).filter(p=>p.id!==paymentId).reduce((sum,p)=>sum+num(p.amount),0);
+  if(value+other-num(c.amount)>.005)return {ok:false,error:"El abono supera el saldo pendiente del cobro."};
+  if(!old&&c.status==="paid"&&!(c.payments||[]).length)
+    return {ok:false,error:"El cobro figura como pagado sin historial de abonos. Reabrilo para registrar nuevos pagos."};
+  if(linked){
+    const period=periodForDate(date);
+    if(!period||date>periodEndDate(period))
+      return {ok:false,error:"Para reflejar el dinero en Movimientos, la fecha debe pertenecer a un período configurado en Presupuesto."};
+    if(kind==="income"){
+      const cat=categoryById(categoryId),oldMove=old?oneCobroMovement(c,old):null;
+      if(!cat||cat.type!=="Ingreso"||(!categoryIsActive(cat)&&cat.id!==oldMove?.categoryId))
+        return {ok:false,error:"Seleccioná una categoría de ingreso activa."};
+    }
+  }
+  let payment=old;
+  if(old){payment={...old,date,amount:value,note};c.payments=c.payments.map(p=>p.id===old.id?payment:p)}
+  else{
+    if(!recordCobroPayment(c,value,date,note))
+      return {ok:false,error:"No se pudo registrar el abono."};
+    payment=c.payments.at(-1);
+  }
+  syncCobroPaymentState(c);c.snoozedUntil="";
+  if(linked)oneUpsertCobroLinkedMovement(c,payment,kind,categoryId);
+  else oneDeleteCobroLinkedMovement(c,payment);
+  return {ok:true,payment};
+}
+function oneRevertCobroPayment(c,p){
+  if(!c||!p||!(c.payments||[]).some(x=>x.id===p.id))return false;
+  oneDeleteCobroLinkedMovement(c,p);
+  c.payments=c.payments.filter(x=>x.id!==p.id);
+  c.status="pending";c.paidAt="";syncCobroPaymentState(c);
+  return true;
+}
+function oneRefreshCobroViews(){
+  save();refreshV7MovementCategoryFilter();renderSharedCharges();
+  renderDashboard();renderMovements();renderPlan();renderCapital();
+}
+
+function openCobroPayment(c,payment=null){
+  if(!c||(!payment&&cobroRemainingOriginal(c)<.005))return;
+  const linked=payment?oneCobroMovement(c,payment):null;
+  document.getElementById("cpChargeId").value=c.id;
+  document.getElementById("cpPaymentId").value=payment?.id||"";
+  document.getElementById("cpDate").value=payment?.date||todayIso();
+  document.getElementById("cpAmount").value=(payment?.amount??cobroRemainingOriginal(c)).toFixed(2);
+  document.getElementById("cpAmount").max=(cobroRemainingOriginal(c)+num(payment?.amount)).toFixed(2);
+  document.getElementById("cpCurrency").value=normalizeCurrency(c.currency);
+  document.getElementById("cpNote").value=payment?.note||"";
+  document.getElementById("cpSyncMovement").checked=!!linked;
+  document.getElementById("cpMovementKind").value=linked?.cashFlowKind==="cobro_ingreso"?"income":"reimbursement";
+  oneCobroMovementOptions(linked?.cashFlowKind==="cobro_ingreso"?linked.categoryId:"");
+  oneRefreshCobroMovementOptions();
+  document.getElementById("cpSubmitBtn").textContent=payment?"Guardar cambios":"Guardar abono";
+  document.getElementById("cpContext").textContent=cobroPerson(c)+" · "+c.description+" · pendiente "+originalMoney(cobroRemainingOriginal(c),c.currency);
+  document.getElementById("cobroPaymentDialog").showModal();
 }
 function openCobroPaymentHistory(c){
- if(!c)return;
- document.getElementById("cpHistoryContext").textContent=cobroPerson(c)+" · "+c.description;
- const payments=c.payments||[];
- document.getElementById("cpHistoryList").innerHTML=payments.length?payments.map(p=>`<div class="one-payment-line"><span><strong>${originalMoney(p.amount,c.currency)}</strong><small>${dateLabel(p.date)}${p.note?" · "+safe(p.note):""}</small></span><button class="btn danger small" type="button" data-revert-cobro-payment="${safe(c.id)}|${safe(p.id)}">Revertir</button></div>`).join(""):`<div class="empty">${c.status==="paid"?"Pago histórico sin detalle de abonos.":"No se han registrado abonos."}</div>`;
- const dialog=document.getElementById("cobroHistoryDialog");if(!dialog.open)dialog.showModal();
+  if(!c)return;
+  document.getElementById("cpHistoryContext").textContent=cobroPerson(c)+" · "+c.description;
+  const payments=c.payments||[];
+  document.getElementById("cpHistoryList").innerHTML=payments.length?payments.map(p=>{
+    const linked=oneCobroMovement(c,p),status=linked?
+      `<small class="one-cobro-linked-tag">En Movimientos · ${linked.cashFlowKind==="cobro_ingreso"?"Ingreso":"Reembolso"}</small>`:"";
+    return `<div class="one-payment-line"><span><strong>${originalMoney(p.amount,c.currency)}</strong><small>${dateLabel(p.date)}${p.note?" · "+safe(p.note):""}</small>${status}</span><div class="one-cobro-payment-actions"><button class="btn secondary small" type="button" data-edit-cobro-payment="${safe(c.id)}|${safe(p.id)}">Editar</button><button class="btn danger small" type="button" data-revert-cobro-payment="${safe(c.id)}|${safe(p.id)}">Revertir</button></div></div>`;
+  }).join(""):`<div class="empty">${c.status==="paid"?"Pago histórico sin detalle de abonos.":"No se han registrado abonos."}</div>`;
+  const dialog=document.getElementById("cobroHistoryDialog");if(!dialog.open)dialog.showModal();
 }
 function cobroPeopleCards(rows,month){
  const people=new Map();
