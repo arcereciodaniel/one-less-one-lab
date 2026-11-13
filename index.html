@@ -2492,7 +2492,7 @@ function restoreValidDate(value){
   return !Number.isNaN(time.getTime())&&time.toISOString().slice(0,10)===value;
 }
 function restoreValidMoney(value){
-  return value!==""&&value!==null&&value!==undefined&&Number.isFinite(Number(value));
+  return (typeof value==="number"||typeof value==="string")&&String(value).trim()!==""&&Number.isFinite(Number(value));
 }
 function restoreValidate(raw){
   if(!restoreIsRecord(raw))throw Error("El archivo no contiene un respaldo válido de One Less One.");
@@ -2526,6 +2526,10 @@ function restoreValidate(raw){
     }
     if(p.opening!==undefined&&p.opening!==null&&!restoreValidMoney(p.opening))
       throw Error("Un período tiene un saldo inicial inválido.");
+    for(const field of ["budgets","categoryBudgets"]){
+      if(p[field]&&Object.values(p[field]).some(v=>!restoreValidMoney(v)))
+        throw Error("Un período contiene montos presupuestados inválidos.");
+    }
   }
   for(const m of raw.movements){
     if(!restoreValidDate(m.date)||typeof m.type!=="string"||!m.type.trim()||
@@ -2548,6 +2552,17 @@ function restoreValidate(raw){
   for(const r of raw.reconciliations||[]){
     if(!restoreValidDate(r.date)||!restoreValidMoney(r.amount))
       throw Error("Hay conciliaciones de saldo sin fecha o monto válidos.");
+  }
+  for(const charge of raw.sharedCharges||[]){
+    if(charge.amount!==undefined&&!restoreValidMoney(charge.amount))
+      throw Error("Hay cobros con importes inválidos.");
+    if(charge.payments!==undefined&&(!Array.isArray(charge.payments)||
+       charge.payments.some(p=>!restoreIsRecord(p)||!restoreValidMoney(p.amount)||Number(p.amount)<0)))
+      throw Error("Hay abonos de Cobros incompletos.");
+  }
+  for(const tx of raw.reserveMovements||[]){
+    if(!restoreValidDate(tx.date)||!restoreValidMoney(tx.amount))
+      throw Error("Hay movimientos de fondos con fechas o importes inválidos.");
   }
   for(const cat of raw.categories||[]){
     if(typeof cat.name!=="string"||!cat.name.trim()||typeof cat.type!=="string"||!cat.type.trim())
